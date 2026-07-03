@@ -140,6 +140,7 @@ model OrderItem {
   name       String
   color      String?
   size       String?
+  imageUrl   String?
   priceCents Int
   quantity   Int
 

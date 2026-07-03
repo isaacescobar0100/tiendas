@@ -28,7 +28,10 @@ export default async function OrderDetailPage({
 
   const order = await prisma.order.findFirst({
     where: { id, storeId: store.id },
-    include: { items: true },
+    include: {
+      // product.imageUrl sirve de respaldo para pedidos antiguos sin snapshot
+      items: { include: { product: { select: { imageUrl: true } } } },
+    },
   });
   if (!order) notFound();
 
@@ -69,9 +72,19 @@ export default async function OrderDetailPage({
               {order.items.map((i) => (
                 <li
                   key={i.id}
-                  className="flex items-center justify-between px-5 py-3 text-sm"
+                  className="flex items-center gap-3 px-5 py-3 text-sm"
                 >
-                  <span className="text-gray-800">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={
+                      i.imageUrl ||
+                      i.product?.imageUrl ||
+                      "https://placehold.co/48x48?text=%20"
+                    }
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                  />
+                  <span className="min-w-0 flex-1 text-gray-800">
                     {i.name}
                     {variantLabel(i.color, i.size) && (
                       <span className="text-gray-400">

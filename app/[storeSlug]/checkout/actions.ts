@@ -82,6 +82,7 @@ export async function placeOrderAction(
     name: string;
     color: string | null;
     size: string | null;
+    imageUrl: string | null;
     priceCents: number;
     quantity: number;
   }[] = [];
@@ -110,6 +111,7 @@ export async function placeOrderAction(
         name: product.name,
         color: variant.color || null,
         size: variant.size || null,
+        imageUrl: product.imageUrl,
         priceCents: product.priceCents,
         quantity: item.quantity,
       });
@@ -125,6 +127,7 @@ export async function placeOrderAction(
         name: product.name,
         color: null,
         size: null,
+        imageUrl: product.imageUrl,
         priceCents: product.priceCents,
         quantity: item.quantity,
       });
@@ -170,6 +173,7 @@ export async function placeOrderAction(
               name: l.name,
               color: l.color,
               size: l.size,
+              imageUrl: l.imageUrl,
               priceCents: l.priceCents,
               quantity: l.quantity,
             })),
