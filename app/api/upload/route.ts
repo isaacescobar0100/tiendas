@@ -45,8 +45,10 @@ export async function POST(request: Request) {
 
     const filename = `${randomUUID()}.${EXT[file.type]}`;
 
-    // En producción (Vercel) usa Vercel Blob; en local guarda en /public/uploads
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
+    // Usa Vercel Blob si hay un store conectado (por token clásico o por OIDC/BLOB_STORE_ID)
+    const useBlob =
+      !!process.env.BLOB_READ_WRITE_TOKEN || !!process.env.BLOB_STORE_ID;
+    if (useBlob) {
       const blob = await put(`uploads/${filename}`, file, {
         access: "public",
         contentType: file.type,
