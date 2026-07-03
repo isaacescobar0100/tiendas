@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -54,8 +55,9 @@ export default async function SuperadminHome({
           <Link
             href="/superadmin"
             className="shrink-0 text-amber-700 hover:text-amber-900"
+            aria-label="Cerrar"
           >
-            ✕
+            <X className="h-4 w-4" />
           </Link>
         </div>
       )}

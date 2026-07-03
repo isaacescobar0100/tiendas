@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { ShoppingCart, X } from "lucide-react";
 import { useCart } from "./cart-context";
 import { formatPrice, variantLabel } from "@/lib/utils";
 
@@ -51,13 +52,13 @@ export function CartDrawer() {
             className="text-gray-400 hover:text-gray-900"
             aria-label="Cerrar"
           >
-            ✕
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-            <p className="text-3xl">🛒</p>
+            <ShoppingCart className="h-10 w-10 text-gray-300" />
             <p className="text-sm text-gray-500">Tu carrito está vacío.</p>
             <button
               onClick={closeCart}

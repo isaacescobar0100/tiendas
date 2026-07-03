@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import { signOutAction } from "@/lib/session-actions";
 
 const LINKS = [
@@ -59,7 +60,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
         aria-label="Abrir menú"
         aria-expanded={open}
       >
-        <span className="text-lg leading-none">{open ? "✕" : "☰"}</span>
+        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       {/* Menú desplegable (móvil) */}

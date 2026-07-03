@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ShoppingCart, X } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice, variantLabel } from "@/lib/utils";
 
@@ -15,7 +16,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-md rounded-2xl border border-dashed border-gray-300 p-12 text-center">
-        <p className="text-4xl">🛒</p>
+        <ShoppingCart className="mx-auto h-10 w-10 text-gray-300" />
         <p className="mt-3 text-gray-500">Tu carrito está vacío.</p>
         <Link
           href={`/${storeSlug}`}
@@ -84,7 +85,7 @@ export default function CartPage() {
               className="text-gray-400 hover:text-red-500"
               aria-label="Quitar"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
           </li>
         ))}

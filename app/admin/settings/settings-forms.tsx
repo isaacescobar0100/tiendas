@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Check } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import {
   updateStoreAction,
@@ -78,7 +79,7 @@ export function StoreForm({ store }: { store: StoreData }) {
       </div>
 
       {state?.error && <Alert type="error">{state.error}</Alert>}
-      {state?.ok && <Alert type="ok">Cambios guardados ✓</Alert>}
+      {state?.ok && <Alert type="ok">Cambios guardados</Alert>}
 
       <button
         type="submit"
@@ -127,7 +128,7 @@ export function PasswordForm() {
       />
 
       {state?.error && <Alert type="error">{state.error}</Alert>}
-      {state?.ok && <Alert type="ok">Contraseña actualizada ✓</Alert>}
+      {state?.ok && <Alert type="ok">Contraseña actualizada</Alert>}
 
       <button type="submit" disabled={pending} className={btnCls}>
         {pending ? "Guardando…" : "Actualizar contraseña"}
@@ -157,12 +158,13 @@ function Alert({
 }) {
   return (
     <p
-      className={`rounded-lg px-3 py-2 text-sm ${
+      className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm ${
         type === "error"
           ? "bg-red-50 text-red-600"
           : "bg-green-50 text-green-700"
       }`}
     >
+      {type === "ok" && <Check className="h-4 w-4" />}
       {children}
     </p>
   );

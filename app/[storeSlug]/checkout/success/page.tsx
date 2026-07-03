@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Check } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
 
@@ -25,8 +26,8 @@ export default async function OrderSuccessPage({
 
   return (
     <div className="mx-auto max-w-lg text-center">
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl">
-        ✓
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
+        <Check className="h-8 w-8" strokeWidth={3} />
       </div>
       <h1 className="text-2xl font-bold text-gray-900">¡Pedido confirmado!</h1>
       <p className="mt-2 text-gray-500">

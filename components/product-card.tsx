@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
+import { Check } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { formatPrice } from "@/lib/utils";
@@ -213,15 +214,19 @@ export function ProductCard({
               if (!open) return setOpen(true); // primero desplegar opciones
               addVariant();
             }}
-            className="w-full rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
+            className="flex w-full items-center justify-center gap-1 rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
           >
-            {added
-              ? "✓ Añadido"
-              : hasVariants && open
-                ? "Añadir"
-                : hasVariants
-                  ? "Elegir y añadir"
-                  : "Agregar al carrito"}
+            {added ? (
+              <>
+                <Check className="h-3.5 w-3.5" /> Añadido
+              </>
+            ) : hasVariants && open ? (
+              "Añadir"
+            ) : hasVariants ? (
+              "Elegir y añadir"
+            ) : (
+              "Agregar al carrito"
+            )}
           </button>
         )}
       </div>

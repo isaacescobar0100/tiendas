@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { X } from "lucide-react";
 import type { ActionState } from "@/app/admin/actions";
 import { ImageUpload } from "@/components/image-upload";
 import { MultiImageUpload } from "@/components/multi-image-upload";
@@ -199,10 +200,10 @@ export function ProductForm({
                   onClick={() =>
                     setVariants((rows) => rows.filter((_, i) => i !== idx))
                   }
-                  className="rounded-md border border-red-200 px-2 py-2 text-xs text-red-600 hover:bg-red-50"
+                  className="rounded-md border border-red-200 px-2 py-2 text-red-600 hover:bg-red-50"
                   aria-label="Quitar variante"
                 >
-                  ✕
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}

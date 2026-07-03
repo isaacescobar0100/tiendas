@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 import { requireSuperadmin } from "@/lib/guards";
 import { SignOutButton } from "@/components/sign-out-button";
 
@@ -14,8 +15,12 @@ export default async function SuperadminLayout({
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <Link href="/superadmin" className="font-semibold text-gray-900">
-              🛍️ MiTienda
+            <Link
+              href="/superadmin"
+              className="flex items-center gap-2 font-semibold text-gray-900"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              MiTienda
             </Link>
             <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
               Superadmin

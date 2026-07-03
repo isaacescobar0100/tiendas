@@ -3,6 +3,7 @@
 import { Suspense, useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 import { loginAction, type LoginState } from "./actions";
 
 export default function LoginPage() {
@@ -26,9 +27,10 @@ function LoginForm() {
       <div className="w-full max-w-sm">
         <Link
           href="/"
-          className="mb-8 block text-center text-2xl font-bold tracking-tight text-gray-900"
+          className="mb-8 flex items-center justify-center gap-2 text-2xl font-bold tracking-tight text-gray-900"
         >
-          🛍️ MiTienda
+          <ShoppingBag className="h-6 w-6" />
+          MiTienda
         </Link>
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
           <h1 className="mb-1 text-xl font-semibold text-gray-900">

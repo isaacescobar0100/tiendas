@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Heart } from "lucide-react";
 import { useFavorites } from "./favorites-context";
 
 export function FavoritesLink({ storeSlug }: { storeSlug: string }) {
@@ -12,7 +13,7 @@ export function FavoritesLink({ storeSlug }: { storeSlug: string }) {
       className="relative flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
       aria-label="Ver favoritos"
     >
-      <span aria-hidden>♥</span>
+      <Heart className="h-4 w-4" />
       <span className="hidden sm:inline">Favoritos</span>
       {ready && count > 0 && (
         <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">

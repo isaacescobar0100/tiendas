@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { X } from "lucide-react";
 
 export function MultiImageUpload({
   name = "images",
@@ -54,10 +55,10 @@ export function MultiImageUpload({
             <button
               type="button"
               onClick={() => setUrls((prev) => prev.filter((_, i) => i !== idx))}
-              className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-xs text-gray-600 hover:text-red-500"
+              className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-gray-600 hover:text-red-500"
               aria-label="Quitar imagen"
             >
-              ✕
+              <X className="h-3 w-3" />
             </button>
           </div>
         ))}

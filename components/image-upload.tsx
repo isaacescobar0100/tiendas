@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ImageIcon } from "lucide-react";
 
 export function ImageUpload({
   name = "imageUrl",
@@ -54,8 +55,8 @@ export function ImageUpload({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={url} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl text-gray-300">
-              🖼️
+            <div className="flex h-full w-full items-center justify-center text-gray-300">
+              <ImageIcon className="h-7 w-7" />
             </div>
           )}
         </div>

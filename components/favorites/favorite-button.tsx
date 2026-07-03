@@ -1,5 +1,6 @@
 "use client";
 
+import { Heart } from "lucide-react";
 import { useFavorites, type FavItem } from "./favorites-context";
 
 export function FavoriteButton({
@@ -32,7 +33,10 @@ export function FavoriteButton({
           : "bg-white/80 text-gray-400 hover:text-red-500"
       } ${className}`}
     >
-      {active ? "♥" : "♡"}
+      <Heart
+        className={size === "sm" ? "h-4 w-4" : "h-5 w-5"}
+        fill={active ? "currentColor" : "none"}
+      />
     </button>
   );
 }
