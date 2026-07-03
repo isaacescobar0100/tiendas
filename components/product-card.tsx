@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useCart } from "@/components/cart/cart-context";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { formatPrice } from "@/lib/utils";
+import { flyToCart } from "@/lib/fly-to-cart";
 
 type Variant = { id: string; color: string; size: string; stock: number };
 
@@ -27,8 +28,9 @@ export function ProductCard({
   currency: string;
   product: CardProduct;
 }) {
-  const { add, openCart } = useCart();
+  const { add } = useCart();
   const [added, setAdded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const [open, setOpen] = useState(false);
   const [selColor, setSelColor] = useState<string | null>(null);
   const [selSize, setSelSize] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export function ProductCard({
       size: null,
     });
     flash();
-    openCart();
+    flyToCart(imgRef.current, product.imageUrl);
   };
 
   const addVariant = () => {
@@ -102,7 +104,7 @@ export function ProductCard({
     setSelColor(null);
     setSelSize(null);
     flash();
-    openCart();
+    flyToCart(imgRef.current, product.imageUrl);
   };
 
   return (
@@ -115,6 +117,7 @@ export function ProductCard({
         <div className="aspect-square overflow-hidden bg-gray-100">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
+            ref={imgRef}
             src={product.imageUrl || "https://placehold.co/400x400?text=Producto"}
             alt={product.name}
             className="h-full w-full object-cover transition group-hover:scale-105"

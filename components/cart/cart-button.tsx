@@ -8,6 +8,7 @@ export function CartButton() {
   return (
     <button
       type="button"
+      id="cart-target"
       onClick={openCart}
       className="relative flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
       aria-label="Ver carrito"

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart, type CartItem } from "./cart-context";
+import { flyToCart } from "@/lib/fly-to-cart";
 
 type Variant = { id: string; color: string; size: string; stock: number };
 
@@ -20,7 +21,7 @@ export function AddToCart({
   variants?: Variant[];
   disabled?: boolean;
 }) {
-  const { add, openCart } = useCart();
+  const { add } = useCart();
   const router = useRouter();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -198,10 +199,11 @@ export function AddToCart({
         <button
           type="button"
           disabled={hasVariants ? false : !canAdd}
-          onClick={() => {
+          onClick={(e) => {
+            const btn = e.currentTarget;
             if (doAdd()) {
               setAdded(true);
-              openCart();
+              flyToCart(btn, product.imageUrl);
               setTimeout(() => setAdded(false), 1500);
             }
           }}
