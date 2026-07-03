@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
-import { formatPrice, variantLabel } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import {
   ORDER_STATUSES,
   ORDER_STATUS_BADGE,
@@ -84,17 +84,19 @@ export default async function OrderDetailPage({
                     alt=""
                     className="h-12 w-12 shrink-0 rounded-lg object-cover"
                   />
-                  <span className="min-w-0 flex-1 text-gray-800">
-                    {i.name}
-                    {variantLabel(i.color, i.size) && (
-                      <span className="text-gray-400">
-                        {" "}
-                        · {variantLabel(i.color, i.size)}
-                      </span>
-                    )}{" "}
-                    <span className="text-gray-400">×{i.quantity}</span>
-                  </span>
-                  <span className="text-gray-900">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900">{i.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {[
+                        i.color && `Color: ${i.color}`,
+                        i.size && `Talla: ${i.size}`,
+                        `Cantidad: ${i.quantity}`,
+                      ]
+                        .filter(Boolean)
+                        .join("  ·  ")}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-gray-900">
                     {formatPrice(i.priceCents * i.quantity, order.currency)}
                   </span>
                 </li>
