@@ -12,7 +12,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin" className="font-semibold text-gray-900">
               {store.name}
@@ -21,42 +21,47 @@ export default async function AdminLayout({
               Admin
             </span>
           </div>
-          <nav className="flex items-center gap-5 text-sm">
-            <Link href="/admin" className="text-gray-600 hover:text-gray-900">
+          <nav className="-mx-4 flex items-center gap-4 overflow-x-auto whitespace-nowrap px-4 text-sm sm:mx-0 sm:gap-5 sm:px-0">
+            <Link
+              href="/admin"
+              className="shrink-0 text-gray-600 hover:text-gray-900"
+            >
               Inicio
             </Link>
             <Link
               href="/admin/products"
-              className="text-gray-600 hover:text-gray-900"
+              className="shrink-0 text-gray-600 hover:text-gray-900"
             >
               Productos
             </Link>
             <Link
               href="/admin/orders"
-              className="text-gray-600 hover:text-gray-900"
+              className="shrink-0 text-gray-600 hover:text-gray-900"
             >
               Pedidos
             </Link>
             <Link
               href="/admin/categories"
-              className="text-gray-600 hover:text-gray-900"
+              className="shrink-0 text-gray-600 hover:text-gray-900"
             >
               Categorías
             </Link>
             <Link
               href="/admin/settings"
-              className="text-gray-600 hover:text-gray-900"
+              className="shrink-0 text-gray-600 hover:text-gray-900"
             >
               Ajustes
             </Link>
             <Link
               href={`/${store.slug}`}
               target="_blank"
-              className="text-gray-600 hover:text-gray-900"
+              className="shrink-0 text-gray-600 hover:text-gray-900"
             >
               Ver tienda ↗
             </Link>
-            <SignOutButton />
+            <span className="shrink-0">
+              <SignOutButton />
+            </span>
           </nav>
         </div>
       </header>
