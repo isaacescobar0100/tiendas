@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { AddToCart } from "@/components/cart/add-to-cart";
@@ -69,9 +70,9 @@ export default async function ProductPage({
     <div>
       <Link
         href={`/${store.slug}`}
-        className="mb-6 inline-block text-sm text-gray-500 hover:text-gray-900"
+        className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
       >
-        ← Seguir comprando
+        <ArrowLeft className="h-4 w-4" /> Seguir comprando
       </Link>
 
       <div className="grid gap-10 md:grid-cols-2">

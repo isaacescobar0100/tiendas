@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { useCart, type CartItem } from "./cart-context";
 import { flyToCart } from "@/lib/fly-to-cart";
 
@@ -225,9 +225,9 @@ export function AddToCart({
         onClick={() => {
           if (doAdd()) router.push(`/${storeSlug}/cart`);
         }}
-        className="text-sm text-gray-500 underline hover:text-gray-900"
+        className="inline-flex items-center gap-1 text-sm text-gray-500 underline hover:text-gray-900"
       >
-        Comprar ahora →
+        Comprar ahora <ArrowRight className="h-4 w-4" />
       </button>
     </div>
   );

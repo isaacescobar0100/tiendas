@@ -5,13 +5,11 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
-import { slugify } from "@/lib/utils";
 
 export type SettingsState = { error?: string; ok?: boolean } | undefined;
 
 const storeSchema = z.object({
   name: z.string().min(2, "El nombre es muy corto."),
-  slug: z.string().min(2, "La URL es muy corta."),
   description: z.string().optional(),
   logoUrl: z.string().url("URL de logo inválida.").optional().or(z.literal("")),
   currency: z.string().min(3).max(3),
@@ -25,27 +23,17 @@ export async function updateStoreAction(
 
   const parsed = storeSchema.safeParse({
     name: formData.get("name"),
-    slug: formData.get("slug"),
     description: formData.get("description") ?? "",
     logoUrl: formData.get("logoUrl") ?? "",
     currency: (formData.get("currency") as string)?.toUpperCase(),
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const slug = slugify(parsed.data.slug);
-  if (!slug) return { error: "La URL no es válida." };
-
-  // La URL (slug) debe ser única entre todas las tiendas
-  const clash = await prisma.store.findFirst({
-    where: { slug, id: { not: store.id } },
-  });
-  if (clash) return { error: "Esa URL ya está en uso por otra tienda." };
-
+  // La URL (slug) de la tienda la gestiona el superadmin; el admin no la cambia.
   await prisma.store.update({
     where: { id: store.id },
     data: {
       name: parsed.data.name,
-      slug,
       description: parsed.data.description || null,
       logoUrl: parsed.data.logoUrl || null,
       currency: parsed.data.currency,
@@ -54,7 +42,7 @@ export async function updateStoreAction(
 
   revalidatePath("/admin/settings");
   revalidatePath("/admin");
-  revalidatePath(`/${slug}`);
+  revalidatePath(`/${store.slug}`);
   return { ok: true };
 }
 

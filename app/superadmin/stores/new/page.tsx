@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { createStoreAction, type ActionState } from "../../actions";
 
 export default function NewStorePage() {
@@ -14,9 +15,9 @@ export default function NewStorePage() {
     <div className="mx-auto max-w-lg">
       <Link
         href="/superadmin"
-        className="mb-4 inline-block text-sm text-gray-500 hover:text-gray-900"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
       >
-        ← Volver
+        <ArrowLeft className="h-4 w-4" /> Volver
       </Link>
       <h1 className="mb-1 text-2xl font-bold text-gray-900">Nueva tienda</h1>
       <p className="mb-6 text-sm text-gray-500">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice, variantLabel } from "@/lib/utils";
@@ -36,9 +37,9 @@ export default async function OrderDetailPage({
       <div>
         <Link
           href="/admin/orders"
-          className="mb-4 inline-block text-sm text-gray-500 hover:text-gray-900"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
         >
-          ← Todos los pedidos
+          <ArrowLeft className="h-4 w-4" /> Todos los pedidos
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

@@ -25,8 +25,11 @@ export function MultiImageUpload({
         const fd = new FormData();
         fd.append("file", file);
         const res = await fetch("/api/upload", { method: "POST", body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Error al subir.");
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : {};
+        if (!res.ok || !data.url) {
+          throw new Error(data.error ?? `Error al subir (${res.status}).`);
+        }
         setUrls((prev) => [...prev, data.url]);
       }
     } catch (e) {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Store } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -62,8 +62,8 @@ export default async function Home() {
                     className="mb-3 h-12 w-12 rounded-xl object-cover"
                   />
                 ) : (
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-900 text-xl text-white">
-                    {store.name.charAt(0).toUpperCase()}
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-900 text-white">
+                    <Store className="h-6 w-6" />
                   </div>
                 )}
                 <h3 className="font-semibold text-gray-900 group-hover:underline">

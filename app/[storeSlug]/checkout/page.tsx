@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { placeOrderAction, type CheckoutState } from "./actions";
@@ -57,9 +58,9 @@ export default function CheckoutPage() {
     <div className="mx-auto max-w-4xl">
       <Link
         href={`/${storeSlug}/cart`}
-        className="mb-6 inline-block text-sm text-gray-500 hover:text-gray-900"
+        className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
       >
-        ← Volver al carrito
+        <ArrowLeft className="h-4 w-4" /> Volver al carrito
       </Link>
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Finalizar compra</h1>
 

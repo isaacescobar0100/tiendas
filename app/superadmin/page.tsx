@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { X } from "lucide-react";
+import { ExternalLink, X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -124,9 +124,9 @@ export default async function SuperadminHome({
                     <Link
                       href={`/${store.slug}`}
                       target="_blank"
-                      className="text-xs text-gray-400 hover:text-gray-600"
+                      className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
                     >
-                      /{store.slug} ↗
+                      /{store.slug} <ExternalLink className="h-3 w-3" />
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-gray-600">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShoppingCart, X } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice, variantLabel } from "@/lib/utils";
 
@@ -101,15 +101,15 @@ export default function CartPage() {
       <div className="mt-6 flex items-center justify-between">
         <Link
           href={`/${storeSlug}`}
-          className="text-sm text-gray-500 hover:text-gray-900"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
         >
-          ← Seguir comprando
+          <ArrowLeft className="h-4 w-4" /> Seguir comprando
         </Link>
         <Link
           href={`/${storeSlug}/checkout`}
-          className="rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800"
         >
-          Finalizar compra →
+          Finalizar compra <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     </div>

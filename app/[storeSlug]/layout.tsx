@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Store } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartButton } from "@/components/cart/cart-button";
@@ -40,8 +41,8 @@ export default async function StoreLayout({
                     className="h-8 w-8 rounded-lg object-cover"
                   />
                 ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-900 text-sm text-white">
-                    {store.name.charAt(0).toUpperCase()}
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-900 text-white">
+                    <Store className="h-4 w-4" />
                   </span>
                 )}
                 {store.name}

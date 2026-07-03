@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
@@ -200,9 +201,9 @@ function Panel({
         {action && (
           <Link
             href={action.href}
-            className="text-xs font-medium text-gray-500 hover:text-gray-900"
+            className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900"
           >
-            {action.label} →
+            {action.label} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         )}
       </div>

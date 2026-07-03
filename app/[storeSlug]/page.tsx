@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/product-card";
 
@@ -118,13 +119,17 @@ export default async function StorefrontPage({
             Novedades
           </SortLink>
           <SortLink href={mkHref({ sort: "price_asc" })} active={sort === "price_asc"}>
-            Precio ↑
+            <span className="flex items-center gap-0.5">
+              Precio <ArrowUp className="h-3 w-3" />
+            </span>
           </SortLink>
           <SortLink
             href={mkHref({ sort: "price_desc" })}
             active={sort === "price_desc"}
           >
-            Precio ↓
+            <span className="flex items-center gap-0.5">
+              Precio <ArrowDown className="h-3 w-3" />
+            </span>
           </SortLink>
         </div>
       </div>
@@ -182,13 +187,13 @@ export default async function StorefrontPage({
           {pageNum > 1 ? (
             <Link
               href={mkHref({ page: pageNum - 1 })}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
-              ← Anterior
+              <ChevronLeft className="h-4 w-4" /> Anterior
             </Link>
           ) : (
-            <span className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300">
-              ← Anterior
+            <span className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300">
+              <ChevronLeft className="h-4 w-4" /> Anterior
             </span>
           )}
 
@@ -209,13 +214,13 @@ export default async function StorefrontPage({
           {pageNum < totalPages ? (
             <Link
               href={mkHref({ page: pageNum + 1 })}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
-              Siguiente →
+              Siguiente <ChevronRight className="h-4 w-4" />
             </Link>
           ) : (
-            <span className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300">
-              Siguiente →
+            <span className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300">
+              Siguiente <ChevronRight className="h-4 w-4" />
             </span>
           )}
         </div>

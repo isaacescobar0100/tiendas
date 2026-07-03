@@ -13,7 +13,6 @@ const CURRENCIES = ["USD", "EUR", "COP", "MXN", "ARS", "CLP", "PEN", "BRL", "GBP
 
 type StoreData = {
   name: string;
-  slug: string;
   description: string | null;
   logoUrl: string | null;
   currency: string;
@@ -33,22 +32,6 @@ export function StoreForm({ store }: { store: StoreData }) {
       <h2 className="text-sm font-semibold text-gray-900">Datos de la tienda</h2>
 
       <Field label="Nombre" name="name" defaultValue={store.name} required />
-
-      <div>
-        <label className={labelCls}>URL pública (slug)</label>
-        <div className="flex items-center rounded-lg border border-gray-300 focus-within:border-gray-900 focus-within:ring-1 focus-within:ring-gray-900">
-          <span className="pl-3 text-sm text-gray-400">tudominio.com/</span>
-          <input
-            name="slug"
-            defaultValue={store.slug}
-            required
-            className="flex-1 rounded-r-lg px-1 py-2 text-sm outline-none"
-          />
-        </div>
-        <p className="mt-1 text-xs text-gray-400">
-          Cambiarla modifica el enlace público de tu tienda.
-        </p>
-      </div>
 
       <div>
         <label className={labelCls}>Descripción</label>
