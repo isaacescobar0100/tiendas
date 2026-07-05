@@ -42,6 +42,9 @@ model Store {
   logoUrl     String?
   currency    String     @default("COP")
   active      Boolean    @default(true)
+  // Métodos de pago que ofrece la tienda (los controla el superadmin)
+  onlinePaymentEnabled Boolean @default(true) // "Ir a pagar en línea" (Wompi)
+  codEnabled           Boolean @default(true) // contraentrega (pago al recibir)
   owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId     String     @unique
   categories  Category[]

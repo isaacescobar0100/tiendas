@@ -1,23 +1,34 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CreditCard, Truck } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { placeOrderAction, type CheckoutState } from "./actions";
 
+type Method = "online" | "cod";
+
 export default function CheckoutForm({
-  paymentsEnabled,
+  onlineEnabled,
+  codEnabled,
 }: {
-  paymentsEnabled: boolean;
+  onlineEnabled: boolean;
+  codEnabled: boolean;
 }) {
   const { items, totalCents, currency, storeSlug, clear, ready } = useCart();
   const router = useRouter();
   const [state, formAction, pending] = useActionState<CheckoutState, FormData>(
     placeOrderAction,
     undefined,
+  );
+
+  const bothEnabled = onlineEnabled && codEnabled;
+  const noMethod = !onlineEnabled && !codEnabled;
+  // Método seleccionado (por defecto: en línea si está disponible).
+  const [method, setMethod] = useState<Method>(
+    onlineEnabled ? "online" : "cod",
   );
 
   // Resultado del pedido:
@@ -146,6 +157,44 @@ export default function CheckoutForm({
             </div>
           </div>
 
+          {/* Método de pago */}
+          <div className="border-t border-gray-100 pt-5">
+            <h2 className="mb-3 text-sm font-semibold text-gray-900">
+              Método de pago
+            </h2>
+            <input type="hidden" name="paymentMethod" value={method} />
+
+            {noMethod ? (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                El pago no está disponible en este momento. Vuelve a intentarlo
+                más tarde.
+              </p>
+            ) : bothEnabled ? (
+              <div className="space-y-2">
+                <MethodOption
+                  icon={<CreditCard className="h-5 w-5" />}
+                  title="Pagar en línea"
+                  desc="Tarjeta, PSE, Nequi… Pago seguro con Wompi."
+                  checked={method === "online"}
+                  onSelect={() => setMethod("online")}
+                />
+                <MethodOption
+                  icon={<Truck className="h-5 w-5" />}
+                  title="Pago contra entrega"
+                  desc="Pagas en efectivo al recibir tu pedido."
+                  checked={method === "cod"}
+                  onSelect={() => setMethod("cod")}
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                {onlineEnabled
+                  ? "Pago en línea seguro con Wompi (tarjeta, PSE, Nequi…)."
+                  : "Pago contra entrega: pagas en efectivo al recibir tu pedido."}
+              </p>
+            )}
+          </div>
+
           {state?.error && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
               {state.error}
@@ -154,22 +203,24 @@ export default function CheckoutForm({
 
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || noMethod}
             className="w-full rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
           >
             {pending
-              ? paymentsEnabled
+              ? method === "online"
                 ? "Redirigiendo al pago…"
                 : "Realizando pedido…"
-              : paymentsEnabled
+              : method === "online"
                 ? "Ir a pagar"
                 : "Confirmar pedido"}
           </button>
-          <p className="text-center text-xs text-gray-400">
-            {paymentsEnabled
-              ? "Pago seguro con Wompi (tarjeta, PSE, Nequi…). Te redirigimos para completar el pago."
-              : "El pago con tarjeta llega en la siguiente fase. Por ahora el pedido queda registrado."}
-          </p>
+          {!noMethod && (
+            <p className="text-center text-xs text-gray-400">
+              {method === "online"
+                ? "Te llevamos a Wompi para completar el pago de forma segura."
+                : "Pagarás en efectivo cuando recibas tu pedido."}
+            </p>
+          )}
         </form>
 
         {/* Resumen */}
@@ -205,6 +256,44 @@ export default function CheckoutForm({
         </div>
       </div>
     </div>
+  );
+}
+
+// Tarjeta seleccionable de método de pago.
+function MethodOption({
+  icon,
+  title,
+  desc,
+  checked,
+  onSelect,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  checked: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${
+        checked
+          ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
+          : "border-gray-200 hover:border-gray-300"
+      }`}
+    >
+      <span className="mt-0.5 text-gray-700">{icon}</span>
+      <span className="flex-1">
+        <span className="block text-sm font-medium text-gray-900">{title}</span>
+        <span className="block text-xs text-gray-500">{desc}</span>
+      </span>
+      <span
+        className={`mt-1 h-4 w-4 shrink-0 rounded-full border ${
+          checked ? "border-gray-900 bg-gray-900" : "border-gray-300"
+        }`}
+      />
+    </button>
   );
 }
 

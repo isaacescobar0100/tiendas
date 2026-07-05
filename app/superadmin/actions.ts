@@ -91,6 +91,34 @@ export async function toggleStoreActiveAction(formData: FormData) {
   }
 }
 
+/**
+ * Activa/desactiva un método de pago de la tienda (online o contraentrega).
+ * Nunca deja la tienda sin ningún método: si al desactivar quedarían los dos
+ * apagados, no hace el cambio.
+ */
+export async function toggleStorePaymentAction(formData: FormData) {
+  await requireSuperadmin();
+  const storeId = String(formData.get("storeId"));
+  const method = String(formData.get("method")); // "online" | "cod"
+  if (method !== "online" && method !== "cod") return;
+
+  const store = await prisma.store.findUnique({ where: { id: storeId } });
+  if (!store) return;
+
+  const next = {
+    onlinePaymentEnabled: store.onlinePaymentEnabled,
+    codEnabled: store.codEnabled,
+  };
+  if (method === "online") next.onlinePaymentEnabled = !next.onlinePaymentEnabled;
+  else next.codEnabled = !next.codEnabled;
+
+  // No permitir desactivar los dos a la vez.
+  if (!next.onlinePaymentEnabled && !next.codEnabled) return;
+
+  await prisma.store.update({ where: { id: storeId }, data: next });
+  revalidatePath("/superadmin");
+}
+
 export async function resetAdminPasswordAction(formData: FormData) {
   await requireSuperadmin();
   const storeId = String(formData.get("storeId"));

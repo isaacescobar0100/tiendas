@@ -78,6 +78,17 @@ export async function placeOrderAction(
   });
   if (!store) return { error: "Tienda no encontrada." };
 
+  // Resuelve el método de pago según lo elegido y lo que la tienda permite.
+  const onlineAvailable = store.onlinePaymentEnabled && isWompiConfigured();
+  const codAvailable = store.codEnabled;
+  const requested = String(formData.get("paymentMethod") ?? "");
+  let useOnline: boolean;
+  if (requested === "online" && onlineAvailable) useOnline = true;
+  else if (requested === "cod" && codAvailable) useOnline = false;
+  else if (onlineAvailable && !codAvailable) useOnline = true;
+  else if (codAvailable && !onlineAvailable) useOnline = false;
+  else return { error: "Método de pago no disponible." };
+
   // Carga los productos (con sus tallas) y valida contra la BD
   const products = await prisma.product.findMany({
     where: {
@@ -196,9 +207,9 @@ export async function placeOrderAction(
       });
     });
 
-    // Con Wompi configurado: no enviamos email todavía (el pedido aún no está
-    // pagado). Redirigimos al cliente a pagar; el email sale al confirmarse.
-    if (isWompiConfigured()) {
+    // Pago en línea: no enviamos email todavía (el pedido aún no está pagado).
+    // Redirigimos al cliente a pagar; el email sale al confirmarse.
+    if (useOnline) {
       const h = await headers();
       const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
       const proto = h.get("x-forwarded-proto") ?? "http";
@@ -212,7 +223,7 @@ export async function placeOrderAction(
       return { orderId: order.id, checkoutUrl };
     }
 
-    // Sin pasarela: el pedido queda registrado (contraentrega / pago manual).
+    // Contraentrega: el pedido queda registrado y se pagará al recibir.
     // Emails de confirmación (no bloquea si Resend no está configurado o falla)
     await sendOrderEmails({
       orderId: order.id,

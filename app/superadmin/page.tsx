@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/utils";
 import {
   deleteStoreAction,
   toggleStoreActiveAction,
+  toggleStorePaymentAction,
   resetAdminPasswordAction,
 } from "./actions";
 
@@ -111,6 +112,7 @@ export default async function SuperadminHome({
                 <th className="px-4 py-3 font-medium">Admin</th>
                 <th className="px-4 py-3 font-medium">Productos</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
+                <th className="px-4 py-3 font-medium">Pagos</th>
                 <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
@@ -147,6 +149,22 @@ export default async function SuperadminHome({
                     )}
                   </td>
                   <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      <PayToggle
+                        storeId={store.id}
+                        method="online"
+                        label="En línea"
+                        enabled={store.onlinePaymentEnabled}
+                      />
+                      <PayToggle
+                        storeId={store.id}
+                        method="cod"
+                        label="Contraentrega"
+                        enabled={store.codEnabled}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <form action={toggleStoreActiveAction}>
                         <input type="hidden" name="storeId" value={store.id} />
@@ -175,6 +193,36 @@ export default async function SuperadminHome({
         </div>
       )}
     </div>
+  );
+}
+
+// Interruptor de un método de pago de la tienda (verde = activo).
+function PayToggle({
+  storeId,
+  method,
+  label,
+  enabled,
+}: {
+  storeId: string;
+  method: "online" | "cod";
+  label: string;
+  enabled: boolean;
+}) {
+  return (
+    <form action={toggleStorePaymentAction}>
+      <input type="hidden" name="storeId" value={storeId} />
+      <input type="hidden" name="method" value={method} />
+      <button
+        title={enabled ? "Clic para desactivar" : "Clic para activar"}
+        className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+          enabled
+            ? "bg-green-100 text-green-700 hover:bg-green-200"
+            : "bg-gray-100 text-gray-400 line-through hover:bg-gray-200"
+        }`}
+      >
+        {label}
+      </button>
+    </form>
   );
 }
 
