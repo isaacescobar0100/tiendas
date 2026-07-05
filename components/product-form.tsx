@@ -152,10 +152,10 @@ export function ProductForm({
             inputMode="decimal"
             defaultValue={
               defaults?.priceCents != null
-                ? (defaults.priceCents / 100).toFixed(2)
+                ? String(defaults.priceCents / 100)
                 : ""
             }
-            placeholder="19.99"
+            placeholder="50000"
             className={inputCls}
           />
         </div>

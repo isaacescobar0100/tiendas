@@ -11,11 +11,24 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/** Formatea un precio en céntimos a moneda legible. 1999 -> "$19.99" */
+// Monedas sin decimales (el peso colombiano, entre otras): se muestran enteras.
+const ZERO_DECIMAL_CURRENCIES = new Set([
+  "COP",
+  "CLP",
+  "JPY",
+  "KRW",
+  "PYG",
+  "VND",
+]);
+
+/** Formatea un precio en céntimos a moneda legible. COP 5000000 -> "50.000 COP" */
 export function formatPrice(cents: number, currency = "COP"): string {
+  const zeroDecimals = ZERO_DECIMAL_CURRENCIES.has(currency);
   return new Intl.NumberFormat("es", {
     style: "currency",
     currency,
+    minimumFractionDigits: zeroDecimals ? 0 : 2,
+    maximumFractionDigits: zeroDecimals ? 0 : 2,
   }).format(cents / 100);
 }
 
