@@ -73,6 +73,8 @@ export function ProductForm({
     size,
     stock: Number(stock[stockKey(color, size)] || 0),
   }));
+  // Stock general = suma de las variantes (cuando las hay).
+  const totalStock = cleanVariants.reduce((n, v) => n + v.stock, 0);
 
   const addTag = (setter: typeof setColors, list: string[], raw: string) => {
     const val = raw.trim();
@@ -139,16 +141,31 @@ export function ProductForm({
         </div>
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
-            Stock {cleanVariants.length > 0 && "(sin variantes)"}
+            {hasVariants ? "Stock total" : "Stock"}
           </label>
-          <input
-            name="stock"
-            type="number"
-            min={0}
-            defaultValue={defaults?.stock ?? 0}
-            disabled={cleanVariants.length > 0}
-            className={`${inputCls} disabled:bg-gray-100 disabled:text-gray-400`}
-          />
+          {hasVariants ? (
+            // Con variantes: el general es la suma (solo lectura), pero sí se envía.
+            <input
+              name="stock"
+              type="text"
+              readOnly
+              value={totalStock}
+              className={`${inputCls} bg-gray-100 text-gray-500`}
+            />
+          ) : (
+            <input
+              name="stock"
+              type="number"
+              min={0}
+              defaultValue={defaults?.stock ?? 0}
+              className={inputCls}
+            />
+          )}
+          {hasVariants && (
+            <p className="mt-1 text-xs text-gray-400">
+              Suma automática del stock de cada variante.
+            </p>
+          )}
         </div>
       </div>
 
