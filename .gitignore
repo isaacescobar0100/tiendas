@@ -38,6 +38,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# guía de despliegue con notas privadas (fuera del repo)
+DEPLOY.md
+
 # vercel
 .vercel
 

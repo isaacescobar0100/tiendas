@@ -46,10 +46,13 @@ Abre http://localhost:3000
 
 ## Usuarios de ejemplo (tras `db:seed`)
 
-| Rol        | Email                    | Contraseña    | Entra en        |
-|------------|--------------------------|---------------|-----------------|
-| Superadmin | `super@mitienda.com`     | `password123` | `/superadmin`   |
-| Admin      | `admin@modacentral.com`  | `password123` | `/admin`        |
+| Rol        | Email                    | Entra en        |
+|------------|--------------------------|-----------------|
+| Superadmin | `super@mitienda.com`     | `/superadmin`   |
+| Admin      | `admin@modacentral.com`  | `/admin`        |
+
+> ⚠️ La contraseña la define el `db:seed` (solo para desarrollo local).
+> **Cámbiala antes de desplegar** — nunca uses contraseñas de ejemplo en producción.
 
 - Tienda pública de ejemplo: http://localhost:3000/moda-central
 - Login: http://localhost:3000/login
