@@ -21,7 +21,27 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { storeSlug } = await params;
   const store = await getStore(storeSlug);
-  return { title: store ? store.name : "Tienda no encontrada" };
+  if (!store) return { title: "Tienda no encontrada" };
+
+  const description =
+    store.description || `Compra en ${store.name}. Envíos a toda Colombia.`;
+  const images = store.logoUrl ? [store.logoUrl] : [];
+  return {
+    title: store.name,
+    description,
+    openGraph: {
+      title: store.name,
+      description,
+      images,
+      type: "website",
+    },
+    twitter: {
+      card: images.length ? "summary_large_image" : "summary",
+      title: store.name,
+      description,
+      images,
+    },
+  };
 }
 
 export default async function StorefrontPage({

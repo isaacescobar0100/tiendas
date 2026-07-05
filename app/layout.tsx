@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getBaseUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Base para resolver URLs relativas de imágenes/canonical en toda la app.
+  metadataBase: new URL(getBaseUrl()),
   title: "MiTienda — Plataforma de tiendas online",
   description: "Crea y gestiona tu tienda online.",
+  openGraph: {
+    type: "website",
+    siteName: "MiTienda",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

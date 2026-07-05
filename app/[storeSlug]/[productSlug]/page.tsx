@@ -34,8 +34,31 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { storeSlug, productSlug } = await params;
   const data = await getData(storeSlug, productSlug);
+  if (!data) return { title: "Producto no encontrado" };
+
+  const { store, product } = data;
+  const price = formatPrice(product.priceCents, store.currency);
+  // Descripción para buscadores y para el preview al compartir (WhatsApp, etc.).
+  const description = product.description
+    ? `${price} · ${product.description.slice(0, 150)}`
+    : `${price} · Cómpralo en ${store.name}.`;
+  const images = product.imageUrl ? [product.imageUrl] : [];
+
   return {
-    title: data ? `${data.product.name} · ${data.store.name}` : "No encontrado",
+    title: `${product.name} · ${store.name}`,
+    description,
+    openGraph: {
+      title: product.name,
+      description,
+      images,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images,
+    },
   };
 }
 
