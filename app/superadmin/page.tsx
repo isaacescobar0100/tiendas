@@ -33,7 +33,7 @@ export default async function SuperadminHome({
 
   const totalProducts = stores.reduce((n, s) => n + s._count.products, 0);
   const totalOrders = orderAgg._count;
-  // La facturación mezcla monedas; se muestra como referencia agregada en USD
+  // La facturación mezcla monedas; se muestra como referencia agregada en COP
   const grossCents = orderAgg._sum.totalCents ?? 0;
 
   return (

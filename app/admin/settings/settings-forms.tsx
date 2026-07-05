@@ -9,7 +9,7 @@ import {
   type SettingsState,
 } from "./actions";
 
-const CURRENCIES = ["USD", "EUR", "COP", "MXN", "ARS", "CLP", "PEN", "BRL", "GBP"];
+const CURRENCIES = ["COP", "USD", "EUR", "MXN", "ARS", "CLP", "PEN", "BRL", "GBP"];
 
 type StoreData = {
   name: string;

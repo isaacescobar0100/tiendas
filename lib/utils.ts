@@ -12,7 +12,7 @@ export function slugify(input: string): string {
 }
 
 /** Formatea un precio en céntimos a moneda legible. 1999 -> "$19.99" */
-export function formatPrice(cents: number, currency = "USD"): string {
+export function formatPrice(cents: number, currency = "COP"): string {
   return new Intl.NumberFormat("es", {
     style: "currency",
     currency,

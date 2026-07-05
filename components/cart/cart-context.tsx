@@ -47,7 +47,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({
   storeSlug,
-  currency = "USD",
+  currency = "COP",
   children,
 }: {
   storeSlug: string;

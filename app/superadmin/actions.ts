@@ -11,7 +11,7 @@ import { requireSuperadmin } from "@/lib/guards";
 
 const createStoreSchema = z.object({
   storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
-  currency: z.string().min(3).max(3).default("USD"),
+  currency: z.string().min(3).max(3).default("COP"),
   adminName: z.string().min(2, "El nombre del admin es muy corto."),
   adminEmail: z.string().email("Email inválido."),
   adminPassword: z.string().min(6, "La contraseña debe tener 6+ caracteres."),
@@ -38,7 +38,7 @@ export async function createStoreAction(
 
   const parsed = createStoreSchema.safeParse({
     storeName: formData.get("storeName"),
-    currency: (formData.get("currency") as string)?.toUpperCase() || "USD",
+    currency: (formData.get("currency") as string)?.toUpperCase() || "COP",
     adminName: formData.get("adminName"),
     adminEmail: formData.get("adminEmail"),
     adminPassword: formData.get("adminPassword"),

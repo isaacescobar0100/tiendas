@@ -26,7 +26,7 @@ async function main() {
       name: "Moda Central",
       slug: "moda-central",
       description: "Ropa y accesorios para todos los días.",
-      currency: "USD",
+      currency: "COP",
       owner: {
         create: {
           email: "admin@modacentral.com",
@@ -53,7 +53,7 @@ async function main() {
     {
       name: "Camiseta básica blanca",
       slug: "camiseta-basica-blanca",
-      priceCents: 1999,
+      priceCents: 1999000, // COP $19.990
       stock: 40,
       categoryId: cat("camisetas"),
       imageUrl: "https://picsum.photos/seed/tee1/500",
@@ -74,7 +74,7 @@ async function main() {
     {
       name: "Camiseta gráfica negra",
       slug: "camiseta-grafica-negra",
-      priceCents: 2499,
+      priceCents: 2499000, // COP $24.990
       stock: 25,
       categoryId: cat("camisetas"),
       imageUrl: "https://picsum.photos/seed/tee2/500",
@@ -92,7 +92,7 @@ async function main() {
     {
       name: "Zapatillas urbanas",
       slug: "zapatillas-urbanas",
-      priceCents: 5999,
+      priceCents: 5999000, // COP $59.990
       stock: 12,
       categoryId: cat("calzado"),
       imageUrl: "https://picsum.photos/seed/shoe1/500",
@@ -114,7 +114,7 @@ async function main() {
     {
       name: "Gorra clásica",
       slug: "gorra-clasica",
-      priceCents: 1499,
+      priceCents: 1499000, // COP $14.990
       stock: 0,
       categoryId: cat("accesorios"),
       imageUrl: "https://picsum.photos/seed/cap1/500",

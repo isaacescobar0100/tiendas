@@ -40,7 +40,7 @@ model Store {
   slug        String     @unique
   description String?
   logoUrl     String?
-  currency    String     @default("USD")
+  currency    String     @default("COP")
   active      Boolean    @default(true)
   owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId     String     @unique
@@ -118,7 +118,7 @@ model Order {
   country       String?
   address       String // resumen legible de la dirección completa
   totalCents    Int
-  currency      String      @default("USD")
+  currency      String      @default("COP")
   status        OrderStatus @default(PENDING)
   items         OrderItem[]
   createdAt     DateTime    @default(now())

@@ -41,8 +41,8 @@ export default function NewStorePage() {
           <Field
             label="Moneda (ISO 3 letras)"
             name="currency"
-            placeholder="USD"
-            defaultValue="USD"
+            placeholder="COP"
+            defaultValue="COP"
           />
         </fieldset>
 
