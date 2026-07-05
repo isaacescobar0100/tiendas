@@ -1,20 +1,27 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check } from "lucide-react";
+import { Check, Clock, X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
+import { getTransaction } from "@/lib/wompi";
+import { markOrderPaid } from "@/lib/orders";
+import ClearCart from "./clear-cart";
 
 export const dynamic = "force-dynamic";
+
+// Estado de pago que mostramos al cliente al volver del checkout.
+type Payment = "approved" | "pending" | "failed" | "registered";
 
 export default async function OrderSuccessPage({
   params,
   searchParams,
 }: {
   params: Promise<{ storeSlug: string }>;
-  searchParams: Promise<{ order?: string }>;
+  // Wompi añade `id` (id de la transacción) y `env` al volver.
+  searchParams: Promise<{ order?: string; id?: string }>;
 }) {
   const { storeSlug } = await params;
-  const { order: orderId } = await searchParams;
+  const { order: orderId, id: txId } = await searchParams;
 
   if (!orderId) notFound();
 
@@ -24,14 +31,69 @@ export default async function OrderSuccessPage({
   });
   if (!order) notFound();
 
+  // Determina el estado del pago.
+  let payment: Payment;
+  if (txId) {
+    const tx = await getTransaction(txId);
+    if (tx && tx.reference === order.id && tx.status === "APPROVED") {
+      await markOrderPaid(order.id);
+      payment = "approved";
+    } else if (tx && tx.reference === order.id && tx.status === "PENDING") {
+      payment = "pending";
+    } else if (tx && tx.reference === order.id) {
+      payment = "failed"; // DECLINED / VOIDED / ERROR
+    } else {
+      // No pudimos verificar: si el webhook ya lo marcó pagado, respétalo.
+      payment = order.status === "PAID" ? "approved" : "pending";
+    }
+  } else {
+    // Sin transacción (contraentrega / pago manual) o ya confirmado por webhook.
+    payment = order.status === "PAID" ? "approved" : "registered";
+  }
+
+  const ui = {
+    approved: {
+      icon: <Check className="h-8 w-8" strokeWidth={3} />,
+      color: "bg-green-100 text-green-600",
+      title: "¡Pago confirmado!",
+      subtitle: "Hemos recibido tu pago. Prepararemos tu pedido enseguida.",
+    },
+    registered: {
+      icon: <Check className="h-8 w-8" strokeWidth={3} />,
+      color: "bg-green-100 text-green-600",
+      title: "¡Pedido confirmado!",
+      subtitle: "Hemos recibido tu pedido.",
+    },
+    pending: {
+      icon: <Clock className="h-8 w-8" strokeWidth={3} />,
+      color: "bg-amber-100 text-amber-600",
+      title: "Pago en proceso",
+      subtitle:
+        "Tu pago se está procesando. Te avisaremos por email cuando se confirme.",
+    },
+    failed: {
+      icon: <X className="h-8 w-8" strokeWidth={3} />,
+      color: "bg-red-100 text-red-600",
+      title: "El pago no se completó",
+      subtitle: "No pudimos confirmar el pago. Puedes intentarlo de nuevo.",
+    },
+  }[payment];
+
+  // Vacía el carrito salvo que el pago haya fallado (para poder reintentar).
+  const shouldClearCart = payment !== "failed";
+
   return (
     <div className="mx-auto max-w-lg text-center">
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-        <Check className="h-8 w-8" strokeWidth={3} />
+      {shouldClearCart && <ClearCart />}
+
+      <div
+        className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${ui.color}`}
+      >
+        {ui.icon}
       </div>
-      <h1 className="text-2xl font-bold text-gray-900">¡Pedido confirmado!</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{ui.title}</h1>
       <p className="mt-2 text-gray-500">
-        Gracias, {order.customerName.split(" ")[0]}. Hemos recibido tu pedido.
+        {order.customerName.split(" ")[0]}, {ui.subtitle}
       </p>
       <p className="mt-1 text-sm text-gray-400">
         Nº de pedido: <span className="font-mono">{order.id.slice(-8)}</span>
@@ -63,17 +125,28 @@ export default async function OrderSuccessPage({
             {formatPrice(order.totalCents, order.currency)}
           </span>
         </div>
-        <p className="mt-4 text-xs text-gray-400">
-          Enviaremos una confirmación a {order.customerEmail}.
-        </p>
+        {payment !== "failed" && (
+          <p className="mt-4 text-xs text-gray-400">
+            Enviaremos una confirmación a {order.customerEmail}.
+          </p>
+        )}
       </div>
 
-      <Link
-        href={`/${storeSlug}`}
-        className="mt-8 inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800"
-      >
-        Seguir comprando
-      </Link>
+      {payment === "failed" ? (
+        <Link
+          href={`/${storeSlug}/checkout`}
+          className="mt-8 inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800"
+        >
+          Intentar el pago de nuevo
+        </Link>
+      ) : (
+        <Link
+          href={`/${storeSlug}`}
+          className="mt-8 inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800"
+        >
+          Seguir comprando
+        </Link>
+      )}
     </div>
   );
 }

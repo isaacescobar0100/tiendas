@@ -1,10 +1,15 @@
 "use server";
 
+import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
+import { isWompiConfigured, buildCheckoutUrl } from "@/lib/wompi";
 
-export type CheckoutState = { error?: string; orderId?: string } | undefined;
+// `checkoutUrl` presente = hay que redirigir al cliente a pagar en Wompi.
+export type CheckoutState =
+  | { error?: string; orderId?: string; checkoutUrl?: string }
+  | undefined;
 
 const customerSchema = z.object({
   customerName: z.string().min(2, "Indica tu nombre."),
@@ -182,6 +187,23 @@ export async function placeOrderAction(
       });
     });
 
+    // Con Wompi configurado: no enviamos email todavía (el pedido aún no está
+    // pagado). Redirigimos al cliente a pagar; el email sale al confirmarse.
+    if (isWompiConfigured()) {
+      const h = await headers();
+      const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+      const proto = h.get("x-forwarded-proto") ?? "http";
+      const redirectUrl = `${proto}://${host}/${storeSlug}/checkout/success?order=${order.id}`;
+      const checkoutUrl = buildCheckoutUrl({
+        reference: order.id,
+        amountInCents: totalCents,
+        redirectUrl,
+        customerEmail: d.customerEmail,
+      });
+      return { orderId: order.id, checkoutUrl };
+    }
+
+    // Sin pasarela: el pedido queda registrado (contraentrega / pago manual).
     // Emails de confirmación (no bloquea si Resend no está configurado o falla)
     await sendOrderEmails({
       orderId: order.id,
