@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ImageIcon } from "lucide-react";
+import { compressImage } from "@/lib/image-compress";
 
 export function ImageUpload({
   name = "imageUrl",
@@ -23,8 +24,9 @@ export function ImageUpload({
     setError("");
     setUploading(true);
     try {
+      const optimized = await compressImage(file);
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", optimized);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const text = await res.text();
       const data = text ? JSON.parse(text) : {};
@@ -92,7 +94,9 @@ export function ImageUpload({
               Quitar
             </button>
           )}
-          <p className="text-xs text-gray-400">JPG, PNG, WEBP o GIF · máx 5 MB</p>
+          <p className="text-xs text-gray-400">
+            JPG, PNG, WEBP o GIF · se optimizan solas al subir
+          </p>
           {error && <p className="text-xs text-red-500">{error}</p>}
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { X } from "lucide-react";
+import { compressImage } from "@/lib/image-compress";
 
 export function MultiImageUpload({
   name = "images",
@@ -22,8 +23,9 @@ export function MultiImageUpload({
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
+        const optimized = await compressImage(file);
         const fd = new FormData();
-        fd.append("file", file);
+        fd.append("file", optimized);
         const res = await fetch("/api/upload", { method: "POST", body: fd });
         const text = await res.text();
         const data = text ? JSON.parse(text) : {};
@@ -87,7 +89,8 @@ export function MultiImageUpload({
         }}
       />
       <p className="mt-1 text-xs text-gray-400">
-        Se muestran junto a la principal en el detalle. JPG, PNG, WEBP o GIF.
+        Se muestran junto a la principal en el detalle. Se optimizan solas al
+        subir. JPG, PNG, WEBP o GIF.
       </p>
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
