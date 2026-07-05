@@ -127,12 +127,19 @@ export default async function OrderDetailPage({
             <h2 className="mb-3 font-semibold text-gray-900">
               Dirección de envío
             </h2>
-            {order.city ? (
+            {order.street || order.city ? (
               <dl className="space-y-1.5 text-gray-600">
-                <Row label="Calle" value={order.street ?? "—"} />
-                <Row label="Número" value={order.streetNumber ?? "—"} />
-                <Row label="Ciudad" value={order.city} />
-                <Row label="Código postal" value={order.postalCode ?? "—"} />
+                <Row label="Dirección" value={order.street ?? "—"} />
+                {order.neighborhood && (
+                  <Row label="Barrio" value={order.neighborhood} />
+                )}
+                <Row label="Ciudad" value={order.city ?? "—"} />
+                {order.reference && (
+                  <Row label="Referencia" value={order.reference} />
+                )}
+                {order.postalCode && (
+                  <Row label="Código postal" value={order.postalCode} />
+                )}
                 <Row label="País" value={order.country ?? "—"} />
               </dl>
             ) : (

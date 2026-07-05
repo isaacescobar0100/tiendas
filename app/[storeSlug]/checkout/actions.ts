@@ -15,10 +15,12 @@ const customerSchema = z.object({
   customerName: z.string().min(2, "Indica tu nombre."),
   customerEmail: z.string().email("Email inválido."),
   customerPhone: z.string().optional(),
-  street: z.string().min(2, "Indica la calle."),
-  streetNumber: z.string().min(1, "Indica el número."),
+  // `street` = dirección completa (calle/carrera, número, apto…)
+  street: z.string().min(3, "Indica la dirección completa."),
+  neighborhood: z.string().min(2, "Indica el barrio."),
   city: z.string().min(2, "Indica la ciudad."),
-  postalCode: z.string().min(2, "Indica el código postal."),
+  reference: z.string().optional(),
+  postalCode: z.string().optional(),
   country: z.string().min(2, "Indica el país."),
 });
 
@@ -41,16 +43,22 @@ export async function placeOrderAction(
     customerEmail: formData.get("customerEmail"),
     customerPhone: formData.get("customerPhone") || undefined,
     street: formData.get("street"),
-    streetNumber: formData.get("streetNumber"),
+    neighborhood: formData.get("neighborhood"),
     city: formData.get("city"),
-    postalCode: formData.get("postalCode"),
+    reference: formData.get("reference") || undefined,
+    postalCode: formData.get("postalCode") || undefined,
     country: formData.get("country"),
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
   const d = parsed.data;
   // Resumen legible de la dirección completa
-  const address = `${d.street} ${d.streetNumber}, ${d.postalCode} ${d.city}, ${d.country}`;
+  const address = [
+    d.street,
+    `Barrio ${d.neighborhood}`,
+    d.postalCode ? `${d.postalCode} ${d.city}` : d.city,
+    d.country,
+  ].join(", ");
 
   let items: {
     productId: string;
@@ -164,9 +172,10 @@ export async function placeOrderAction(
           customerEmail: d.customerEmail,
           customerPhone: d.customerPhone ?? null,
           street: d.street,
-          streetNumber: d.streetNumber,
+          neighborhood: d.neighborhood,
           city: d.city,
-          postalCode: d.postalCode,
+          reference: d.reference ?? null,
+          postalCode: d.postalCode ?? null,
           country: d.country,
           address,
           totalCents,

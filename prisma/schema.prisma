@@ -111,11 +111,14 @@ model Order {
   customerEmail String
   customerPhone String?
   // Dirección desglosada (los pedidos antiguos solo tienen `address`)
+  // `street` guarda la dirección completa (ej. "Cra 23D # 45-12, Apto 301").
   street        String?
-  streetNumber  String?
+  streetNumber  String? // en desuso (se conserva por pedidos antiguos)
+  neighborhood  String? // barrio
   city          String?
   postalCode    String?
   country       String?
+  reference     String? // referencia / cómo llegar (ej. "casa blanca, portón negro")
   address       String // resumen legible de la dirección completa
   totalCents    Int
   currency      String      @default("COP")

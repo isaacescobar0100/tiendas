@@ -103,37 +103,44 @@ export default function CheckoutForm({
             <h2 className="mb-3 text-sm font-semibold text-gray-900">
               Dirección de envío
             </h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <Field
-                  label="Calle / Carrera"
+                  label="Dirección completa"
                   name="street"
-                  placeholder="Cra 23D"
+                  placeholder="Cra 23D # 45-12, Apto 301"
                   required
                 />
               </div>
               <Field
-                label="Número"
-                name="streetNumber"
-                placeholder="45-12"
+                label="Barrio"
+                name="neighborhood"
+                placeholder="El Poblado"
                 required
               />
               <Field
                 label="Ciudad"
                 name="city"
-                placeholder="Bogotá"
+                placeholder="Medellín"
                 required
               />
+              <div className="sm:col-span-2">
+                <Field
+                  label="Referencia / cómo llegar (opcional)"
+                  name="reference"
+                  placeholder="Casa blanca de dos pisos, portón negro, al lado de la tienda"
+                />
+              </div>
               <Field
-                label="Código postal"
+                label="Código postal (opcional)"
                 name="postalCode"
-                placeholder="110111"
-                required
+                placeholder="050021"
               />
               <Field
                 label="País"
                 name="country"
                 placeholder="Colombia"
+                defaultValue="Colombia"
                 required
               />
             </div>

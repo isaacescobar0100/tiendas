@@ -152,12 +152,13 @@ async function main() {
       {
         customerName: "Lucía Gómez",
         customerEmail: "lucia@example.com",
-        customerPhone: "+34 600 111 222",
-        street: "Calle Mayor",
-        streetNumber: "10",
-        city: "Madrid",
-        postalCode: "28013",
-        country: "España",
+        customerPhone: "+57 300 111 2222",
+        street: "Cra 43A # 5-15, Apto 502",
+        neighborhood: "El Poblado",
+        city: "Medellín",
+        reference: "Edificio Torre Verde, portería 2",
+        postalCode: "050021",
+        country: "Colombia",
         status: "PENDING" as const,
         lines: [
           { product: p("camiseta-basica-blanca"), qty: 2 },
@@ -167,11 +168,13 @@ async function main() {
       {
         customerName: "Carlos Ruiz",
         customerEmail: "carlos@example.com",
-        street: "Av. Diagonal",
-        streetNumber: "200",
-        city: "Barcelona",
-        postalCode: "08018",
-        country: "España",
+        customerPhone: "+57 301 555 7777",
+        street: "Calle 85 # 12-30",
+        neighborhood: "Chapinero",
+        city: "Bogotá",
+        reference: "Casa esquinera de ladrillo, reja negra",
+        postalCode: "110221",
+        country: "Colombia",
         status: "SHIPPED" as const,
         lines: [{ product: p("zapatillas-urbanas"), qty: 1 }],
       },
@@ -182,7 +185,12 @@ async function main() {
         (n, l) => n + l.product.priceCents * l.qty,
         0,
       );
-      const address = `${o.street} ${o.streetNumber}, ${o.postalCode} ${o.city}, ${o.country}`;
+      const address = [
+        o.street,
+        `Barrio ${o.neighborhood}`,
+        `${o.postalCode} ${o.city}`,
+        o.country,
+      ].join(", ");
       await prisma.order.create({
         data: {
           storeId: store.id,
@@ -190,8 +198,9 @@ async function main() {
           customerEmail: o.customerEmail,
           customerPhone: o.customerPhone ?? null,
           street: o.street,
-          streetNumber: o.streetNumber,
+          neighborhood: o.neighborhood,
           city: o.city,
+          reference: o.reference,
           postalCode: o.postalCode,
           country: o.country,
           address,
