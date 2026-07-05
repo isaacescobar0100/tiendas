@@ -27,6 +27,39 @@ export async function markOrderPaid(orderId: string): Promise<boolean> {
   });
   if (!order) return true;
 
+  // Ahora que el pago está confirmado, descontamos el stock (una sola vez,
+  // porque la transición PENDING→PAID de arriba solo la gana una llamada).
+  // Si algo se agotó entre tanto, dejamos el stock en 0 (nunca negativo); el
+  // dueño verá el pedido y lo gestiona.
+  await prisma.$transaction(async (tx) => {
+    for (const item of order.items) {
+      const qty = item.quantity;
+      if (item.variantId) {
+        const r = await tx.productVariant.updateMany({
+          where: { id: item.variantId, stock: { gte: qty } },
+          data: { stock: { decrement: qty } },
+        });
+        if (r.count === 0) {
+          await tx.productVariant.updateMany({
+            where: { id: item.variantId },
+            data: { stock: 0 },
+          });
+        }
+      } else if (item.productId) {
+        const r = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: qty } },
+          data: { stock: { decrement: qty } },
+        });
+        if (r.count === 0) {
+          await tx.product.updateMany({
+            where: { id: item.productId },
+            data: { stock: 0 },
+          });
+        }
+      }
+    }
+  });
+
   await sendOrderEmails({
     orderId: order.id,
     storeName: order.store.name,

@@ -160,20 +160,25 @@ export async function placeOrderAction(
 
   try {
     const order = await prisma.$transaction(async (tx) => {
-      // Descuenta stock de forma segura (la condición evita quedar en negativo)
-      for (const line of lineItems) {
-        if (line.variantId) {
-          const res = await tx.productVariant.updateMany({
-            where: { id: line.variantId, stock: { gte: line.quantity } },
-            data: { stock: { decrement: line.quantity } },
-          });
-          if (res.count === 0) throw new Error("STOCK");
-        } else {
-          const res = await tx.product.updateMany({
-            where: { id: line.productId, stock: { gte: line.quantity } },
-            data: { stock: { decrement: line.quantity } },
-          });
-          if (res.count === 0) throw new Error("STOCK");
+      // Contraentrega: el pedido queda comprometido, así que descontamos el
+      // stock ya. Pago en línea: NO se descuenta aquí; se descuenta cuando el
+      // pago se confirma (markOrderPaid), para no perder stock si el pago falla.
+      if (!useOnline) {
+        // La condición `gte` evita quedar en negativo.
+        for (const line of lineItems) {
+          if (line.variantId) {
+            const res = await tx.productVariant.updateMany({
+              where: { id: line.variantId, stock: { gte: line.quantity } },
+              data: { stock: { decrement: line.quantity } },
+            });
+            if (res.count === 0) throw new Error("STOCK");
+          } else {
+            const res = await tx.product.updateMany({
+              where: { id: line.productId, stock: { gte: line.quantity } },
+              data: { stock: { decrement: line.quantity } },
+            });
+            if (res.count === 0) throw new Error("STOCK");
+          }
         }
       }
       return tx.order.create({
