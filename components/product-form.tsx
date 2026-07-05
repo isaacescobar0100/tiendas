@@ -48,9 +48,13 @@ export function ProductForm({
   const [sizes, setSizes] = useState<string[]>(() => [
     ...new Set(initialVariants.map((v) => v.size).filter(Boolean)),
   ]);
-  const [stockMap, setStockMap] = useState<Record<string, number>>(() => {
-    const m: Record<string, number> = {};
-    for (const v of initialVariants) m[stockKey(v.color, v.size)] = v.stock;
+  // Guardamos el stock como texto para que el campo se pueda vaciar y no meta
+  // ceros a la izquierda; se convierte a número al construir las variantes.
+  const [stock, setStockState] = useState<Record<string, string>>(() => {
+    const m: Record<string, string> = {};
+    for (const v of initialVariants) {
+      m[stockKey(v.color, v.size)] = v.stock ? String(v.stock) : "";
+    }
     return m;
   });
 
@@ -67,15 +71,18 @@ export function ProductForm({
   const cleanVariants = combos.map(({ color, size }) => ({
     color,
     size,
-    stock: stockMap[stockKey(color, size)] ?? 0,
+    stock: Number(stock[stockKey(color, size)] || 0),
   }));
 
   const addTag = (setter: typeof setColors, list: string[], raw: string) => {
     const val = raw.trim();
     if (val && !list.includes(val)) setter([...list, val]);
   };
-  const setStock = (color: string, size: string, n: number) =>
-    setStockMap((prev) => ({ ...prev, [stockKey(color, size)]: n }));
+  const setStock = (color: string, size: string, raw: string) => {
+    // Solo dígitos, sin ceros a la izquierda (permite vacío = 0).
+    const digits = raw.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
+    setStockState((prev) => ({ ...prev, [stockKey(color, size)]: digits }));
+  };
 
   return (
     <form
@@ -200,12 +207,11 @@ export function ProductForm({
                       {variantLabel(color, size) || "Única"}
                     </span>
                     <input
-                      type="number"
-                      min={0}
-                      value={stockMap[key] ?? 0}
-                      onChange={(e) =>
-                        setStock(color, size, Number(e.target.value) || 0)
-                      }
+                      type="text"
+                      inputMode="numeric"
+                      value={stock[key] ?? ""}
+                      onChange={(e) => setStock(color, size, e.target.value)}
+                      placeholder="0"
                       aria-label={`Stock de ${variantLabel(color, size) || "única"}`}
                       className={`${inputCls} w-24`}
                     />
