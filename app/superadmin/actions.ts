@@ -152,3 +152,48 @@ export async function deleteStoreAction(formData: FormData) {
     revalidatePath("/superadmin");
   }
 }
+
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Indica tu contraseña actual."),
+    newPassword: z
+      .string()
+      .min(8, "La nueva contraseña debe tener al menos 8 caracteres."),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Las contraseñas nuevas no coinciden.",
+    path: ["confirmPassword"],
+  });
+
+/** El superadmin cambia su propia contraseña (pide la actual por seguridad). */
+export async function changeMyPasswordAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const user = await requireSuperadmin();
+
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+  if (!dbUser) return { error: "Usuario no encontrado." };
+
+  const valid = await bcrypt.compare(
+    parsed.data.currentPassword,
+    dbUser.passwordHash,
+  );
+  if (!valid) return { error: "La contraseña actual no es correcta." };
+
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash },
+  });
+
+  return { ok: true };
+}

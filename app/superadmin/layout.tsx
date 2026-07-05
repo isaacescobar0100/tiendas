@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, KeyRound } from "lucide-react";
 import { requireSuperadmin } from "@/lib/guards";
 import { SignOutButton } from "@/components/sign-out-button";
 
@@ -30,6 +30,13 @@ export default async function SuperadminLayout({
             <span className="hidden text-sm text-gray-500 sm:inline">
               {user.email}
             </span>
+            <Link
+              href="/superadmin/account"
+              className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
+            >
+              <KeyRound className="h-4 w-4" />
+              <span className="hidden sm:inline">Cambiar contraseña</span>
+            </Link>
             <SignOutButton />
           </div>
         </div>
