@@ -42,12 +42,14 @@ export function ProductForm({
   );
   // Colores y tallas se definen por separado; el sistema arma las combinaciones.
   const initialVariants = defaults?.variants ?? [];
-  const [colors, setColors] = useState<string[]>(() => [
+  const initColors = [
     ...new Set(initialVariants.map((v) => v.color).filter(Boolean)),
-  ]);
-  const [sizes, setSizes] = useState<string[]>(() => [
+  ];
+  const initSizes = [
     ...new Set(initialVariants.map((v) => v.size).filter(Boolean)),
-  ]);
+  ];
+  const [colors, setColors] = useState<string[]>(initColors);
+  const [sizes, setSizes] = useState<string[]>(initSizes);
   // Guardamos el stock como texto para que el campo se pueda vaciar y no meta
   // ceros a la izquierda; se convierte a número al construir las variantes.
   const [stock, setStockState] = useState<Record<string, string>>(() => {
@@ -57,14 +59,30 @@ export function ProductForm({
     }
     return m;
   });
+  // Combinaciones excluidas (que no existen). Al editar, arrancamos ocultando
+  // las combinaciones color×talla que no estaban creadas (asimétricas).
+  const [removed, setRemoved] = useState<Set<string>>(() => {
+    const r = new Set<string>();
+    if (initialVariants.length === 0) return r;
+    const existing = new Set(
+      initialVariants.map((v) => stockKey(v.color, v.size)),
+    );
+    for (const c of initColors.length ? initColors : [""]) {
+      for (const s of initSizes.length ? initSizes : [""]) {
+        const k = stockKey(c, s);
+        if (!existing.has(k)) r.add(k);
+      }
+    }
+    return r;
+  });
 
   const hasVariants = colors.length > 0 || sizes.length > 0;
-  // Producto de todas las combinaciones color × talla (cada dimensión opcional).
+  // Combinaciones color × talla, excluyendo las que el usuario quitó.
   const combos: { color: string; size: string }[] = [];
   if (hasVariants) {
     for (const c of colors.length ? colors : [""]) {
       for (const s of sizes.length ? sizes : [""]) {
-        combos.push({ color: c, size: s });
+        if (!removed.has(stockKey(c, s))) combos.push({ color: c, size: s });
       }
     }
   }
@@ -85,6 +103,8 @@ export function ProductForm({
     const digits = raw.replace(/[^\d]/g, "").replace(/^0+(?=\d)/, "");
     setStockState((prev) => ({ ...prev, [stockKey(color, size)]: digits }));
   };
+  const removeCombo = (color: string, size: string) =>
+    setRemoved((prev) => new Set(prev).add(stockKey(color, size)));
 
   return (
     <form
@@ -232,6 +252,14 @@ export function ProductForm({
                       aria-label={`Stock de ${variantLabel(color, size) || "única"}`}
                       className={`${inputCls} w-24`}
                     />
+                    <button
+                      type="button"
+                      onClick={() => removeCombo(color, size)}
+                      className="rounded-md border border-red-200 px-2 py-2 text-red-600 hover:bg-red-50"
+                      aria-label={`Quitar ${variantLabel(color, size) || "variante"}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 );
               })}

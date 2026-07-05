@@ -11,8 +11,17 @@ export default async function ProductsPage() {
   const products = await prisma.product.findMany({
     where: { storeId: store.id },
     orderBy: { createdAt: "desc" },
-    include: { category: { select: { name: true } } },
+    include: {
+      category: { select: { name: true } },
+      variants: { select: { stock: true } },
+    },
   });
+
+  // Stock real: suma de variantes si las hay; si no, el stock del producto.
+  const stockOf = (p: (typeof products)[number]) =>
+    p.variants.length > 0
+      ? p.variants.reduce((n, v) => n + v.stock, 0)
+      : p.stock;
 
   return (
     <div className="space-y-6">
@@ -77,7 +86,7 @@ export default async function ProductsPage() {
                   <td className="px-4 py-3 text-gray-900">
                     {formatPrice(p.priceCents, store.currency)}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{p.stock}</td>
+                  <td className="px-4 py-3 text-gray-600">{stockOf(p)}</td>
                   <td className="px-4 py-3">
                     {p.active ? (
                       <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
