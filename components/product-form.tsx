@@ -126,7 +126,7 @@ export function ProductForm({
           name="variants"
           value={JSON.stringify(cleanVariants)}
         />
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-1 flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">
             Variantes (color / talla)
           </label>
@@ -140,11 +140,17 @@ export function ProductForm({
             + Añadir variante
           </button>
         </div>
+        <p className="mb-3 text-xs text-gray-500">
+          Úsalas solo si el producto viene en varias versiones (tallas o
+          colores), cada una con su propio stock. Ejemplo: Negro · M, Negro · L,
+          Blanco · M.
+        </p>
 
         {variants.length === 0 ? (
-          <p className="text-xs text-gray-400">
-            Sin variantes: se usa el stock general de arriba. Añade combinaciones
-            de color y/o talla (cada una con su stock).
+          <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">
+            Este producto no tiene variantes. Se usará el{" "}
+            <strong>Stock</strong> de arriba. Si vendes por tallas o colores,
+            pulsa <strong>“+ Añadir variante”</strong>.
           </p>
         ) : (
           <div className="space-y-2">
@@ -165,7 +171,7 @@ export function ProductForm({
                       ),
                     )
                   }
-                  placeholder="Negro"
+                  placeholder="Color (ej. Negro)"
                   className={`${inputCls} flex-1`}
                 />
                 <input
@@ -177,7 +183,7 @@ export function ProductForm({
                       ),
                     )
                   }
-                  placeholder="M"
+                  placeholder="Talla (ej. M, 38)"
                   className={`${inputCls} flex-1`}
                 />
                 <input
