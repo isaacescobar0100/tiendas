@@ -6,10 +6,11 @@ import { X } from "lucide-react";
 import type { ActionState } from "@/app/admin/actions";
 import { ImageUpload } from "@/components/image-upload";
 import { MultiImageUpload } from "@/components/multi-image-upload";
+import { variantLabel } from "@/lib/utils";
 
 type Category = { id: string; name: string };
 
-type VariantRow = { color: string; size: string; stock: number };
+const stockKey = (color: string, size: string) => `${color}|||${size}`;
 
 type ProductDefaults = {
   id?: string;
@@ -39,17 +40,42 @@ export function ProductForm({
     action,
     undefined,
   );
-  const [variants, setVariants] = useState<VariantRow[]>(
-    defaults?.variants ?? [],
-  );
+  // Colores y tallas se definen por separado; el sistema arma las combinaciones.
+  const initialVariants = defaults?.variants ?? [];
+  const [colors, setColors] = useState<string[]>(() => [
+    ...new Set(initialVariants.map((v) => v.color).filter(Boolean)),
+  ]);
+  const [sizes, setSizes] = useState<string[]>(() => [
+    ...new Set(initialVariants.map((v) => v.size).filter(Boolean)),
+  ]);
+  const [stockMap, setStockMap] = useState<Record<string, number>>(() => {
+    const m: Record<string, number> = {};
+    for (const v of initialVariants) m[stockKey(v.color, v.size)] = v.stock;
+    return m;
+  });
 
-  const cleanVariants = variants
-    .map((v) => ({
-      color: v.color.trim(),
-      size: v.size.trim(),
-      stock: v.stock,
-    }))
-    .filter((v) => v.color.length > 0 || v.size.length > 0);
+  const hasVariants = colors.length > 0 || sizes.length > 0;
+  // Producto de todas las combinaciones color × talla (cada dimensión opcional).
+  const combos: { color: string; size: string }[] = [];
+  if (hasVariants) {
+    for (const c of colors.length ? colors : [""]) {
+      for (const s of sizes.length ? sizes : [""]) {
+        combos.push({ color: c, size: s });
+      }
+    }
+  }
+  const cleanVariants = combos.map(({ color, size }) => ({
+    color,
+    size,
+    stock: stockMap[stockKey(color, size)] ?? 0,
+  }));
+
+  const addTag = (setter: typeof setColors, list: string[], raw: string) => {
+    const val = raw.trim();
+    if (val && !list.includes(val)) setter([...list, val]);
+  };
+  const setStock = (color: string, size: string, n: number) =>
+    setStockMap((prev) => ({ ...prev, [stockKey(color, size)]: n }));
 
   return (
     <form
@@ -119,103 +145,74 @@ export function ProductForm({
         </div>
       </div>
 
-      {/* Variantes: color + talla con stock por combinación */}
-      <div className="rounded-lg border border-gray-200 p-4">
+      {/* Variantes: se definen colores y tallas por separado y se combinan */}
+      <div className="space-y-4 rounded-lg border border-gray-200 p-4">
         <input
           type="hidden"
           name="variants"
           value={JSON.stringify(cleanVariants)}
         />
-        <div className="mb-1 flex items-center justify-between">
+        <div>
           <label className="text-sm font-medium text-gray-700">
-            Variantes (color / talla)
+            Variantes (tallas y colores)
           </label>
-          <button
-            type="button"
-            onClick={() =>
-              setVariants((v) => [...v, { color: "", size: "", stock: 0 }])
-            }
-            className="text-sm font-medium text-gray-900 hover:underline"
-          >
-            + Añadir variante
-          </button>
+          <p className="mt-1 text-xs text-gray-500">
+            ¿Tu producto viene en varias tallas o colores? Añádelos abajo y el
+            sistema arma solas todas las combinaciones para que pongas el stock
+            de cada una. Si no, deja esto vacío y usa el{" "}
+            <strong>Stock</strong> de arriba.
+          </p>
         </div>
-        <p className="mb-3 text-xs text-gray-500">
-          Úsalas solo si el producto viene en varias versiones (tallas o
-          colores), cada una con su propio stock. Ejemplo: Negro · M, Negro · L,
-          Blanco · M.
-        </p>
 
-        {variants.length === 0 ? (
+        <TagInput
+          label="Colores"
+          hint="Deja vacío si el producto no varía en color."
+          placeholder="Escribe un color y pulsa Enter (ej. Negro)"
+          values={colors}
+          onAdd={(v) => addTag(setColors, colors, v)}
+          onRemove={(v) => setColors(colors.filter((c) => c !== v))}
+        />
+
+        <TagInput
+          label="Tallas"
+          hint="Puede ser letra o número (S, M, L, 38, 42, Única…)."
+          placeholder="Escribe una talla y pulsa Enter (ej. M)"
+          values={sizes}
+          onAdd={(v) => addTag(setSizes, sizes, v)}
+          onRemove={(v) => setSizes(sizes.filter((s) => s !== v))}
+        />
+
+        {combos.length === 0 ? (
           <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">
-            Este producto no tiene variantes. Se usará el{" "}
-            <strong>Stock</strong> de arriba. Si vendes por tallas o colores,
-            pulsa <strong>“+ Añadir variante”</strong>.
+            Sin variantes: se usará el <strong>Stock</strong> de arriba.
           </p>
         ) : (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs text-gray-400">
-              <span className="flex-1">Color</span>
-              <span className="flex-1">Talla</span>
-              <span className="w-20">Stock</span>
-              <span className="w-7" />
-            </div>
-            {variants.map((v, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <input
-                  value={v.color}
-                  onChange={(e) =>
-                    setVariants((rows) =>
-                      rows.map((r, i) =>
-                        i === idx ? { ...r, color: e.target.value } : r,
-                      ),
-                    )
-                  }
-                  placeholder="Color (ej. Negro)"
-                  className={`${inputCls} flex-1`}
-                />
-                <input
-                  value={v.size}
-                  onChange={(e) =>
-                    setVariants((rows) =>
-                      rows.map((r, i) =>
-                        i === idx ? { ...r, size: e.target.value } : r,
-                      ),
-                    )
-                  }
-                  placeholder="Talla (ej. M, 38)"
-                  className={`${inputCls} flex-1`}
-                />
-                <input
-                  type="number"
-                  min={0}
-                  value={v.stock}
-                  onChange={(e) =>
-                    setVariants((rows) =>
-                      rows.map((r, i) =>
-                        i === idx
-                          ? { ...r, stock: Number(e.target.value) || 0 }
-                          : r,
-                      ),
-                    )
-                  }
-                  className={`${inputCls} w-20`}
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    setVariants((rows) => rows.filter((_, i) => i !== idx))
-                  }
-                  className="rounded-md border border-red-200 px-2 py-2 text-red-600 hover:bg-red-50"
-                  aria-label="Quitar variante"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-            <p className="text-xs text-gray-400">
-              Deja el color o la talla vacío si esa dimensión no aplica.
+          <div>
+            <p className="mb-2 text-xs font-medium text-gray-600">
+              Stock por variante
             </p>
+            <div className="space-y-2">
+              {combos.map(({ color, size }) => {
+                const key = stockKey(color, size);
+                return (
+                  <div key={key} className="flex items-center gap-3">
+                    <span className="flex-1 text-sm text-gray-800">
+                      {variantLabel(color, size) || "Única"}
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={stockMap[key] ?? 0}
+                      onChange={(e) =>
+                        setStock(color, size, Number(e.target.value) || 0)
+                      }
+                      aria-label={`Stock de ${variantLabel(color, size) || "única"}`}
+                      className={`${inputCls} w-24`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -283,3 +280,65 @@ export function ProductForm({
 
 const inputCls =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
+
+// Campo de "etiquetas": escribes un valor y con Enter (o coma) lo añades como chip.
+function TagInput({
+  label,
+  hint,
+  placeholder,
+  values,
+  onAdd,
+  onRemove,
+}: {
+  label: string;
+  hint?: string;
+  placeholder: string;
+  values: string[];
+  onAdd: (value: string) => void;
+  onRemove: (value: string) => void;
+}) {
+  const [text, setText] = useState("");
+  const commit = () => {
+    if (text.trim()) onAdd(text);
+    setText("");
+  };
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium text-gray-700">
+        {label}
+      </label>
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-300 p-2 focus-within:border-gray-900 focus-within:ring-1 focus-within:ring-gray-900">
+        {values.map((v) => (
+          <span
+            key={v}
+            className="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-sm text-gray-800"
+          >
+            {v}
+            <button
+              type="button"
+              onClick={() => onRemove(v)}
+              className="text-gray-400 hover:text-red-500"
+              aria-label={`Quitar ${v}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") {
+              e.preventDefault();
+              commit();
+            }
+          }}
+          onBlur={commit}
+          placeholder={placeholder}
+          className="min-w-[10rem] flex-1 text-sm outline-none"
+        />
+      </div>
+      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+    </div>
+  );
+}
