@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
 import { isPaidStatus } from "@/lib/order-status";
-import { OrderStatusSelect } from "@/components/order-status-select";
+import {
+  PaymentSelect,
+  FulfillmentSelect,
+} from "@/components/order-status-select";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +56,8 @@ export default async function OrdersPage() {
                 <th className="px-4 py-3 font-medium">Fecha</th>
                 <th className="px-4 py-3 font-medium">Artículos</th>
                 <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
+                <th className="px-4 py-3 font-medium">Pago</th>
+                <th className="px-4 py-3 font-medium">Envío</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -84,7 +88,10 @@ export default async function OrdersPage() {
                     {formatPrice(o.totalCents, o.currency)}
                   </td>
                   <td className="px-4 py-3">
-                    <OrderStatusSelect orderId={o.id} status={o.status} />
+                    <PaymentSelect orderId={o.id} value={o.status} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <FulfillmentSelect orderId={o.id} value={o.fulfillment} />
                   </td>
                 </tr>
               ))}

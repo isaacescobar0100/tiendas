@@ -160,6 +160,7 @@ async function main() {
         postalCode: "050021",
         country: "Colombia",
         status: "PENDING" as const,
+        fulfillment: "PENDING" as const,
         lines: [
           { product: p("camiseta-basica-blanca"), qty: 2 },
           { product: p("gorra-clasica"), qty: 1 },
@@ -175,7 +176,8 @@ async function main() {
         reference: "Casa esquinera de ladrillo, reja negra",
         postalCode: "110221",
         country: "Colombia",
-        status: "SHIPPED" as const,
+        status: "PAID" as const,
+        fulfillment: "SHIPPED" as const,
         lines: [{ product: p("zapatillas-urbanas"), qty: 1 }],
       },
     ];
@@ -207,6 +209,7 @@ async function main() {
           totalCents: total,
           currency: store.currency,
           status: o.status,
+          fulfillment: o.fulfillment,
           items: {
             create: o.lines.map((l) => ({
               productId: l.product.id,

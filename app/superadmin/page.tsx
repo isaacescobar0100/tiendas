@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ExternalLink, X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
-import { PAID_STATUSES } from "@/lib/order-status";
 import {
   deleteStoreAction,
   toggleStoreActiveAction,
@@ -28,9 +27,9 @@ export default async function SuperadminHome({
     }),
     // Total de pedidos no cancelados (para la tarjeta "Pedidos").
     prisma.order.count({ where: { status: { not: "CANCELLED" } } }),
-    // Facturado: solo pedidos cobrados (pagados/enviados).
+    // Facturado: solo pedidos cobrados (pagados).
     prisma.order.aggregate({
-      where: { status: { in: PAID_STATUSES } },
+      where: { status: "PAID" },
       _sum: { totalCents: true },
     }),
   ]);

@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
 import {
-  ORDER_STATUS_BADGE,
-  ORDER_STATUS_LABEL,
+  PAYMENT_BADGE,
+  PAYMENT_LABEL,
   isPaidStatus,
 } from "@/lib/order-status";
 
@@ -99,9 +99,9 @@ export default async function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${ORDER_STATUS_BADGE[o.status]}`}
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${PAYMENT_BADGE[o.status]}`}
                       >
-                        {ORDER_STATUS_LABEL[o.status]}
+                        {PAYMENT_LABEL[o.status]}
                       </span>
                       <span className="font-medium text-gray-900">
                         {formatPrice(o.totalCents, o.currency)}

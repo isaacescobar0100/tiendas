@@ -15,11 +15,19 @@ enum Role {
   ADMIN
 }
 
+// Estado de PAGO del pedido (SHIPPED queda en desuso; el envío va aparte).
 enum OrderStatus {
   PENDING
   PAID
   SHIPPED
   CANCELLED
+}
+
+// Estado de ENVÍO del pedido (independiente del pago).
+enum Fulfillment {
+  PENDING
+  SHIPPED
+  DELIVERED
 }
 
 model User {
@@ -125,7 +133,8 @@ model Order {
   address       String // resumen legible de la dirección completa
   totalCents    Int
   currency      String      @default("COP")
-  status        OrderStatus @default(PENDING)
+  status        OrderStatus @default(PENDING) // estado de PAGO
+  fulfillment   Fulfillment @default(PENDING) // estado de ENVÍO
   items         OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt

@@ -5,11 +5,15 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
 import {
-  ORDER_STATUSES,
-  ORDER_STATUS_BADGE,
-  ORDER_STATUS_LABEL,
+  PAYMENT_LABEL,
+  PAYMENT_BADGE,
+  FULFILLMENT_LABEL,
+  FULFILLMENT_BADGE,
 } from "@/lib/order-status";
-import { updateOrderStatusAction } from "../actions";
+import {
+  PaymentSelect,
+  FulfillmentSelect,
+} from "@/components/order-status-select";
 
 export const dynamic = "force-dynamic";
 
@@ -53,11 +57,18 @@ export default async function OrderDetailPage({
               {dateFmt.format(order.createdAt)}
             </p>
           </div>
-          <span
-            className={`rounded-full px-3 py-1 text-sm font-medium ${ORDER_STATUS_BADGE[order.status]}`}
-          >
-            {ORDER_STATUS_LABEL[order.status]}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <span
+              className={`rounded-full px-3 py-1 text-sm font-medium ${PAYMENT_BADGE[order.status]}`}
+            >
+              {PAYMENT_LABEL[order.status]}
+            </span>
+            <span
+              className={`rounded-full px-3 py-1 text-sm font-medium ${FULFILLMENT_BADGE[order.fulfillment]}`}
+            >
+              {FULFILLMENT_LABEL[order.fulfillment]}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -149,28 +160,15 @@ export default async function OrderDetailPage({
           </div>
         </div>
 
-        {/* Cambiar estado */}
-        <div className="h-fit rounded-2xl border border-gray-200 bg-white p-5">
-          <h2 className="mb-3 text-sm font-semibold text-gray-900">
-            Actualizar estado
-          </h2>
-          <div className="space-y-2">
-            {ORDER_STATUSES.map((status) => (
-              <form key={status} action={updateOrderStatusAction}>
-                <input type="hidden" name="orderId" value={order.id} />
-                <input type="hidden" name="status" value={status} />
-                <button
-                  disabled={status === order.status}
-                  className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition ${
-                    status === order.status
-                      ? "cursor-default border-gray-900 bg-gray-900 text-white"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {ORDER_STATUS_LABEL[status]}
-                </button>
-              </form>
-            ))}
+        {/* Cambiar estados (pago y envío por separado) */}
+        <div className="h-fit space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
+          <div>
+            <h2 className="mb-2 text-sm font-semibold text-gray-900">Pago</h2>
+            <PaymentSelect orderId={order.id} value={order.status} />
+          </div>
+          <div className="border-t border-gray-100 pt-4">
+            <h2 className="mb-2 text-sm font-semibold text-gray-900">Envío</h2>
+            <FulfillmentSelect orderId={order.id} value={order.fulfillment} />
           </div>
         </div>
       </div>

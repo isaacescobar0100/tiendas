@@ -1,28 +1,41 @@
-import type { OrderStatus } from "@prisma/client";
+import type { OrderStatus, Fulfillment } from "@prisma/client";
 
-export const ORDER_STATUSES: OrderStatus[] = [
-  "PENDING",
-  "PAID",
-  "SHIPPED",
-  "CANCELLED",
-];
+// ─── Estado de PAGO ──────────────────────────────────────────────────────────
+// (El enum aún incluye SHIPPED por compatibilidad, pero ya no se usa como pago.)
+export const PAYMENT_STATUSES: OrderStatus[] = ["PENDING", "PAID", "CANCELLED"];
 
-// Estados que cuentan como cobrado (para "Facturado"): pagado o enviado.
-// Los pendientes (aún sin pagar) y cancelados NO suman.
-export const PAID_STATUSES: OrderStatus[] = ["PAID", "SHIPPED"];
-export const isPaidStatus = (status: OrderStatus): boolean =>
-  PAID_STATUSES.includes(status);
-
-export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
-  PENDING: "Pendiente",
+export const PAYMENT_LABEL: Record<OrderStatus, string> = {
+  PENDING: "Pendiente de pago",
   PAID: "Pagado",
-  SHIPPED: "Enviado",
+  SHIPPED: "Pagado", // legado
   CANCELLED: "Cancelado",
 };
 
-export const ORDER_STATUS_BADGE: Record<OrderStatus, string> = {
+export const PAYMENT_BADGE: Record<OrderStatus, string> = {
   PENDING: "bg-amber-100 text-amber-700",
   PAID: "bg-green-100 text-green-700",
-  SHIPPED: "bg-blue-100 text-blue-700",
+  SHIPPED: "bg-green-100 text-green-700",
   CANCELLED: "bg-gray-100 text-gray-500",
+};
+
+// "Facturado" solo cuenta lo cobrado (pagado). Pendiente/cancelado no suman.
+export const isPaidStatus = (status: OrderStatus): boolean => status === "PAID";
+
+// ─── Estado de ENVÍO (independiente del pago) ────────────────────────────────
+export const FULFILLMENT_STATUSES: Fulfillment[] = [
+  "PENDING",
+  "SHIPPED",
+  "DELIVERED",
+];
+
+export const FULFILLMENT_LABEL: Record<Fulfillment, string> = {
+  PENDING: "Por enviar",
+  SHIPPED: "Enviado",
+  DELIVERED: "Entregado",
+};
+
+export const FULFILLMENT_BADGE: Record<Fulfillment, string> = {
+  PENDING: "bg-amber-100 text-amber-700",
+  SHIPPED: "bg-blue-100 text-blue-700",
+  DELIVERED: "bg-green-100 text-green-700",
 };
