@@ -48,6 +48,7 @@ model Store {
   slug        String     @unique
   description String?
   logoUrl     String?
+  whatsapp    String?    // número de WhatsApp de la tienda (para avisos de pedido)
   themeColor  String     @default("#111827") // color de marca (botones/acentos)
   currency    String     @default("COP")
   active      Boolean    @default(true)

@@ -25,6 +25,7 @@ type StoreData = {
   name: string;
   description: string | null;
   logoUrl: string | null;
+  whatsapp: string | null;
   themeColor: string;
   shippingCents: number;
   freeShippingOverCents: number;
@@ -58,6 +59,21 @@ export function StoreForm({ store }: { store: StoreData }) {
       </div>
 
       <ImageUpload name="logoUrl" label="Logo" defaultUrl={store.logoUrl} />
+
+      <div>
+        <label className={labelCls}>WhatsApp (para avisos de pedido)</label>
+        <input
+          name="whatsapp"
+          inputMode="tel"
+          defaultValue={store.whatsapp ?? ""}
+          placeholder="300 123 4567"
+          className={inputCls}
+        />
+        <p className="mt-1 text-xs text-gray-400">
+          Al confirmar un pedido, el cliente verá un botón para enviártelo por
+          WhatsApp a este número. Déjalo vacío para no mostrarlo.
+        </p>
+      </div>
 
       {/* Color de marca: se aplica a los botones y acentos de tu tienda */}
       <div>

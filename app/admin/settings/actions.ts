@@ -21,6 +21,8 @@ const storeSchema = z.object({
   // Envío (en pesos, texto): costo fijo y umbral de envío gratis.
   shipping: z.string().optional(),
   freeShippingOver: z.string().optional(),
+  // WhatsApp de la tienda (para avisos de pedido). Texto libre; se normaliza al usar.
+  whatsapp: z.string().optional(),
 });
 
 export async function updateStoreAction(
@@ -36,6 +38,7 @@ export async function updateStoreAction(
     themeColor: (formData.get("themeColor") as string) || undefined,
     shipping: (formData.get("shipping") as string) ?? "",
     freeShippingOver: (formData.get("freeShippingOver") as string) ?? "",
+    whatsapp: (formData.get("whatsapp") as string) ?? "",
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
@@ -51,6 +54,7 @@ export async function updateStoreAction(
       name: parsed.data.name,
       description: parsed.data.description || null,
       logoUrl: parsed.data.logoUrl || null,
+      whatsapp: parsed.data.whatsapp?.trim() || null,
       shippingCents,
       freeShippingOverCents,
       ...(parsed.data.themeColor
