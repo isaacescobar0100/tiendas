@@ -1,11 +1,21 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { formatPrice } from "./utils";
 
-const apiKey = process.env.RESEND_API_KEY;
-const from = process.env.EMAIL_FROM ?? "MiTienda <onboarding@resend.dev>";
+// Envío por Gmail (SMTP). Requiere una "Contraseña de aplicación" de Google
+// (no la contraseña normal). Si no está configurado, el envío se omite y la
+// app sigue funcionando.
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 
-// Si no hay API key, el envío se omite (la app sigue funcionando en desarrollo)
-const resend = apiKey ? new Resend(apiKey) : null;
+const transporter =
+  GMAIL_USER && GMAIL_APP_PASSWORD
+    ? nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+      })
+    : null;
 
 export type OrderEmailData = {
   orderId: string;
@@ -46,21 +56,22 @@ function itemsTable(data: OrderEmailData): string {
 }
 
 /**
- * Envía el email de confirmación al cliente y el aviso al admin.
+ * Envía el email de confirmación al cliente y el aviso al admin (por Gmail).
  * No lanza: si algo falla, lo registra y sigue (no debe romper el checkout).
  */
 export async function sendOrderEmails(data: OrderEmailData): Promise<void> {
-  if (!resend) {
+  if (!transporter) {
     console.log(
-      `[email] RESEND_API_KEY no configurada — se omite el envío del pedido ${data.orderId}`,
+      `[email] Gmail no configurado (GMAIL_USER/GMAIL_APP_PASSWORD) — se omite el envío del pedido ${data.orderId}`,
     );
     return;
   }
 
+  const from = `"${data.storeName}" <${GMAIL_USER}>`;
   const shortId = data.orderId.slice(-8);
   try {
-    // 1) Confirmación al cliente
-    await resend.emails.send({
+    // 1) Confirmación al cliente (al correo que puso en el checkout)
+    await transporter.sendMail({
       from,
       to: data.customerEmail,
       subject: `Tu pedido en ${data.storeName} (#${shortId})`,
@@ -73,11 +84,12 @@ export async function sendOrderEmails(data: OrderEmailData): Promise<void> {
         </div>`,
     });
 
-    // 2) Aviso al admin de la tienda
+    // 2) Aviso al admin de la tienda (puede responder directo al cliente)
     if (data.adminEmail) {
-      await resend.emails.send({
+      await transporter.sendMail({
         from,
         to: data.adminEmail,
+        replyTo: data.customerEmail,
         subject: `Nuevo pedido en ${data.storeName} (#${shortId})`,
         html: `
           <div style="font-family:system-ui,sans-serif;max-width:520px;margin:auto">
