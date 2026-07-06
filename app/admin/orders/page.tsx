@@ -2,11 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
-import {
-  ORDER_STATUS_BADGE,
-  ORDER_STATUS_LABEL,
-  isPaidStatus,
-} from "@/lib/order-status";
+import { isPaidStatus } from "@/lib/order-status";
+import { OrderStatusSelect } from "@/components/order-status-select";
 
 export const dynamic = "force-dynamic";
 
@@ -87,11 +84,7 @@ export default async function OrdersPage() {
                     {formatPrice(o.totalCents, o.currency)}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${ORDER_STATUS_BADGE[o.status]}`}
-                    >
-                      {ORDER_STATUS_LABEL[o.status]}
-                    </span>
+                    <OrderStatusSelect orderId={o.id} status={o.status} />
                   </td>
                 </tr>
               ))}
