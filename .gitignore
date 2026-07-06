@@ -47,3 +47,6 @@ DEPLOY.md
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# temporales de scripts
+tmp-*

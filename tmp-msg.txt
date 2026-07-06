@@ -1,9 +1,0 @@
-WhatsApp: boton de aviso de pedido (wa.me) al confirmar la compra
-
-- Store.whatsapp (numero de la tienda) configurable en Ajustes.
-- lib/whatsapp: normaliza el numero (Colombia 57 por defecto) y arma el
-  enlace wa.me con el pedido ya escrito (items, total, nombre, direccion).
-- Pagina de exito: boton verde "Confirmar pedido por WhatsApp" si la tienda
-  tiene numero. Sin API ni costo.
-
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
