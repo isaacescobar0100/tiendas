@@ -2,7 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
-import { ORDER_STATUS_BADGE, ORDER_STATUS_LABEL } from "@/lib/order-status";
+import {
+  ORDER_STATUS_BADGE,
+  ORDER_STATUS_LABEL,
+  isPaidStatus,
+} from "@/lib/order-status";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +26,9 @@ export default async function OrdersPage() {
     include: { _count: { select: { items: true } } },
   });
 
+  // Solo cuenta lo cobrado (pagado/enviado); pendientes y cancelados no suman.
   const revenue = orders
-    .filter((o) => o.status !== "CANCELLED")
+    .filter((o) => isPaidStatus(o.status))
     .reduce((n, o) => n + o.totalCents, 0);
 
   return (

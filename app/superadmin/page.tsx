@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ExternalLink, X } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { PAID_STATUSES } from "@/lib/order-status";
 import {
   deleteStoreAction,
   toggleStoreActiveAction,
@@ -17,7 +18,7 @@ export default async function SuperadminHome({
   searchParams: Promise<{ resetEmail?: string; tempPass?: string }>;
 }) {
   const { resetEmail, tempPass } = await searchParams;
-  const [stores, orderAgg] = await Promise.all([
+  const [stores, totalOrders, paidAgg] = await Promise.all([
     prisma.store.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -25,17 +26,18 @@ export default async function SuperadminHome({
         _count: { select: { products: true, orders: true } },
       },
     }),
+    // Total de pedidos no cancelados (para la tarjeta "Pedidos").
+    prisma.order.count({ where: { status: { not: "CANCELLED" } } }),
+    // Facturado: solo pedidos cobrados (pagados/enviados).
     prisma.order.aggregate({
-      where: { status: { not: "CANCELLED" } },
+      where: { status: { in: PAID_STATUSES } },
       _sum: { totalCents: true },
-      _count: true,
     }),
   ]);
 
   const totalProducts = stores.reduce((n, s) => n + s._count.products, 0);
-  const totalOrders = orderAgg._count;
   // La facturación mezcla monedas; se muestra como referencia agregada en COP
-  const grossCents = orderAgg._sum.totalCents ?? 0;
+  const grossCents = paidAgg._sum.totalCents ?? 0;
 
   return (
     <div className="space-y-8">
@@ -89,8 +91,8 @@ export default async function SuperadminHome({
         <StatCard label="Facturado*" value={formatPrice(grossCents)} />
       </div>
       <p className="-mt-4 text-xs text-gray-400">
-        * Suma bruta de todos los pedidos no cancelados (referencia; las tiendas
-        pueden usar distintas monedas).
+        * Suma de los pedidos cobrados (pagados/enviados); los pendientes no
+        cuentan (referencia; las tiendas pueden usar distintas monedas).
       </p>
 
       {stores.length === 0 ? (

@@ -3,7 +3,11 @@ import { ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
-import { ORDER_STATUS_BADGE, ORDER_STATUS_LABEL } from "@/lib/order-status";
+import {
+  ORDER_STATUS_BADGE,
+  ORDER_STATUS_LABEL,
+  isPaidStatus,
+} from "@/lib/order-status";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +28,9 @@ export default async function DashboardPage() {
     prisma.product.findMany({ where: { storeId: store.id } }),
   ]);
 
+  // Facturado = solo pedidos cobrados (pagados/enviados). Pendientes no suman.
   const revenue = orders
-    .filter((o) => o.status !== "CANCELLED")
+    .filter((o) => isPaidStatus(o.status))
     .reduce((n, o) => n + o.totalCents, 0);
   const pending = orders.filter((o) => o.status === "PENDING").length;
   const lowStock = products

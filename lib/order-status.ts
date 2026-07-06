@@ -7,6 +7,12 @@ export const ORDER_STATUSES: OrderStatus[] = [
   "CANCELLED",
 ];
 
+// Estados que cuentan como cobrado (para "Facturado"): pagado o enviado.
+// Los pendientes (aún sin pagar) y cancelados NO suman.
+export const PAID_STATUSES: OrderStatus[] = ["PAID", "SHIPPED"];
+export const isPaidStatus = (status: OrderStatus): boolean =>
+  PAID_STATUSES.includes(status);
+
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING: "Pendiente",
   PAID: "Pagado",
