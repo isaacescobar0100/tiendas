@@ -247,6 +247,10 @@ export async function placeOrderAction(
       currency: store.currency,
       customerName: d.customerName,
       customerEmail: d.customerEmail,
+      customerPhone: d.customerPhone ?? null,
+      address,
+      reference: d.reference ?? null,
+      paymentLabel: "Contra entrega (pago al recibir)",
       adminEmail: store.owner?.email,
       totalCents: grandTotalCents,
       shippingCents,
@@ -254,6 +258,8 @@ export async function placeOrderAction(
         name: l.name,
         quantity: l.quantity,
         priceCents: l.priceCents,
+        color: l.color,
+        size: l.size,
       })),
     });
 

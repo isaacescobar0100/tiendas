@@ -66,6 +66,10 @@ export async function markOrderPaid(orderId: string): Promise<boolean> {
     currency: order.currency,
     customerName: order.customerName,
     customerEmail: order.customerEmail,
+    customerPhone: order.customerPhone,
+    address: order.address,
+    reference: order.reference,
+    paymentLabel: "Pagado en línea",
     adminEmail: order.store.owner?.email,
     totalCents: order.totalCents,
     shippingCents: order.shippingCents,
@@ -73,6 +77,8 @@ export async function markOrderPaid(orderId: string): Promise<boolean> {
       name: i.name,
       quantity: i.quantity,
       priceCents: i.priceCents,
+      color: i.color,
+      size: i.size,
     })),
   });
   return true;
