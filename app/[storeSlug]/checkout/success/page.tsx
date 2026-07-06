@@ -119,7 +119,23 @@ export default async function OrderSuccessPage({
             </li>
           ))}
         </ul>
-        <div className="mt-4 flex justify-between border-t border-gray-100 pt-4">
+        <div className="mt-4 space-y-1 border-t border-gray-100 pt-4 text-sm">
+          <div className="flex justify-between text-gray-600">
+            <span>Subtotal</span>
+            <span>
+              {formatPrice(order.totalCents - order.shippingCents, order.currency)}
+            </span>
+          </div>
+          <div className="flex justify-between text-gray-600">
+            <span>Envío</span>
+            <span>
+              {order.shippingCents > 0
+                ? formatPrice(order.shippingCents, order.currency)
+                : "Gratis"}
+            </span>
+          </div>
+        </div>
+        <div className="mt-2 flex justify-between border-t border-gray-100 pt-3">
           <span className="font-medium text-gray-900">Total</span>
           <span className="text-lg font-bold text-gray-900">
             {formatPrice(order.totalCents, order.currency)}

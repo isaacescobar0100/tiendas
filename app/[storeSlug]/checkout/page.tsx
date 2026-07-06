@@ -13,7 +13,12 @@ export default async function CheckoutPage({
   const { storeSlug } = await params;
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
-    select: { onlinePaymentEnabled: true, codEnabled: true },
+    select: {
+      onlinePaymentEnabled: true,
+      codEnabled: true,
+      shippingCents: true,
+      freeShippingOverCents: true,
+    },
   });
   if (!store) notFound();
 
@@ -21,5 +26,14 @@ export default async function CheckoutPage({
   const onlineEnabled = store.onlinePaymentEnabled && isWompiConfigured();
   const codEnabled = store.codEnabled;
 
-  return <CheckoutForm onlineEnabled={onlineEnabled} codEnabled={codEnabled} />;
+  return (
+    <CheckoutForm
+      onlineEnabled={onlineEnabled}
+      codEnabled={codEnabled}
+      shipping={{
+        shippingCents: store.shippingCents,
+        freeShippingOverCents: store.freeShippingOverCents,
+      }}
+    />
+  );
 }

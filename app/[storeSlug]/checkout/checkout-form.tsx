@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, CreditCard, Truck } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice, variantLabel } from "@/lib/utils";
+import { computeShipping } from "@/lib/shipping";
 import { placeOrderAction, type CheckoutState } from "./actions";
 
 type Method = "online" | "cod";
@@ -13,11 +14,16 @@ type Method = "online" | "cod";
 export default function CheckoutForm({
   onlineEnabled,
   codEnabled,
+  shipping,
 }: {
   onlineEnabled: boolean;
   codEnabled: boolean;
+  shipping: { shippingCents: number; freeShippingOverCents: number };
 }) {
   const { items, totalCents, currency, storeSlug, clear, ready } = useCart();
+  // totalCents = subtotal (productos). Sumamos el envío para el total final.
+  const shippingCents = computeShipping(totalCents, shipping);
+  const grandTotal = totalCents + shippingCents;
   const router = useRouter();
   const [state, formAction, pending] = useActionState<CheckoutState, FormData>(
     placeOrderAction,
@@ -247,10 +253,26 @@ export default function CheckoutForm({
               </li>
             ))}
           </ul>
-          <div className="mt-4 flex justify-between border-t border-gray-100 pt-4">
+          <div className="mt-4 space-y-1 border-t border-gray-100 pt-4 text-sm">
+            <div className="flex justify-between text-gray-600">
+              <span>Subtotal</span>
+              <span>{formatPrice(totalCents, currency)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>Envío</span>
+              <span>
+                {shippingCents > 0 ? (
+                  formatPrice(shippingCents, currency)
+                ) : (
+                  <span className="font-medium text-green-600">Gratis</span>
+                )}
+              </span>
+            </div>
+          </div>
+          <div className="mt-2 flex justify-between border-t border-gray-100 pt-3">
             <span className="font-medium text-gray-900">Total</span>
             <span className="text-lg font-bold text-gray-900">
-              {formatPrice(totalCents, currency)}
+              {formatPrice(grandTotal, currency)}
             </span>
           </div>
         </div>

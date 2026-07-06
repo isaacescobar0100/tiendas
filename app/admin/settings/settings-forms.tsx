@@ -26,6 +26,8 @@ type StoreData = {
   description: string | null;
   logoUrl: string | null;
   themeColor: string;
+  shippingCents: number;
+  freeShippingOverCents: number;
 };
 
 export function StoreForm({ store }: { store: StoreData }) {
@@ -101,6 +103,42 @@ export function StoreForm({ store }: { store: StoreData }) {
         <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
           COP · Peso colombiano
         </p>
+      </div>
+
+      {/* Envío */}
+      <div className="border-t border-gray-100 pt-5">
+        <h2 className="mb-3 text-sm font-semibold text-gray-900">Envío</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelCls}>Costo de envío (por pedido)</label>
+            <input
+              name="shipping"
+              inputMode="numeric"
+              defaultValue={String(Math.round(store.shippingCents / 100))}
+              placeholder="10000"
+              className={inputCls}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              En pesos. Pon <strong>0</strong> para envío gratis siempre.
+            </p>
+          </div>
+          <div>
+            <label className={labelCls}>Envío gratis desde (opcional)</label>
+            <input
+              name="freeShippingOver"
+              inputMode="numeric"
+              defaultValue={String(
+                Math.round(store.freeShippingOverCents / 100),
+              )}
+              placeholder="100000"
+              className={inputCls}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Si el pedido supera este monto, el envío es gratis. <strong>0</strong>{" "}
+              = desactivado.
+            </p>
+          </div>
+        </div>
       </div>
 
       {state?.error && <Alert type="error">{state.error}</Alert>}

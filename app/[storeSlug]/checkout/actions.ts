@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { isWompiConfigured, buildCheckoutUrl } from "@/lib/wompi";
+import { computeShipping } from "@/lib/shipping";
 
 // `checkoutUrl` presente = hay que redirigir al cliente a pagar en Wompi.
 export type CheckoutState =
@@ -158,6 +159,15 @@ export async function placeOrderAction(
     }
   }
 
+  // `totalCents` es el subtotal de productos. Añadimos el envío (calculado en
+  // el servidor, no confiamos en el cliente).
+  const subtotalCents = totalCents;
+  const shippingCents = computeShipping(subtotalCents, {
+    shippingCents: store.shippingCents,
+    freeShippingOverCents: store.freeShippingOverCents,
+  });
+  const grandTotalCents = subtotalCents + shippingCents;
+
   try {
     const order = await prisma.$transaction(async (tx) => {
       // Contraentrega: el pedido queda comprometido, así que descontamos el
@@ -194,7 +204,8 @@ export async function placeOrderAction(
           postalCode: d.postalCode ?? null,
           country: d.country,
           address,
-          totalCents,
+          totalCents: grandTotalCents,
+          shippingCents,
           currency: store.currency,
           items: {
             create: lineItems.map((l) => ({
@@ -221,7 +232,7 @@ export async function placeOrderAction(
       const redirectUrl = `${proto}://${host}/${storeSlug}/checkout/success?order=${order.id}`;
       const checkoutUrl = buildCheckoutUrl({
         reference: order.id,
-        amountInCents: totalCents,
+        amountInCents: grandTotalCents,
         redirectUrl,
         customerEmail: d.customerEmail,
       });
@@ -237,7 +248,8 @@ export async function placeOrderAction(
       customerName: d.customerName,
       customerEmail: d.customerEmail,
       adminEmail: store.owner?.email,
-      totalCents,
+      totalCents: grandTotalCents,
+      shippingCents,
       items: lineItems.map((l) => ({
         name: l.name,
         quantity: l.quantity,

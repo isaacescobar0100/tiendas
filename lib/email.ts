@@ -14,7 +14,8 @@ export type OrderEmailData = {
   customerName: string;
   customerEmail: string;
   adminEmail?: string | null;
-  totalCents: number;
+  totalCents: number; // incluye el envío
+  shippingCents?: number;
   items: { name: string; quantity: number; priceCents: number }[];
 };
 
@@ -28,7 +29,15 @@ function itemsTable(data: OrderEmailData): string {
         )}</td></tr>`,
     )
     .join("");
-  return `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows}
+  const shippingRow =
+    data.shippingCents == null
+      ? ""
+      : `<tr><td style="padding:6px 0">Envío</td><td style="padding:6px 0;text-align:right">${
+          data.shippingCents > 0
+            ? formatPrice(data.shippingCents, data.currency)
+            : "Gratis"
+        }</td></tr>`;
+  return `<table style="width:100%;border-collapse:collapse;font-size:14px">${rows}${shippingRow}
     <tr><td style="padding-top:10px;border-top:1px solid #eee;font-weight:600">Total</td>
     <td style="padding-top:10px;border-top:1px solid #eee;text-align:right;font-weight:600">${formatPrice(
       data.totalCents,

@@ -21,6 +21,8 @@ export default async function SettingsPage() {
           description: store.description,
           logoUrl: store.logoUrl,
           themeColor: store.themeColor,
+          shippingCents: store.shippingCents,
+          freeShippingOverCents: store.freeShippingOverCents,
         }}
       />
 

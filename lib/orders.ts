@@ -68,6 +68,7 @@ export async function markOrderPaid(orderId: string): Promise<boolean> {
     customerEmail: order.customerEmail,
     adminEmail: order.store.owner?.email,
     totalCents: order.totalCents,
+    shippingCents: order.shippingCents,
     items: order.items.map((i) => ({
       name: i.name,
       quantity: i.quantity,

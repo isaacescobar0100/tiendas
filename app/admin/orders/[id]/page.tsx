@@ -113,11 +113,30 @@ export default async function OrderDetailPage({
                 </li>
               ))}
             </ul>
-            <div className="flex justify-between border-t border-gray-200 px-5 py-3">
-              <span className="font-medium text-gray-900">Total</span>
-              <span className="text-lg font-bold text-gray-900">
-                {formatPrice(order.totalCents, order.currency)}
-              </span>
+            <div className="space-y-1 border-t border-gray-200 px-5 py-3 text-sm">
+              <div className="flex justify-between text-gray-600">
+                <span>Subtotal</span>
+                <span>
+                  {formatPrice(
+                    order.totalCents - order.shippingCents,
+                    order.currency,
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Envío</span>
+                <span>
+                  {order.shippingCents > 0
+                    ? formatPrice(order.shippingCents, order.currency)
+                    : "Gratis"}
+                </span>
+              </div>
+              <div className="flex justify-between border-t border-gray-100 pt-2">
+                <span className="font-medium text-gray-900">Total</span>
+                <span className="text-lg font-bold text-gray-900">
+                  {formatPrice(order.totalCents, order.currency)}
+                </span>
+              </div>
             </div>
           </div>
 

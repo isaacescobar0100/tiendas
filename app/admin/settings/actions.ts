@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
+import { parsePriceToCents } from "@/lib/utils";
 
 export type SettingsState = { error?: string; ok?: boolean } | undefined;
 
@@ -17,6 +18,9 @@ const storeSchema = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/, "Color inválido.")
     .optional(),
+  // Envío (en pesos, texto): costo fijo y umbral de envío gratis.
+  shipping: z.string().optional(),
+  freeShippingOver: z.string().optional(),
 });
 
 export async function updateStoreAction(
@@ -30,8 +34,15 @@ export async function updateStoreAction(
     description: formData.get("description") ?? "",
     logoUrl: formData.get("logoUrl") ?? "",
     themeColor: (formData.get("themeColor") as string) || undefined,
+    shipping: (formData.get("shipping") as string) ?? "",
+    freeShippingOver: (formData.get("freeShippingOver") as string) ?? "",
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  // Envío: se escribe en pesos; se guarda en céntimos (0 si vacío/ inválido).
+  const shippingCents = parsePriceToCents(parsed.data.shipping || "0") ?? 0;
+  const freeShippingOverCents =
+    parsePriceToCents(parsed.data.freeShippingOver || "0") ?? 0;
 
   // La URL (slug) y la moneda (COP) no las cambia el admin.
   await prisma.store.update({
@@ -40,6 +51,8 @@ export async function updateStoreAction(
       name: parsed.data.name,
       description: parsed.data.description || null,
       logoUrl: parsed.data.logoUrl || null,
+      shippingCents,
+      freeShippingOverCents,
       ...(parsed.data.themeColor
         ? { themeColor: parsed.data.themeColor }
         : {}),

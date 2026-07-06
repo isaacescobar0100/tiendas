@@ -54,6 +54,9 @@ model Store {
   // Métodos de pago que ofrece la tienda (los controla el superadmin)
   onlinePaymentEnabled Boolean @default(true) // "Ir a pagar en línea" (Wompi)
   codEnabled           Boolean @default(true) // contraentrega (pago al recibir)
+  // Envío: costo fijo por pedido y umbral opcional de envío gratis (0 = desactivado)
+  shippingCents        Int     @default(0)
+  freeShippingOverCents Int    @default(0)
   owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId     String     @unique
   categories  Category[]
@@ -136,7 +139,8 @@ model Order {
   country       String?
   reference     String? // referencia / cómo llegar (ej. "casa blanca, portón negro")
   address       String // resumen legible de la dirección completa
-  totalCents    Int
+  totalCents    Int // incluye el envío
+  shippingCents Int         @default(0) // parte de envío del total
   currency      String      @default("COP")
   status        OrderStatus @default(PENDING) // estado de PAGO
   fulfillment   Fulfillment @default(PENDING) // estado de ENVÍO
