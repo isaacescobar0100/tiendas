@@ -114,6 +114,7 @@ export default async function ProductPage({
           </div>
           <ProductGallery
             alt={product.name}
+            mainPosition={product.imagePosition}
             images={[product.imageUrl, ...product.images].filter(
               (u): u is string => !!u,
             )}
@@ -197,6 +198,7 @@ export default async function ProductPage({
                   name: p.name,
                   priceCents: p.priceCents,
                   imageUrl: p.imageUrl,
+                  imagePosition: p.imagePosition,
                   stock: p.stock,
                   variants: p.variants,
                 }}

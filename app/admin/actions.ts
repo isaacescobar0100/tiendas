@@ -15,6 +15,7 @@ const productSchema = z.object({
   price: z.string().min(1, "Indica un precio."),
   stock: z.string().optional(),
   imageUrl: z.string().url("URL de imagen inválida.").optional().or(z.literal("")),
+  imagePosition: z.string().optional(),
   categoryId: z.string().optional(),
   active: z.string().optional(),
 });
@@ -45,6 +46,7 @@ function readProductForm(formData: FormData) {
     price: formData.get("price"),
     stock: formData.get("stock") ?? "0",
     imageUrl: formData.get("imageUrl") ?? "",
+    imagePosition: formData.get("imagePosition") ?? "50% 50%",
     categoryId: formData.get("categoryId") ?? "",
     active: formData.get("active") ?? "",
   });
@@ -128,6 +130,7 @@ export async function createProductAction(
       priceCents,
       stock: Number(parsed.data.stock) || 0,
       imageUrl: parsed.data.imageUrl || null,
+      imagePosition: parsed.data.imagePosition || "50% 50%",
       images: readImages(formData),
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",
@@ -169,6 +172,7 @@ export async function updateProductAction(
       priceCents,
       stock: Number(parsed.data.stock) || 0,
       imageUrl: parsed.data.imageUrl || null,
+      imagePosition: parsed.data.imagePosition || "50% 50%",
       images: readImages(formData),
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",

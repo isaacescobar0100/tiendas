@@ -19,6 +19,7 @@ type ProductDefaults = {
   priceCents?: number;
   stock?: number;
   imageUrl?: string | null;
+  imagePosition?: string;
   categoryId?: string | null;
   active?: boolean;
   images?: string[];
@@ -290,6 +291,9 @@ export function ProductForm({
         name="imageUrl"
         label="Imagen principal"
         defaultUrl={defaults?.imageUrl}
+        reposition
+        positionName="imagePosition"
+        defaultPosition={defaults?.imagePosition ?? "50% 50%"}
       />
 
       <MultiImageUpload name="images" defaultUrls={defaults?.images ?? []} />

@@ -82,8 +82,9 @@ model Product {
   description String?
   priceCents  Int       @default(0) // precio en céntimos para evitar errores de coma flotante
   stock       Int       @default(0)
-  imageUrl    String?   // imagen principal (portada)
-  images      String[]  @default([]) // imágenes adicionales (galería)
+  imageUrl      String?   // imagen principal (portada)
+  imagePosition String    @default("50% 50%") // punto focal de la portada (object-position)
+  images        String[]  @default([]) // imágenes adicionales (galería)
   active      Boolean   @default(true)
   store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
   storeId     String
