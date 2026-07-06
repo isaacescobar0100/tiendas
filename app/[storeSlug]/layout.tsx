@@ -18,13 +18,24 @@ export default async function StoreLayout({
   const { storeSlug } = await params;
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
-    select: { name: true, slug: true, currency: true, logoUrl: true },
+    select: {
+      name: true,
+      slug: true,
+      currency: true,
+      logoUrl: true,
+      themeColor: true,
+    },
   });
   if (!store) notFound();
 
   return (
     <FavoritesProvider storeSlug={store.slug}>
     <CartProvider storeSlug={store.slug} currency={store.currency}>
+      {/* --brand: color de marca de la tienda, usado por botones y acentos */}
+      <div
+        className="contents"
+        style={{ ["--brand" as string]: store.themeColor }}
+      >
       <div className="flex min-h-screen flex-col bg-white">
         <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
@@ -41,7 +52,7 @@ export default async function StoreLayout({
                     className="h-8 w-8 rounded-lg object-cover"
                   />
                 ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-900 text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand)] text-white">
                     <Store className="h-4 w-4" />
                   </span>
                 )}
@@ -70,6 +81,7 @@ export default async function StoreLayout({
         </footer>
       </div>
       <CartDrawer />
+      </div>
     </CartProvider>
     </FavoritesProvider>
   );

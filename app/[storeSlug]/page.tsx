@@ -128,7 +128,7 @@ export default async function StorefrontPage({
             placeholder="Buscar productos…"
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
           />
-          <button className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+          <button className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110">
             Buscar
           </button>
         </form>

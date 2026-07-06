@@ -65,7 +65,7 @@ export default function CheckoutForm({
         <p className="text-gray-500">Tu carrito está vacío.</p>
         <Link
           href={`/${storeSlug}`}
-          className="mt-4 inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+          className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
         >
           Ver productos
         </Link>
@@ -204,7 +204,7 @@ export default function CheckoutForm({
           <button
             type="submit"
             disabled={pending || noMethod}
-            className="w-full rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+            className="w-full rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
           >
             {pending
               ? method === "online"

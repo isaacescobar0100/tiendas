@@ -135,14 +135,14 @@ export default async function OrderSuccessPage({
       {payment === "failed" ? (
         <Link
           href={`/${storeSlug}/checkout`}
-          className="mt-8 inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800"
+          className="mt-8 inline-block rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white hover:brightness-110"
         >
           Intentar el pago de nuevo
         </Link>
       ) : (
         <Link
           href={`/${storeSlug}`}
-          className="mt-8 inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800"
+          className="mt-8 inline-block rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white hover:brightness-110"
         >
           Seguir comprando
         </Link>

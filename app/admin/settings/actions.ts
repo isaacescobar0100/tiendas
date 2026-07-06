@@ -12,7 +12,11 @@ const storeSchema = z.object({
   name: z.string().min(2, "El nombre es muy corto."),
   description: z.string().optional(),
   logoUrl: z.string().url("URL de logo inválida.").optional().or(z.literal("")),
-  currency: z.string().min(3).max(3),
+  // Color de marca en formato hex (#rrggbb). La moneda es fija (COP).
+  themeColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Color inválido.")
+    .optional(),
 });
 
 export async function updateStoreAction(
@@ -25,18 +29,20 @@ export async function updateStoreAction(
     name: formData.get("name"),
     description: formData.get("description") ?? "",
     logoUrl: formData.get("logoUrl") ?? "",
-    currency: (formData.get("currency") as string)?.toUpperCase(),
+    themeColor: (formData.get("themeColor") as string) || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  // La URL (slug) de la tienda la gestiona el superadmin; el admin no la cambia.
+  // La URL (slug) y la moneda (COP) no las cambia el admin.
   await prisma.store.update({
     where: { id: store.id },
     data: {
       name: parsed.data.name,
       description: parsed.data.description || null,
       logoUrl: parsed.data.logoUrl || null,
-      currency: parsed.data.currency,
+      ...(parsed.data.themeColor
+        ? { themeColor: parsed.data.themeColor }
+        : {}),
     },
   });
 

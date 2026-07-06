@@ -208,7 +208,7 @@ export function AddToCart({
               setTimeout(() => setAdded(false), 1500);
             }
           }}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-gray-800 disabled:opacity-50 sm:flex-none"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50 sm:flex-none"
         >
           {added ? (
             <>

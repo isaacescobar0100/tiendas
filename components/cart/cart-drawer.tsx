@@ -62,7 +62,7 @@ export function CartDrawer() {
             <p className="text-sm text-gray-500">Tu carrito está vacío.</p>
             <button
               onClick={closeCart}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+              className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
             >
               Seguir comprando
             </button>
@@ -135,7 +135,7 @@ export function CartDrawer() {
               <Link
                 href={`/${storeSlug}/checkout`}
                 onClick={closeCart}
-                className="block w-full rounded-lg bg-gray-900 px-4 py-3 text-center text-sm font-medium text-white hover:bg-gray-800"
+                className="block w-full rounded-lg bg-[var(--brand)] px-4 py-3 text-center text-sm font-medium text-white hover:brightness-110"
               >
                 Finalizar compra
               </Link>

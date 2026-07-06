@@ -20,7 +20,7 @@ export default async function SettingsPage() {
           name: store.name,
           description: store.description,
           logoUrl: store.logoUrl,
-          currency: store.currency,
+          themeColor: store.themeColor,
         }}
       />
 

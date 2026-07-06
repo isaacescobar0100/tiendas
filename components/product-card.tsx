@@ -214,7 +214,7 @@ export function ProductCard({
               if (!open) return setOpen(true); // primero desplegar opciones
               addVariant();
             }}
-            className="flex w-full items-center justify-center gap-1 rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-gray-800"
+            className="flex w-full items-center justify-center gap-1 rounded-lg bg-[var(--brand)] px-3 py-2 text-xs font-medium text-white transition hover:brightness-110"
           >
             {added ? (
               <>

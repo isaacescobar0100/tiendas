@@ -22,7 +22,7 @@ export default function FavoritesPage() {
         <p className="mt-3 text-gray-500">No tienes favoritos todavía.</p>
         <Link
           href={`/${storeSlug}`}
-          className="mt-4 inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+          className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
         >
           Explorar productos
         </Link>

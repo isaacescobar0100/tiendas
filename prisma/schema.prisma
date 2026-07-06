@@ -48,6 +48,7 @@ model Store {
   slug        String     @unique
   description String?
   logoUrl     String?
+  themeColor  String     @default("#111827") // color de marca (botones/acentos)
   currency    String     @default("COP")
   active      Boolean    @default(true)
   // Métodos de pago que ofrece la tienda (los controla el superadmin)

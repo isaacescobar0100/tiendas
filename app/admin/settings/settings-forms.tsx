@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Check } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import {
@@ -9,13 +9,23 @@ import {
   type SettingsState,
 } from "./actions";
 
-const CURRENCIES = ["COP", "USD", "EUR", "MXN", "ARS", "CLP", "PEN", "BRL", "GBP"];
+// Colores de marca sugeridos (todos suficientemente oscuros para texto blanco).
+const COLOR_PRESETS = [
+  "#111827",
+  "#2563eb",
+  "#7c3aed",
+  "#db2777",
+  "#dc2626",
+  "#ea580c",
+  "#16a34a",
+  "#0d9488",
+];
 
 type StoreData = {
   name: string;
   description: string | null;
   logoUrl: string | null;
-  currency: string;
+  themeColor: string;
 };
 
 export function StoreForm({ store }: { store: StoreData }) {
@@ -23,6 +33,7 @@ export function StoreForm({ store }: { store: StoreData }) {
     updateStoreAction,
     undefined,
   );
+  const [color, setColor] = useState(store.themeColor || "#111827");
 
   return (
     <form
@@ -46,19 +57,50 @@ export function StoreForm({ store }: { store: StoreData }) {
 
       <ImageUpload name="logoUrl" label="Logo" defaultUrl={store.logoUrl} />
 
+      {/* Color de marca: se aplica a los botones y acentos de tu tienda */}
+      <div>
+        <label className={labelCls}>Color de la tienda</label>
+        <input type="hidden" name="themeColor" value={color} />
+        <div className="flex flex-wrap items-center gap-2">
+          {COLOR_PRESETS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setColor(c)}
+              aria-label={`Usar color ${c}`}
+              className={`h-8 w-8 rounded-full border-2 transition ${
+                color.toLowerCase() === c.toLowerCase()
+                  ? "border-gray-900 ring-2 ring-gray-300"
+                  : "border-white shadow"
+              }`}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+          {/* Color personalizado */}
+          <label
+            className="ml-1 inline-flex items-center gap-2 rounded-lg border border-gray-300 px-2 py-1 text-xs text-gray-600"
+            title="Elegir un color personalizado"
+          >
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+            />
+            Personalizado
+          </label>
+        </div>
+        <p className="mt-1 text-xs text-gray-400">
+          Se usa en los botones y acentos de tu tienda. Elige uno oscuro para
+          que el texto blanco se lea bien.
+        </p>
+      </div>
+
       <div>
         <label className={labelCls}>Moneda</label>
-        <select
-          name="currency"
-          defaultValue={store.currency}
-          className={inputCls}
-        >
-          {CURRENCIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
+        <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
+          COP · Peso colombiano
+        </p>
       </div>
 
       {state?.error && <Alert type="error">{state.error}</Alert>}
