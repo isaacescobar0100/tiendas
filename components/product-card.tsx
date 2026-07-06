@@ -17,6 +17,7 @@ export type CardProduct = {
   priceCents: number;
   imageUrl?: string | null;
   imagePosition?: string | null;
+  imageZoom?: number | null;
   stock: number;
   variants: Variant[];
 };
@@ -122,8 +123,11 @@ export function ProductCard({
             ref={imgRef}
             src={product.imageUrl || "https://placehold.co/400x400?text=Producto"}
             alt={product.name}
-            style={{ objectPosition: product.imagePosition ?? "50% 50%" }}
-            className="h-full w-full object-cover transition group-hover:scale-105"
+            style={{
+              objectPosition: product.imagePosition ?? "50% 50%",
+              transform: `scale(${product.imageZoom ?? 1})`,
+            }}
+            className="h-full w-full object-cover transition"
           />
         </div>
         <div className="p-3 pb-2">

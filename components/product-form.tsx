@@ -20,6 +20,7 @@ type ProductDefaults = {
   stock?: number;
   imageUrl?: string | null;
   imagePosition?: string;
+  imageZoom?: number;
   categoryId?: string | null;
   active?: boolean;
   images?: string[];
@@ -294,6 +295,8 @@ export function ProductForm({
         reposition
         positionName="imagePosition"
         defaultPosition={defaults?.imagePosition ?? "50% 50%"}
+        zoomName="imageZoom"
+        defaultZoom={defaults?.imageZoom ?? 1}
       />
 
       <MultiImageUpload name="images" defaultUrls={defaults?.images ?? []} />

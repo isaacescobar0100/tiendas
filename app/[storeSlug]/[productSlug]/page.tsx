@@ -115,6 +115,7 @@ export default async function ProductPage({
           <ProductGallery
             alt={product.name}
             mainPosition={product.imagePosition}
+            mainZoom={product.imageZoom}
             images={[product.imageUrl, ...product.images].filter(
               (u): u is string => !!u,
             )}
@@ -199,6 +200,7 @@ export default async function ProductPage({
                   priceCents: p.priceCents,
                   imageUrl: p.imageUrl,
                   imagePosition: p.imagePosition,
+                  imageZoom: p.imageZoom,
                   stock: p.stock,
                   variants: p.variants,
                 }}

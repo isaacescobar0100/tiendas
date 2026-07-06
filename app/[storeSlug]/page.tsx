@@ -195,6 +195,7 @@ export default async function StorefrontPage({
                 priceCents: p.priceCents,
                 imageUrl: p.imageUrl,
                 imagePosition: p.imagePosition,
+                imageZoom: p.imageZoom,
                 stock: p.stock,
                 variants: p.variants,
               }}

@@ -84,6 +84,7 @@ model Product {
   stock       Int       @default(0)
   imageUrl      String?   // imagen principal (portada)
   imagePosition String    @default("50% 50%") // punto focal de la portada (object-position)
+  imageZoom     Float     @default(1) // zoom de la portada (1 = sin zoom)
   images        String[]  @default([]) // imágenes adicionales (galería)
   active      Boolean   @default(true)
   store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)

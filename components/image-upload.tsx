@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ImageIcon, Move } from "lucide-react";
+import { ImageIcon, Move, ZoomIn, ZoomOut } from "lucide-react";
 import { compressImage } from "@/lib/image-compress";
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
+const clampZoom = (n: number) => Math.max(1, Math.min(3, n));
 function parsePos(p: string): { x: number; y: number } {
   const [x, y] = p.split(" ").map((v) => parseFloat(v));
   return { x: isNaN(x) ? 50 : x, y: isNaN(y) ? 50 : y };
@@ -19,6 +20,8 @@ export function ImageUpload({
   reposition = false,
   positionName = "imagePosition",
   defaultPosition = "50% 50%",
+  zoomName = "imageZoom",
+  defaultZoom = 1,
 }: {
   name?: string;
   defaultUrl?: string | null;
@@ -27,9 +30,12 @@ export function ImageUpload({
   reposition?: boolean;
   positionName?: string;
   defaultPosition?: string;
+  zoomName?: string;
+  defaultZoom?: number;
 }) {
   const [url, setUrl] = useState(defaultUrl ?? "");
   const [position, setPosition] = useState(defaultPosition || "50% 50%");
+  const [zoom, setZoom] = useState(clampZoom(defaultZoom || 1));
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +60,8 @@ export function ImageUpload({
         throw new Error(data.error ?? `Error al subir (${res.status}).`);
       }
       setUrl(data.url);
-      setPosition("50% 50%"); // nueva foto: centrada por defecto
+      setPosition("50% 50%"); // nueva foto: centrada y sin zoom
+      setZoom(1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al subir.");
     } finally {
@@ -84,7 +91,10 @@ export function ImageUpload({
       {/* Guarda la URL final y (si aplica) la posición para el formulario */}
       <input type="hidden" name={name} value={url} />
       {reposition && (
-        <input type="hidden" name={positionName} value={position} />
+        <>
+          <input type="hidden" name={positionName} value={position} />
+          <input type="hidden" name={zoomName} value={zoom} />
+        </>
       )}
 
       <div className="flex items-start gap-4">
@@ -106,7 +116,11 @@ export function ImageUpload({
               src={url}
               alt=""
               draggable={false}
-              style={{ objectPosition: position }}
+              style={{
+                objectPosition: position,
+                transform: `scale(${zoom})`,
+                transformOrigin: "center",
+              }}
               className="pointer-events-none h-full w-full object-cover"
             />
             <span className="pointer-events-none absolute bottom-1 left-1 right-1 flex items-center justify-center gap-1 rounded bg-black/55 px-1 py-0.5 text-[10px] font-medium text-white">
@@ -131,6 +145,31 @@ export function ImageUpload({
         )}
 
         <div className="space-y-2">
+          {showReposition && url && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setZoom((z) => clampZoom(z - 0.25))}
+                disabled={zoom <= 1}
+                className="rounded-lg border border-gray-300 p-1.5 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                aria-label="Alejar"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </button>
+              <span className="w-12 text-center text-xs text-gray-500">
+                {zoom.toFixed(2)}×
+              </span>
+              <button
+                type="button"
+                onClick={() => setZoom((z) => clampZoom(z + 0.25))}
+                disabled={zoom >= 3}
+                className="rounded-lg border border-gray-300 p-1.5 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                aria-label="Acercar"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </button>
+            </div>
+          )}
           <input
             ref={inputRef}
             type="file"
@@ -163,8 +202,7 @@ export function ImageUpload({
           </p>
           {showReposition && (
             <p className="text-xs text-gray-400">
-              Arrastra la foto en el recuadro para elegir qué parte se ve en la
-              tienda.
+              Arrastra la foto para encuadrarla y usa −/+ para acercar o alejar.
             </p>
           )}
           {error && <p className="text-xs text-red-500">{error}</p>}

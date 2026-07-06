@@ -16,6 +16,7 @@ const productSchema = z.object({
   stock: z.string().optional(),
   imageUrl: z.string().url("URL de imagen inválida.").optional().or(z.literal("")),
   imagePosition: z.string().optional(),
+  imageZoom: z.coerce.number().min(1).max(3).optional(),
   categoryId: z.string().optional(),
   active: z.string().optional(),
 });
@@ -47,6 +48,7 @@ function readProductForm(formData: FormData) {
     stock: formData.get("stock") ?? "0",
     imageUrl: formData.get("imageUrl") ?? "",
     imagePosition: formData.get("imagePosition") ?? "50% 50%",
+    imageZoom: formData.get("imageZoom") ?? "1",
     categoryId: formData.get("categoryId") ?? "",
     active: formData.get("active") ?? "",
   });
@@ -131,6 +133,7 @@ export async function createProductAction(
       stock: Number(parsed.data.stock) || 0,
       imageUrl: parsed.data.imageUrl || null,
       imagePosition: parsed.data.imagePosition || "50% 50%",
+      imageZoom: parsed.data.imageZoom ?? 1,
       images: readImages(formData),
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",
@@ -173,6 +176,7 @@ export async function updateProductAction(
       stock: Number(parsed.data.stock) || 0,
       imageUrl: parsed.data.imageUrl || null,
       imagePosition: parsed.data.imagePosition || "50% 50%",
+      imageZoom: parsed.data.imageZoom ?? 1,
       images: readImages(formData),
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",

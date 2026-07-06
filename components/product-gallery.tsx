@@ -6,10 +6,12 @@ export function ProductGallery({
   images,
   alt,
   mainPosition = "50% 50%",
+  mainZoom = 1,
 }: {
   images: string[];
   alt: string;
   mainPosition?: string;
+  mainZoom?: number;
 }) {
   const pics = images.length > 0 ? images : ["https://placehold.co/600x600?text=Producto"];
   const [active, setActive] = useState(0);
@@ -22,8 +24,11 @@ export function ProductGallery({
         <img
           src={current}
           alt={alt}
-          // El punto focal solo aplica a la imagen principal (índice 0).
-          style={{ objectPosition: active === 0 ? mainPosition : "50% 50%" }}
+          // El punto focal y el zoom solo aplican a la imagen principal (índice 0).
+          style={{
+            objectPosition: active === 0 ? mainPosition : "50% 50%",
+            transform: `scale(${active === 0 ? mainZoom : 1})`,
+          }}
           className="aspect-square w-full object-cover"
         />
       </div>
