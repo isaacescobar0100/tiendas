@@ -3,17 +3,20 @@
 import { useRef, useState } from "react";
 import { X } from "lucide-react";
 import { compressImage } from "@/lib/image-compress";
+import { ImageFramer } from "@/components/image-framer";
+
+export type GalleryItem = { url: string; position: string; zoom: number };
 
 export function MultiImageUpload({
-  name = "images",
-  defaultUrls = [],
+  name = "gallery",
+  defaultItems = [],
   label = "Imágenes adicionales (galería)",
 }: {
   name?: string;
-  defaultUrls?: string[];
+  defaultItems?: GalleryItem[];
   label?: string;
 }) {
-  const [urls, setUrls] = useState<string[]>(defaultUrls);
+  const [items, setItems] = useState<GalleryItem[]>(defaultItems);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,7 +35,10 @@ export function MultiImageUpload({
         if (!res.ok || !data.url) {
           throw new Error(data.error ?? `Error al subir (${res.status}).`);
         }
-        setUrls((prev) => [...prev, data.url]);
+        setItems((prev) => [
+          ...prev,
+          { url: data.url, position: "50% 50%", zoom: 1 },
+        ]);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al subir.");
@@ -42,28 +48,38 @@ export function MultiImageUpload({
     }
   }
 
+  function updateItem(idx: number, position: string, zoom: number) {
+    setItems((prev) =>
+      prev.map((it, i) => (i === idx ? { ...it, position, zoom } : it)),
+    );
+  }
+
   return (
     <div>
       <label className="mb-1 block text-sm font-medium text-gray-700">
         {label}
       </label>
-      <input type="hidden" name={name} value={JSON.stringify(urls)} />
+      <input type="hidden" name={name} value={JSON.stringify(items)} />
 
-      <div className="flex flex-wrap gap-3">
-        {urls.map((url, idx) => (
-          <div
-            key={url + idx}
-            className="relative h-20 w-20 overflow-hidden rounded-lg border border-gray-200"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt="" className="h-full w-full object-cover" />
+      <div className="flex flex-wrap gap-4">
+        {items.map((item, idx) => (
+          <div key={item.url + idx} className="relative">
+            <ImageFramer
+              url={item.url}
+              position={item.position}
+              zoom={item.zoom}
+              onChange={(pos, z) => updateItem(idx, pos, z)}
+              size="h-28 w-28"
+            />
             <button
               type="button"
-              onClick={() => setUrls((prev) => prev.filter((_, i) => i !== idx))}
-              className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-gray-600 hover:text-red-500"
+              onClick={() =>
+                setItems((prev) => prev.filter((_, i) => i !== idx))
+              }
+              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow hover:text-red-500"
               aria-label="Quitar imagen"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         ))}
@@ -72,7 +88,7 @@ export function MultiImageUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex h-20 w-20 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs text-gray-400 hover:border-gray-900 hover:text-gray-700 disabled:opacity-60"
+          className="flex h-28 w-28 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs text-gray-400 hover:border-gray-900 hover:text-gray-700 disabled:opacity-60"
         >
           {uploading ? "Subiendo…" : "+ Añadir"}
         </button>
@@ -89,8 +105,8 @@ export function MultiImageUpload({
         }}
       />
       <p className="mt-1 text-xs text-gray-400">
-        Se muestran junto a la principal en el detalle. Se optimizan solas al
-        subir. JPG, PNG, WEBP o GIF.
+        Se muestran junto a la principal. Arrastra cada una y usa −/+ para
+        encuadrarla. Se optimizan solas al subir.
       </p>
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>

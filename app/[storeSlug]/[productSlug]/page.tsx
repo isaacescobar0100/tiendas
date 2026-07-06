@@ -11,6 +11,25 @@ import { ProductCard } from "@/components/product-card";
 
 export const dynamic = "force-dynamic";
 
+type GalleryPic = { url: string; position: string; zoom: number };
+
+/** Parsea el JSON de galería con encuadre, tolerante a datos malformados. */
+function parseGalleryData(raw: string): GalleryPic[] {
+  try {
+    const arr = JSON.parse(raw || "[]");
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .map((i) => ({
+        url: String(i?.url ?? ""),
+        position: typeof i?.position === "string" ? i.position : "50% 50%",
+        zoom: Number(i?.zoom) || 1,
+      }))
+      .filter((i) => i.url);
+  } catch {
+    return [];
+  }
+}
+
 async function getData(storeSlug: string, productSlug: string) {
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
@@ -72,6 +91,20 @@ export default async function ProductPage({
   if (!data) notFound();
   const { store, product } = data;
 
+  // Galería con encuadre: portada primero, luego las imágenes adicionales.
+  const galleryItems = [
+    ...(product.imageUrl
+      ? [
+          {
+            url: product.imageUrl,
+            position: product.imagePosition,
+            zoom: product.imageZoom,
+          },
+        ]
+      : []),
+    ...parseGalleryData(product.galleryData),
+  ];
+
   // Productos relacionados: misma tienda, priorizando la misma categoría
   const relatedRaw = await prisma.product.findMany({
     where: { storeId: store.id, active: true, id: { not: product.id } },
@@ -112,14 +145,7 @@ export default async function ProductPage({
               }}
             />
           </div>
-          <ProductGallery
-            alt={product.name}
-            mainPosition={product.imagePosition}
-            mainZoom={product.imageZoom}
-            images={[product.imageUrl, ...product.images].filter(
-              (u): u is string => !!u,
-            )}
-          />
+          <ProductGallery alt={product.name} items={galleryItems} />
         </div>
 
         <div>

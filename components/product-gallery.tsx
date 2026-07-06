@@ -2,18 +2,25 @@
 
 import { useState } from "react";
 
+export type GalleryPic = { url: string; position: string; zoom: number };
+
 export function ProductGallery({
-  images,
+  items,
   alt,
-  mainPosition = "50% 50%",
-  mainZoom = 1,
 }: {
-  images: string[];
+  items: GalleryPic[];
   alt: string;
-  mainPosition?: string;
-  mainZoom?: number;
 }) {
-  const pics = images.length > 0 ? images : ["https://placehold.co/600x600?text=Producto"];
+  const pics: GalleryPic[] =
+    items.length > 0
+      ? items
+      : [
+          {
+            url: "https://placehold.co/600x600?text=Producto",
+            position: "50% 50%",
+            zoom: 1,
+          },
+        ];
   const [active, setActive] = useState(0);
   const current = pics[Math.min(active, pics.length - 1)];
 
@@ -22,12 +29,11 @@ export function ProductGallery({
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={current}
+          src={current.url}
           alt={alt}
-          // El punto focal y el zoom solo aplican a la imagen principal (índice 0).
           style={{
-            objectPosition: active === 0 ? mainPosition : "50% 50%",
-            transform: `scale(${active === 0 ? mainZoom : 1})`,
+            objectPosition: current.position,
+            transform: `scale(${current.zoom})`,
           }}
           className="aspect-square w-full object-cover"
         />
@@ -35,9 +41,9 @@ export function ProductGallery({
 
       {pics.length > 1 && (
         <div className="mt-3 flex gap-2 overflow-x-auto">
-          {pics.map((src, idx) => (
+          {pics.map((pic, idx) => (
             <button
-              key={src + idx}
+              key={pic.url + idx}
               type="button"
               onClick={() => setActive(idx)}
               className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border transition ${
@@ -47,7 +53,15 @@ export function ProductGallery({
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-full w-full object-cover" />
+              <img
+                src={pic.url}
+                alt=""
+                style={{
+                  objectPosition: pic.position,
+                  transform: `scale(${pic.zoom})`,
+                }}
+                className="h-full w-full object-cover"
+              />
             </button>
           ))}
         </div>

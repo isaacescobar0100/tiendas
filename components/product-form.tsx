@@ -5,7 +5,10 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import type { ActionState } from "@/app/admin/actions";
 import { ImageUpload } from "@/components/image-upload";
-import { MultiImageUpload } from "@/components/multi-image-upload";
+import {
+  MultiImageUpload,
+  type GalleryItem,
+} from "@/components/multi-image-upload";
 import { variantLabel } from "@/lib/utils";
 
 type Category = { id: string; name: string };
@@ -24,8 +27,33 @@ type ProductDefaults = {
   categoryId?: string | null;
   active?: boolean;
   images?: string[];
+  galleryData?: string;
   variants?: { color: string; size: string; stock: number }[];
 };
+
+/** Reconstruye los items de galería (con encuadre) desde los defaults. */
+function parseGallery(defaults?: ProductDefaults): GalleryItem[] {
+  try {
+    const raw = defaults?.galleryData ? JSON.parse(defaults.galleryData) : null;
+    if (Array.isArray(raw)) {
+      return raw
+        .map((i) => ({
+          url: String(i?.url ?? ""),
+          position: typeof i?.position === "string" ? i.position : "50% 50%",
+          zoom: Number(i?.zoom) || 1,
+        }))
+        .filter((i) => i.url);
+    }
+  } catch {
+    // cae al fallback
+  }
+  // Productos antiguos: solo URLs, sin encuadre.
+  return (defaults?.images ?? []).map((url) => ({
+    url,
+    position: "50% 50%",
+    zoom: 1,
+  }));
+}
 
 export function ProductForm({
   action,
@@ -299,7 +327,7 @@ export function ProductForm({
         defaultZoom={defaults?.imageZoom ?? 1}
       />
 
-      <MultiImageUpload name="images" defaultUrls={defaults?.images ?? []} />
+      <MultiImageUpload name="gallery" defaultItems={parseGallery(defaults)} />
 
       <label className="flex items-center gap-2 text-sm text-gray-700">
         <input

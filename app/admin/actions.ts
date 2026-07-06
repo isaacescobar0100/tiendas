@@ -54,15 +54,30 @@ function readProductForm(formData: FormData) {
   });
 }
 
-/** Lee la galería de imágenes (JSON de URLs) del formulario. */
-function readImages(formData: FormData): string[] {
+/** Lee la galería (JSON [{url, position, zoom}]) del formulario. */
+function readGallery(formData: FormData): {
+  galleryData: string;
+  images: string[];
+} {
   try {
-    const raw = JSON.parse(String(formData.get("images") ?? "[]"));
-    if (!Array.isArray(raw)) return [];
-    return raw.map((u) => String(u)).filter((u) => u.length > 0);
+    const raw = JSON.parse(String(formData.get("gallery") ?? "[]"));
+    if (Array.isArray(raw)) {
+      const items = raw
+        .map((i) => ({
+          url: String(i?.url ?? ""),
+          position: typeof i?.position === "string" ? i.position : "50% 50%",
+          zoom: Math.max(1, Math.min(3, Number(i?.zoom) || 1)),
+        }))
+        .filter((i) => i.url.length > 0);
+      return {
+        galleryData: JSON.stringify(items),
+        images: items.map((i) => i.url),
+      };
+    }
   } catch {
-    return [];
+    // cae al valor vacío
   }
+  return { galleryData: "[]", images: [] };
 }
 
 type VariantInput = { color: string; size: string; stock: number };
@@ -122,6 +137,7 @@ export async function createProductAction(
   if (priceCents === null) return { error: "Precio inválido." };
 
   const slug = await uniqueProductSlug(store.id, parsed.data.name);
+  const gallery = readGallery(formData);
 
   const product = await prisma.product.create({
     data: {
@@ -134,7 +150,8 @@ export async function createProductAction(
       imageUrl: parsed.data.imageUrl || null,
       imagePosition: parsed.data.imagePosition || "50% 50%",
       imageZoom: parsed.data.imageZoom ?? 1,
-      images: readImages(formData),
+      images: gallery.images,
+      galleryData: gallery.galleryData,
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",
     },
@@ -165,6 +182,7 @@ export async function updateProductAction(
   if (priceCents === null) return { error: "Precio inválido." };
 
   const slug = await uniqueProductSlug(store.id, parsed.data.name, id);
+  const gallery = readGallery(formData);
 
   await prisma.product.update({
     where: { id },
@@ -177,7 +195,8 @@ export async function updateProductAction(
       imageUrl: parsed.data.imageUrl || null,
       imagePosition: parsed.data.imagePosition || "50% 50%",
       imageZoom: parsed.data.imageZoom ?? 1,
-      images: readImages(formData),
+      images: gallery.images,
+      galleryData: gallery.galleryData,
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",
     },
