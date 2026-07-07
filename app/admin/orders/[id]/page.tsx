@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MessageCircle, Truck, PackageCheck } from "lucide-react";
+import { ArrowLeft, Truck, PackageCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
-import { whatsappLink } from "@/lib/whatsapp";
 import {
   PAYMENT_LABEL,
   PAYMENT_BADGE,
@@ -40,20 +39,6 @@ export default async function OrderDetailPage({
     },
   });
   if (!order) notFound();
-
-  // Mensajes de WhatsApp al cliente (según el estado del pedido).
-  const short = order.id.slice(-8);
-  const total = formatPrice(order.totalCents, order.currency);
-  const waShipped = whatsappLink(
-    order.customerPhone,
-    `Hola ${order.customerName}! 🚚 Tu pedido #${short} de ${store.name} ya va en camino.\n` +
-      `Envío a: ${order.address}\nTotal: ${total}\n¡Gracias por tu compra!`,
-  );
-  const waDelivered = whatsappLink(
-    order.customerPhone,
-    `Hola ${order.customerName}! ✅ Tu pedido #${short} de ${store.name} fue entregado. ` +
-      `¡Gracias por tu compra! Esperamos que lo disfrutes 😊`,
-  );
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -207,10 +192,10 @@ export default async function OrderDetailPage({
           </div>
         </div>
 
-        {/* Avisar al cliente (WhatsApp o Email) según el estado */}
+        {/* Avisar al cliente por email según el estado del pedido */}
         <div className="h-fit rounded-2xl border border-gray-200 bg-white p-5">
           <h2 className="mb-3 text-sm font-semibold text-gray-900">
-            Avisar al cliente
+            Avisar al cliente por email
           </h2>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -218,48 +203,19 @@ export default async function OrderDetailPage({
               <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
                 <Truck className="h-4 w-4" /> Va en camino
               </p>
-              <div className="space-y-2">
-                {waShipped && (
-                  <a
-                    href={waShipped}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-                  >
-                    <MessageCircle className="h-4 w-4" /> WhatsApp
-                  </a>
-                )}
-                <NotifyEmailButton orderId={order.id} kind="shipped" />
-              </div>
+              <NotifyEmailButton orderId={order.id} kind="shipped" />
             </div>
 
             <div>
               <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
                 <PackageCheck className="h-4 w-4" /> Entregado
               </p>
-              <div className="space-y-2">
-                {waDelivered && (
-                  <a
-                    href={waDelivered}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-                  >
-                    <MessageCircle className="h-4 w-4" /> WhatsApp
-                  </a>
-                )}
-                <NotifyEmailButton orderId={order.id} kind="delivered" />
-              </div>
+              <NotifyEmailButton orderId={order.id} kind="delivered" />
             </div>
           </div>
-
-          {!waShipped && (
-            <p className="mt-3 text-xs text-gray-400">
-              {order.customerPhone
-                ? `El teléfono (${order.customerPhone}) no sirve para WhatsApp; puedes avisar por email.`
-                : "El cliente no dejó teléfono; puedes avisar por email."}
-            </p>
-          )}
+          <p className="mt-3 text-xs text-gray-400">
+            Se envía al correo del cliente ({order.customerEmail}).
+          </p>
         </div>
       </div>
     </div>
