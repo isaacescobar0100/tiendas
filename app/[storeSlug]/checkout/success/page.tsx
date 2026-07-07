@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, Clock, X, MessageCircle } from "lucide-react";
+import { Check, Clock, X, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { getTransaction } from "@/lib/wompi";
 import { markOrderPaid } from "@/lib/orders";
-import { whatsappLink } from "@/lib/whatsapp";
 import ClearCart from "./clear-cart";
 
 export const dynamic = "force-dynamic";
@@ -86,27 +85,6 @@ export default async function OrderSuccessPage({
   // Vacía el carrito salvo que el pago haya fallado (para poder reintentar).
   const shouldClearCart = payment !== "failed";
 
-  // Botón de WhatsApp: mensaje del pedido ya escrito hacia el número de la tienda.
-  const waMessage =
-    `Hola ${order.store.name}! Confirmo mi pedido #${order.id.slice(-8)}:\n` +
-    order.items
-      .map((i) => {
-        const v = variantLabel(i.color, i.size);
-        return `• ${i.name}${v ? ` (${v})` : ""} x${i.quantity}`;
-      })
-      .join("\n") +
-    `\n\nTotal: ${formatPrice(order.totalCents, order.currency)}` +
-    (order.shippingCents > 0
-      ? ` (envío ${formatPrice(order.shippingCents, order.currency)})`
-      : "") +
-    `\nNombre: ${order.customerName}` +
-    `\nDirección: ${order.address}` +
-    (order.customerPhone ? `\nTel: ${order.customerPhone}` : "");
-  const waHref =
-    payment !== "failed"
-      ? whatsappLink(order.store.whatsapp, waMessage)
-      : null;
-
   return (
     <div className="mx-auto max-w-lg text-center">
       {shouldClearCart && <ClearCart />}
@@ -124,16 +102,14 @@ export default async function OrderSuccessPage({
         Nº de pedido: <span className="font-mono">{order.id.slice(-8)}</span>
       </p>
 
-      {waHref && (
-        <a
-          href={waHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-green-700"
+      {payment !== "failed" && (
+        <Link
+          href={`/${storeSlug}/rastrear?n=${order.id.slice(-8)}&email=${encodeURIComponent(order.customerEmail)}`}
+          className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
         >
-          <MessageCircle className="h-5 w-5" />
-          Confirmar pedido por WhatsApp
-        </a>
+          <Search className="h-4 w-4" />
+          Rastrear mi pedido
+        </Link>
       )}
 
       <div className="mt-8 rounded-2xl border border-gray-200 p-5 text-left">
