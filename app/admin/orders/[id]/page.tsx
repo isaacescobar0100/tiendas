@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Truck, PackageCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
@@ -213,18 +213,18 @@ export default async function OrderDetailPage({
             Avisar al cliente
           </h2>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <p className="mb-1.5 text-sm font-medium text-gray-700">
-                🚚 Va en camino
+              <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                <Truck className="h-4 w-4" /> Va en camino
               </p>
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 {waShipped && (
                   <a
                     href={waShipped}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
                   >
                     <MessageCircle className="h-4 w-4" /> WhatsApp
                   </a>
@@ -233,17 +233,17 @@ export default async function OrderDetailPage({
               </div>
             </div>
 
-            <div className="border-t border-gray-100 pt-4">
-              <p className="mb-1.5 text-sm font-medium text-gray-700">
-                ✅ Entregado
+            <div>
+              <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                <PackageCheck className="h-4 w-4" /> Entregado
               </p>
-              <div className="flex gap-2">
+              <div className="space-y-2">
                 {waDelivered && (
                   <a
                     href={waDelivered}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
                   >
                     <MessageCircle className="h-4 w-4" /> WhatsApp
                   </a>
