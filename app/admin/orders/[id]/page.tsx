@@ -15,6 +15,7 @@ import {
   PaymentSelect,
   FulfillmentSelect,
 } from "@/components/order-status-select";
+import { NotifyEmailButton } from "@/components/notify-email-button";
 
 export const dynamic = "force-dynamic";
 
@@ -206,46 +207,57 @@ export default async function OrderDetailPage({
           </div>
         </div>
 
-        {/* Avisar al cliente por WhatsApp */}
+        {/* Avisar al cliente (WhatsApp o Email) según el estado */}
         <div className="h-fit rounded-2xl border border-gray-200 bg-white p-5">
-          <h2 className="mb-1 text-sm font-semibold text-gray-900">
+          <h2 className="mb-3 text-sm font-semibold text-gray-900">
             Avisar al cliente
           </h2>
-          {waShipped ? (
-            <>
-              <p className="mb-3 text-xs text-gray-400">
-                Abre WhatsApp con el mensaje ya escrito hacia{" "}
-                {order.customerPhone}.
+
+          <div className="space-y-4">
+            <div>
+              <p className="mb-1.5 text-sm font-medium text-gray-700">
+                🚚 Va en camino
               </p>
-              <div className="space-y-2">
-                <a
-                  href={waShipped}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700"
-                >
-                  <MessageCircle className="h-4 w-4" /> 🚚 Va en camino
-                </a>
+              <div className="flex gap-2">
+                {waShipped && (
+                  <a
+                    href={waShipped}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                  >
+                    <MessageCircle className="h-4 w-4" /> WhatsApp
+                  </a>
+                )}
+                <NotifyEmailButton orderId={order.id} kind="shipped" />
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4">
+              <p className="mb-1.5 text-sm font-medium text-gray-700">
+                ✅ Entregado
+              </p>
+              <div className="flex gap-2">
                 {waDelivered && (
                   <a
                     href={waDelivered}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-green-600 px-4 py-2.5 text-sm font-medium text-green-700 transition hover:bg-green-50"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
                   >
-                    <MessageCircle className="h-4 w-4" /> ✅ Entregado
+                    <MessageCircle className="h-4 w-4" /> WhatsApp
                   </a>
                 )}
+                <NotifyEmailButton orderId={order.id} kind="delivered" />
               </div>
-            </>
-          ) : order.customerPhone ? (
-            <p className="text-xs text-amber-600">
-              El teléfono del cliente ({order.customerPhone}) no es válido para
-              WhatsApp. Debe ser un móvil de 10 dígitos (ej. 300 123 4567).
-            </p>
-          ) : (
-            <p className="text-xs text-gray-400">
-              El cliente no dejó teléfono, no se puede avisar por WhatsApp.
+            </div>
+          </div>
+
+          {!waShipped && (
+            <p className="mt-3 text-xs text-gray-400">
+              {order.customerPhone
+                ? `El teléfono (${order.customerPhone}) no sirve para WhatsApp; puedes avisar por email.`
+                : "El cliente no dejó teléfono; puedes avisar por email."}
             </p>
           )}
         </div>

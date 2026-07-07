@@ -15,7 +15,14 @@ export type CheckoutState =
 const customerSchema = z.object({
   customerName: z.string().min(2, "Indica tu nombre."),
   customerEmail: z.string().email("Email inválido."),
-  customerPhone: z.string().optional(),
+  // Obligatorio y validado: móvil colombiano (10 dígitos), para poder avisar por WhatsApp.
+  customerPhone: z
+    .string()
+    .min(1, "Indica tu número de WhatsApp.")
+    .refine((v) => {
+      const d = v.replace(/\D/g, "");
+      return d.length === 10 || (d.length === 12 && d.startsWith("57"));
+    }, "Número inválido. Usa un móvil de 10 dígitos (ej. 300 123 4567)."),
   // `street` = dirección completa (calle/carrera, número, apto…)
   street: z.string().min(3, "Indica la dirección completa."),
   neighborhood: z.string().min(2, "Indica el barrio."),
@@ -42,7 +49,7 @@ export async function placeOrderAction(
   const parsed = customerSchema.safeParse({
     customerName: formData.get("customerName"),
     customerEmail: formData.get("customerEmail"),
-    customerPhone: formData.get("customerPhone") || undefined,
+    customerPhone: formData.get("customerPhone") ?? "",
     street: formData.get("street"),
     neighborhood: formData.get("neighborhood"),
     city: formData.get("city"),

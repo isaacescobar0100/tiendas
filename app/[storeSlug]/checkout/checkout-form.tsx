@@ -111,9 +111,11 @@ export default function CheckoutForm({
             required
           />
           <Field
-            label="Teléfono (opcional)"
+            label="WhatsApp / Teléfono"
             name="customerPhone"
             type="tel"
+            placeholder="300 123 4567"
+            required
           />
 
           <div className="border-t border-gray-100 pt-5">

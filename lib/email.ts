@@ -37,6 +37,11 @@ function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+const wrap = (inner: string) =>
+  `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;color:#222">${inner}</div>`;
+const section = (title: string, body: string) =>
+  `<h3 style="margin:22px 0 6px;font-size:15px">${title}</h3>${body}`;
+
 function itemsTable(data: OrderEmailData): string {
   const rows = data.items
     .map((i) => {
@@ -134,10 +139,6 @@ export async function sendOrderEmails(data: OrderEmailData): Promise<void> {
   }
 
   const shortId = data.orderId.slice(-8);
-  const wrap = (inner: string) =>
-    `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;color:#222">${inner}</div>`;
-  const section = (title: string, body: string) =>
-    `<h3 style="margin:22px 0 6px;font-size:15px">${title}</h3>${body}`;
 
   try {
     // 1) Confirmación al cliente (con todo el detalle de su pedido)
@@ -170,5 +171,48 @@ export async function sendOrderEmails(data: OrderEmailData): Promise<void> {
     }
   } catch (e) {
     console.error("[email] Error enviando emails del pedido:", e);
+  }
+}
+
+/**
+ * Envía al cliente un correo de cambio de estado (en camino / entregado).
+ * Devuelve true si se envió; false si no está configurado o falló.
+ */
+export async function sendStatusEmail(opts: {
+  to: string;
+  storeName: string;
+  customerName: string;
+  orderShortId: string;
+  kind: "shipped" | "delivered";
+  address?: string | null;
+  total?: string | null;
+}): Promise<boolean> {
+  if (!BREVO_API_KEY || !SENDER_EMAIL) return false;
+
+  const shipped = opts.kind === "shipped";
+  const subject = shipped
+    ? `🚚 Tu pedido va en camino (#${opts.orderShortId})`
+    : `✅ Tu pedido fue entregado (#${opts.orderShortId})`;
+  const body = shipped
+    ? `<h2 style="margin:0 0 8px">¡Tu pedido va en camino! 🚚</h2>
+       <p>Hola ${esc(opts.customerName)}, tu pedido <strong>#${opts.orderShortId}</strong> de ${esc(opts.storeName)} ya está en camino.</p>
+       ${opts.address ? `<p style="color:#555">Envío a: ${esc(opts.address)}</p>` : ""}
+       ${opts.total ? `<p style="color:#555">Total: ${esc(opts.total)}</p>` : ""}
+       <p style="margin-top:16px">¡Gracias por tu compra!</p>`
+    : `<h2 style="margin:0 0 8px">¡Pedido entregado! ✅</h2>
+       <p>Hola ${esc(opts.customerName)}, tu pedido <strong>#${opts.orderShortId}</strong> de ${esc(opts.storeName)} fue entregado.</p>
+       <p style="margin-top:16px">¡Gracias por tu compra! Esperamos que lo disfrutes 😊</p>`;
+
+  try {
+    await brevoSend({
+      to: opts.to,
+      senderName: opts.storeName,
+      subject,
+      html: wrap(body),
+    });
+    return true;
+  } catch (e) {
+    console.error("[email] Error enviando estado:", e);
+    return false;
   }
 }
