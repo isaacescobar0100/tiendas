@@ -1,21 +1,12 @@
-import nodemailer from "nodemailer";
 import { formatPrice, variantLabel } from "./utils";
 
-// Envío por Gmail (SMTP). Requiere una "Contraseña de aplicación" de Google
-// (no la contraseña normal). Si no está configurado, el envío se omite y la
-// app sigue funcionando.
-const GMAIL_USER = process.env.GMAIL_USER;
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
-
-const transporter =
-  GMAIL_USER && GMAIL_APP_PASSWORD
-    ? nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
-      })
-    : null;
+// Envío de correos por Brevo (API HTTP). Funciona en Vercel (a diferencia del
+// SMTP de Gmail). Si no está configurado, el envío se omite sin romper nada.
+//   BREVO_API_KEY        → clave de API de Brevo
+//   BREVO_SENDER_EMAIL   → correo remitente VERIFICADO en Brevo (ej. issac10.es@gmail.com)
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const SENDER_EMAIL =
+  process.env.BREVO_SENDER_EMAIL || process.env.GMAIL_USER || "";
 
 export type OrderEmailItem = {
   name: string;
@@ -43,10 +34,7 @@ export type OrderEmailData = {
 
 // Escapa texto para evitar romper el HTML del correo con datos del cliente.
 function esc(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function itemsTable(data: OrderEmailData): string {
@@ -104,20 +92,47 @@ function customerBlock(data: OrderEmailData): string {
     .join("")}</table>`;
 }
 
+/** Envía un correo por la API de Brevo. Lanza si la respuesta no es OK. */
+async function brevoSend(opts: {
+  to: string;
+  subject: string;
+  html: string;
+  senderName: string;
+  replyTo?: string;
+}): Promise<void> {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": BREVO_API_KEY as string,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: opts.senderName, email: SENDER_EMAIL },
+      to: [{ email: opts.to }],
+      subject: opts.subject,
+      htmlContent: opts.html,
+      ...(opts.replyTo ? { replyTo: { email: opts.replyTo } } : {}),
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Brevo ${res.status}: ${await res.text()}`);
+  }
+}
+
 /**
- * Envía el email de confirmación al cliente y el aviso al admin (por Gmail),
+ * Envía el email de confirmación al cliente y el aviso al admin (por Brevo),
  * ambos con el detalle completo del pedido. No lanza: si algo falla, lo
  * registra y sigue (no debe romper el checkout).
  */
 export async function sendOrderEmails(data: OrderEmailData): Promise<void> {
-  if (!transporter) {
+  if (!BREVO_API_KEY || !SENDER_EMAIL) {
     console.log(
-      `[email] Gmail no configurado (GMAIL_USER/GMAIL_APP_PASSWORD) — se omite el envío del pedido ${data.orderId}`,
+      `[email] Brevo no configurado (BREVO_API_KEY/BREVO_SENDER_EMAIL) — se omite el envío del pedido ${data.orderId}`,
     );
     return;
   }
 
-  const from = `"${data.storeName}" <${GMAIL_USER}>`;
   const shortId = data.orderId.slice(-8);
   const wrap = (inner: string) =>
     `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;color:#222">${inner}</div>`;
@@ -126,9 +141,9 @@ export async function sendOrderEmails(data: OrderEmailData): Promise<void> {
 
   try {
     // 1) Confirmación al cliente (con todo el detalle de su pedido)
-    await transporter.sendMail({
-      from,
+    await brevoSend({
       to: data.customerEmail,
+      senderName: data.storeName,
       subject: `Tu pedido en ${data.storeName} (#${shortId})`,
       html: wrap(`
         <h2 style="margin:0 0 4px">¡Gracias por tu compra, ${esc(data.customerName)}!</h2>
@@ -141,9 +156,9 @@ export async function sendOrderEmails(data: OrderEmailData): Promise<void> {
 
     // 2) Aviso al admin de la tienda (con datos para poder enviar el pedido)
     if (data.adminEmail) {
-      await transporter.sendMail({
-        from,
+      await brevoSend({
         to: data.adminEmail,
+        senderName: data.storeName,
         replyTo: data.customerEmail,
         subject: `Nuevo pedido en ${data.storeName} (#${shortId})`,
         html: wrap(`
