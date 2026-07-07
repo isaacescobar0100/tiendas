@@ -147,6 +147,10 @@ export default async function TrackOrderPage({
               {formatPrice(order.totalCents, order.currency)}
             </span>
           </div>
+          <p className="mt-4 text-center text-xs text-gray-400">
+            El estado se actualiza cuando la tienda lo cambia. Vuelve a buscar
+            para ver lo más reciente.
+          </p>
         </div>
       )}
     </div>

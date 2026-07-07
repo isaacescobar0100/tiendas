@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Store } from "lucide-react";
+import { Store, PackageSearch } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartButton } from "@/components/cart/cart-button";
@@ -60,6 +60,14 @@ export default async function StoreLayout({
               </Link>
             </div>
             <div className="flex items-center gap-3">
+              <Link
+                href={`/${store.slug}/rastrear`}
+                className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+                aria-label="Rastrear pedido"
+              >
+                <PackageSearch className="h-5 w-5" />
+                <span className="hidden sm:inline">Rastrear pedido</span>
+              </Link>
               <Link
                 href="/"
                 className="hidden text-sm text-gray-400 hover:text-gray-600 sm:inline"
