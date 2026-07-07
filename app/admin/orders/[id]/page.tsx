@@ -211,23 +211,21 @@ export default async function OrderDetailPage({
           <h2 className="mb-1 text-sm font-semibold text-gray-900">
             Avisar al cliente
           </h2>
-          {order.customerPhone ? (
+          {waShipped ? (
             <>
               <p className="mb-3 text-xs text-gray-400">
                 Abre WhatsApp con el mensaje ya escrito hacia{" "}
                 {order.customerPhone}.
               </p>
               <div className="space-y-2">
-                {waShipped && (
-                  <a
-                    href={waShipped}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700"
-                  >
-                    <MessageCircle className="h-4 w-4" /> 🚚 Va en camino
-                  </a>
-                )}
+                <a
+                  href={waShipped}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700"
+                >
+                  <MessageCircle className="h-4 w-4" /> 🚚 Va en camino
+                </a>
                 {waDelivered && (
                   <a
                     href={waDelivered}
@@ -240,6 +238,11 @@ export default async function OrderDetailPage({
                 )}
               </div>
             </>
+          ) : order.customerPhone ? (
+            <p className="text-xs text-amber-600">
+              El teléfono del cliente ({order.customerPhone}) no es válido para
+              WhatsApp. Debe ser un móvil de 10 dígitos (ej. 300 123 4567).
+            </p>
           ) : (
             <p className="text-xs text-gray-400">
               El cliente no dejó teléfono, no se puede avisar por WhatsApp.
