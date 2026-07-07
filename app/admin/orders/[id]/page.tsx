@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
+import { whatsappLink } from "@/lib/whatsapp";
 import {
   PAYMENT_LABEL,
   PAYMENT_BADGE,
@@ -38,6 +39,20 @@ export default async function OrderDetailPage({
     },
   });
   if (!order) notFound();
+
+  // Mensajes de WhatsApp al cliente (según el estado del pedido).
+  const short = order.id.slice(-8);
+  const total = formatPrice(order.totalCents, order.currency);
+  const waShipped = whatsappLink(
+    order.customerPhone,
+    `Hola ${order.customerName}! 🚚 Tu pedido #${short} de ${store.name} ya va en camino.\n` +
+      `Envío a: ${order.address}\nTotal: ${total}\n¡Gracias por tu compra!`,
+  );
+  const waDelivered = whatsappLink(
+    order.customerPhone,
+    `Hola ${order.customerName}! ✅ Tu pedido #${short} de ${store.name} fue entregado. ` +
+      `¡Gracias por tu compra! Esperamos que lo disfrutes 😊`,
+  );
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -189,6 +204,47 @@ export default async function OrderDetailPage({
             <h2 className="mb-2 text-sm font-semibold text-gray-900">Envío</h2>
             <FulfillmentSelect orderId={order.id} value={order.fulfillment} />
           </div>
+        </div>
+
+        {/* Avisar al cliente por WhatsApp */}
+        <div className="h-fit rounded-2xl border border-gray-200 bg-white p-5">
+          <h2 className="mb-1 text-sm font-semibold text-gray-900">
+            Avisar al cliente
+          </h2>
+          {order.customerPhone ? (
+            <>
+              <p className="mb-3 text-xs text-gray-400">
+                Abre WhatsApp con el mensaje ya escrito hacia{" "}
+                {order.customerPhone}.
+              </p>
+              <div className="space-y-2">
+                {waShipped && (
+                  <a
+                    href={waShipped}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700"
+                  >
+                    <MessageCircle className="h-4 w-4" /> 🚚 Va en camino
+                  </a>
+                )}
+                {waDelivered && (
+                  <a
+                    href={waDelivered}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-green-600 px-4 py-2.5 text-sm font-medium text-green-700 transition hover:bg-green-50"
+                  >
+                    <MessageCircle className="h-4 w-4" /> ✅ Entregado
+                  </a>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-gray-400">
+              El cliente no dejó teléfono, no se puede avisar por WhatsApp.
+            </p>
+          )}
         </div>
       </div>
     </div>

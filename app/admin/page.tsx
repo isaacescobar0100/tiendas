@@ -6,7 +6,7 @@ import { formatPrice } from "@/lib/utils";
 import {
   PAYMENT_BADGE,
   PAYMENT_LABEL,
-  isPaidStatus,
+  isDelivered,
 } from "@/lib/order-status";
 
 export const dynamic = "force-dynamic";
@@ -28,9 +28,9 @@ export default async function DashboardPage() {
     prisma.product.findMany({ where: { storeId: store.id } }),
   ]);
 
-  // Facturado = solo pedidos cobrados (pagados/enviados). Pendientes no suman.
+  // Facturado = solo pedidos ENTREGADOS (dinero realmente recibido).
   const revenue = orders
-    .filter((o) => isPaidStatus(o.status))
+    .filter((o) => isDelivered(o.fulfillment))
     .reduce((n, o) => n + o.totalCents, 0);
   const pending = orders.filter((o) => o.status === "PENDING").length;
   const lowStock = products
@@ -63,6 +63,7 @@ export default async function DashboardPage() {
         <StatCard
           label="Facturado"
           value={formatPrice(revenue, store.currency)}
+          sub="solo entregados"
         />
         <StatCard label="Pedidos" value={String(orders.length)} sub={`${pending} pendientes`} />
         <StatCard label="Productos" value={String(products.length)} />

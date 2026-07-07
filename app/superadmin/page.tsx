@@ -27,9 +27,9 @@ export default async function SuperadminHome({
     }),
     // Total de pedidos no cancelados (para la tarjeta "Pedidos").
     prisma.order.count({ where: { status: { not: "CANCELLED" } } }),
-    // Facturado: solo pedidos cobrados (pagados).
+    // Facturado: solo pedidos ENTREGADOS (dinero realmente recibido).
     prisma.order.aggregate({
-      where: { status: "PAID" },
+      where: { fulfillment: "DELIVERED" },
       _sum: { totalCents: true },
     }),
   ]);
@@ -90,8 +90,8 @@ export default async function SuperadminHome({
         <StatCard label="Facturado*" value={formatPrice(grossCents)} />
       </div>
       <p className="-mt-4 text-xs text-gray-400">
-        * Suma de los pedidos cobrados (pagados/enviados); los pendientes no
-        cuentan (referencia; las tiendas pueden usar distintas monedas).
+        * Suma de los pedidos ENTREGADOS (dinero ya recibido); los no entregados
+        no cuentan (referencia; las tiendas pueden usar distintas monedas).
       </p>
 
       {stores.length === 0 ? (

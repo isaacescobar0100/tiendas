@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
-import { isPaidStatus } from "@/lib/order-status";
+import { isDelivered } from "@/lib/order-status";
 import {
   PaymentSelect,
   FulfillmentSelect,
@@ -26,9 +26,9 @@ export default async function OrdersPage() {
     include: { _count: { select: { items: true } } },
   });
 
-  // Solo cuenta lo cobrado (pagado/enviado); pendientes y cancelados no suman.
+  // Solo cuenta pedidos ENTREGADOS (dinero realmente recibido).
   const revenue = orders
-    .filter((o) => isPaidStatus(o.status))
+    .filter((o) => isDelivered(o.fulfillment))
     .reduce((n, o) => n + o.totalCents, 0);
 
   return (

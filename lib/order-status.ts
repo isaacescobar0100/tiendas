@@ -21,6 +21,11 @@ export const PAYMENT_BADGE: Record<OrderStatus, string> = {
 // "Facturado" solo cuenta lo cobrado (pagado). Pendiente/cancelado no suman.
 export const isPaidStatus = (status: OrderStatus): boolean => status === "PAID";
 
+// Para "Facturado" contamos solo pedidos ENTREGADOS: es el dinero realmente
+// recibido (en contraentrega el pago se cobra justo al entregar).
+export const isDelivered = (fulfillment: Fulfillment): boolean =>
+  fulfillment === "DELIVERED";
+
 // ─── Estado de ENVÍO (independiente del pago) ────────────────────────────────
 export const FULFILLMENT_STATUSES: Fulfillment[] = [
   "PENDING",
