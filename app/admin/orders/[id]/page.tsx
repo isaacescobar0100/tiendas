@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Truck, PackageCheck } from "lucide-react";
+import { ArrowLeft, Truck, PackageCheck, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
+import { whatsappLink } from "@/lib/whatsapp";
 import {
   PAYMENT_LABEL,
   PAYMENT_BADGE,
@@ -39,6 +40,20 @@ export default async function OrderDetailPage({
     },
   });
   if (!order) notFound();
+
+  // Enlaces de WhatsApp al cliente (solo se usan si el admin activó ese canal).
+  const short = order.id.slice(-8);
+  const total = formatPrice(order.totalCents, order.currency);
+  const waShipped = whatsappLink(
+    order.customerPhone,
+    `Hola ${order.customerName}! Tu pedido #${short} de ${store.name} ya va en camino.\n` +
+      `Envío a: ${order.address}\nTotal: ${total}\n¡Gracias por tu compra!`,
+  );
+  const waDelivered = whatsappLink(
+    order.customerPhone,
+    `Hola ${order.customerName}! Tu pedido #${short} de ${store.name} fue entregado. ` +
+      `¡Gracias por tu compra! Esperamos que lo disfrutes.`,
+  );
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -192,30 +207,69 @@ export default async function OrderDetailPage({
           </div>
         </div>
 
-        {/* Avisar al cliente por email según el estado del pedido */}
+        {/* Avisar al cliente (canales según los ajustes de la tienda) */}
         <div className="h-fit rounded-2xl border border-gray-200 bg-white p-5">
           <h2 className="mb-3 text-sm font-semibold text-gray-900">
-            Avisar al cliente por email
+            Avisar al cliente
           </h2>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                <Truck className="h-4 w-4" /> Va en camino
-              </p>
-              <NotifyEmailButton orderId={order.id} kind="shipped" />
-            </div>
+          {store.notifyEmail || store.notifyWhatsapp ? (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                    <Truck className="h-4 w-4" /> Va en camino
+                  </p>
+                  <div className="space-y-2">
+                    {store.notifyWhatsapp && waShipped && (
+                      <a
+                        href={waShipped}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                      >
+                        <MessageCircle className="h-4 w-4" /> WhatsApp
+                      </a>
+                    )}
+                    {store.notifyEmail && (
+                      <NotifyEmailButton orderId={order.id} kind="shipped" />
+                    )}
+                  </div>
+                </div>
 
-            <div>
-              <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                <PackageCheck className="h-4 w-4" /> Entregado
-              </p>
-              <NotifyEmailButton orderId={order.id} kind="delivered" />
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-gray-400">
-            Se envía al correo del cliente ({order.customerEmail}).
-          </p>
+                <div>
+                  <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                    <PackageCheck className="h-4 w-4" /> Entregado
+                  </p>
+                  <div className="space-y-2">
+                    {store.notifyWhatsapp && waDelivered && (
+                      <a
+                        href={waDelivered}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                      >
+                        <MessageCircle className="h-4 w-4" /> WhatsApp
+                      </a>
+                    )}
+                    {store.notifyEmail && (
+                      <NotifyEmailButton orderId={order.id} kind="delivered" />
+                    )}
+                  </div>
+                </div>
+              </div>
+              {store.notifyWhatsapp && !waShipped && (
+                <p className="mt-3 text-xs text-amber-600">
+                  El teléfono del cliente no es válido para WhatsApp; usa email.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-xs text-gray-400">
+              Activa los avisos (email o WhatsApp) en{" "}
+              <span className="font-medium">Ajustes</span>.
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -49,6 +49,9 @@ model Store {
   description String?
   logoUrl     String?
   whatsapp    String?    // número de WhatsApp de la tienda (para avisos de pedido)
+  // Canales para avisar al cliente del estado del pedido (los elige el admin)
+  notifyEmail    Boolean @default(true)
+  notifyWhatsapp Boolean @default(false)
   themeColor  String     @default("#111827") // color de marca (botones/acentos)
   currency    String     @default("COP")
   active      Boolean    @default(true)

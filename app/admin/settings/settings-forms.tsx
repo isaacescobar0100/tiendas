@@ -26,6 +26,8 @@ type StoreData = {
   description: string | null;
   logoUrl: string | null;
   whatsapp: string | null;
+  notifyEmail: boolean;
+  notifyWhatsapp: boolean;
   themeColor: string;
   shippingCents: number;
   freeShippingOverCents: number;
@@ -73,6 +75,34 @@ export function StoreForm({ store }: { store: StoreData }) {
           Al confirmar un pedido, el cliente verá un botón para enviártelo por
           WhatsApp a este número. Déjalo vacío para no mostrarlo.
         </p>
+      </div>
+
+      {/* Canales para avisar al cliente del estado del pedido */}
+      <div className="border-t border-gray-100 pt-5">
+        <h2 className="mb-1 text-sm font-semibold text-gray-900">
+          Avisar al cliente (va en camino / entregado)
+        </h2>
+        <p className="mb-3 text-xs text-gray-400">
+          Elige por qué canales podrás avisar al cliente desde el pedido.
+        </p>
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            name="notifyEmail"
+            defaultChecked={store.notifyEmail}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          Por email
+        </label>
+        <label className="mt-2 flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            name="notifyWhatsapp"
+            defaultChecked={store.notifyWhatsapp}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          Por WhatsApp (al número del cliente)
+        </label>
       </div>
 
       {/* Color de marca: se aplica a los botones y acentos de tu tienda */}

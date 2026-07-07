@@ -55,6 +55,8 @@ export async function updateStoreAction(
       description: parsed.data.description || null,
       logoUrl: parsed.data.logoUrl || null,
       whatsapp: parsed.data.whatsapp?.trim() || null,
+      notifyEmail: formData.get("notifyEmail") === "on",
+      notifyWhatsapp: formData.get("notifyWhatsapp") === "on",
       shippingCents,
       freeShippingOverCents,
       ...(parsed.data.themeColor
