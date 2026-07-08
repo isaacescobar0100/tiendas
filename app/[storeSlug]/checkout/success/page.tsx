@@ -87,19 +87,19 @@ export default async function OrderSuccessPage({
   // Vacía el carrito salvo que el pago haya fallado (para poder reintentar).
   const shouldClearCart = payment !== "failed";
 
-  // Invitar a crear cuenta solo si no hay sesión ni ya existe una con ese correo.
+  // Sin sesión → invitar a crear cuenta, o a iniciar sesión si ese correo ya
+  // tiene una. Si ya hay sesión, no mostramos nada.
   const loggedIn = await getCurrentCustomer(order.storeId);
-  const hasAccount = loggedIn
-    ? true
-    : !!(await prisma.customer.findUnique({
-        where: {
-          storeId_email: {
-            storeId: order.storeId,
-            email: order.customerEmail.toLowerCase(),
-          },
-        },
-      }));
-  const showAccountInvite = payment !== "failed" && !hasAccount;
+  const accountExists = !!(await prisma.customer.findUnique({
+    where: {
+      storeId_email: {
+        storeId: order.storeId,
+        email: order.customerEmail.toLowerCase(),
+      },
+    },
+  }));
+  const accountCta: "create" | "login" | null =
+    payment === "failed" || loggedIn ? null : accountExists ? "login" : "create";
 
   return (
     <div className="mx-auto max-w-lg text-center">
@@ -177,12 +177,29 @@ export default async function OrderSuccessPage({
         )}
       </div>
 
-      {showAccountInvite && (
+      {accountCta === "create" && (
         <PostOrderAccount
           storeSlug={storeSlug}
           name={order.customerName}
           email={order.customerEmail}
         />
+      )}
+
+      {accountCta === "login" && (
+        <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-5 text-left">
+          <p className="font-semibold text-gray-900">
+            Ya tienes una cuenta con este correo
+          </p>
+          <p className="mt-1 text-sm text-gray-500">
+            Inicia sesión para ver el estado de este y tus demás pedidos.
+          </p>
+          <Link
+            href={`/${storeSlug}/cuenta`}
+            className="mt-3 inline-block rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110"
+          >
+            Iniciar sesión
+          </Link>
+        </div>
       )}
 
       {payment === "failed" ? (
