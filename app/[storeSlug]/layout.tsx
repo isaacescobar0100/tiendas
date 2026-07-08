@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Store, PackageSearch } from "lucide-react";
+import { Store, PackageSearch, User } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartButton } from "@/components/cart/cart-button";
@@ -73,7 +73,15 @@ export default async function StoreLayout({
                 aria-label="Rastrear pedido"
               >
                 <PackageSearch className="h-5 w-5" />
-                <span className="hidden sm:inline">Rastrear pedido</span>
+                <span className="hidden sm:inline">Rastrear</span>
+              </Link>
+              <Link
+                href={`/${store.slug}/cuenta`}
+                className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+                aria-label="Mi cuenta"
+              >
+                <User className="h-5 w-5" />
+                <span className="hidden sm:inline">Mi cuenta</span>
               </Link>
               <Link
                 href="/"

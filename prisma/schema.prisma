@@ -66,8 +66,22 @@ model Store {
   categories  Category[]
   products    Product[]
   orders      Order[]
+  customers   Customer[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+}
+
+// Cuenta de cliente de una tienda (para ver su historial de pedidos).
+model Customer {
+  id           String   @id @default(cuid())
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId      String
+  email        String
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  @@unique([storeId, email])
 }
 
 model Category {
