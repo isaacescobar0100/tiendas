@@ -14,12 +14,40 @@ const inputCls =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
 const labelCls = "mb-1 block text-sm font-medium text-gray-700";
 
+type LinkOption = { value: string; label: string };
+
 export default async function PromotionsPage() {
   const { store } = await requireAdminStore();
-  const promotions = await prisma.promotion.findMany({
-    where: { storeId: store.id },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-  });
+  const [promotions, categories, products] = await Promise.all([
+    prisma.promotion.findMany({
+      where: { storeId: store.id },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.category.findMany({
+      where: { storeId: store.id },
+      orderBy: { name: "asc" },
+      select: { name: true, slug: true },
+    }),
+    prisma.product.findMany({
+      where: { storeId: store.id, active: true },
+      orderBy: { createdAt: "desc" },
+      select: { name: true, slug: true },
+    }),
+  ]);
+
+  // Opciones del desplegable de enlace (para no copiar URLs a mano).
+  const specialLinks: LinkOption[] = [
+    { value: `/${store.slug}?offers=1`, label: "Página de ofertas" },
+    { value: `/${store.slug}`, label: "Inicio de la tienda" },
+  ];
+  const categoryLinks: LinkOption[] = categories.map((c) => ({
+    value: `/${store.slug}?cat=${c.slug}`,
+    label: c.name,
+  }));
+  const productLinks: LinkOption[] = products.map((p) => ({
+    value: `/${store.slug}/${p.slug}`,
+    label: p.name,
+  }));
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -37,6 +65,9 @@ export default async function PromotionsPage() {
         action={createPromotionAction}
         submitLabel="Añadir promoción"
         title="Nueva promoción"
+        specialLinks={specialLinks}
+        categoryLinks={categoryLinks}
+        productLinks={productLinks}
       />
 
       {/* Existentes */}
@@ -51,6 +82,9 @@ export default async function PromotionsPage() {
               action={updatePromotionAction}
               promotion={p}
               submitLabel="Guardar cambios"
+              specialLinks={specialLinks}
+              categoryLinks={categoryLinks}
+              productLinks={productLinks}
             />
           ))}
         </div>
@@ -64,12 +98,28 @@ function PromotionForm({
   promotion,
   submitLabel,
   title,
+  specialLinks,
+  categoryLinks,
+  productLinks,
 }: {
   action: (formData: FormData) => void | Promise<void>;
   promotion?: Promotion;
   submitLabel: string;
   title?: string;
+  specialLinks: LinkOption[];
+  categoryLinks: LinkOption[];
+  productLinks: LinkOption[];
 }) {
+  // Si la promoción ya tiene un enlace que no está entre las opciones
+  // (p. ej. una URL externa antigua), lo mantenemos como opción extra.
+  const known = new Set([
+    ...specialLinks,
+    ...categoryLinks,
+    ...productLinks,
+  ].map((o) => o.value));
+  const current = promotion?.linkUrl ?? "";
+  const customLink = current && !known.has(current) ? current : "";
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6">
       {title && (
@@ -106,16 +156,45 @@ function PromotionForm({
         </div>
 
         <div>
-          <label className={labelCls}>Enlace al hacer clic (opcional)</label>
-          <input
+          <label className={labelCls}>Al hacer clic, ir a… (opcional)</label>
+          <select
             name="linkUrl"
-            defaultValue={promotion?.linkUrl ?? ""}
-            placeholder="Ej: /categoria o pega una dirección"
+            defaultValue={current}
             className={inputCls}
-          />
+          >
+            <option value="">Sin enlace</option>
+            {customLink && (
+              <option value={customLink}>Enlace actual: {customLink}</option>
+            )}
+            <optgroup label="Páginas">
+              {specialLinks.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </optgroup>
+            {categoryLinks.length > 0 && (
+              <optgroup label="Categorías">
+                {categoryLinks.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {productLinks.length > 0 && (
+              <optgroup label="Productos">
+                {productLinks.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+          </select>
           <p className="mt-1 text-xs text-gray-400">
-            Puedes enlazar a una categoría o producto de tu tienda, o a una
-            dirección externa. Déjalo vacío si no quieres enlace.
+            Elige a dónde lleva la promoción: la página de ofertas, una categoría
+            o un producto. No necesitas copiar ninguna dirección.
           </p>
         </div>
 
