@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { formatPrice } from "@/lib/utils";
+import { effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 
@@ -64,20 +66,52 @@ export default async function StorefrontPage({
   const store = await getStore(storeSlug);
   if (!store) notFound();
 
-  // Banner: promociones activas (slider). Si no hay, se usa el banner de la
-  // tienda con el nombre/descripción como única diapositiva.
-  const promotions = await prisma.promotion.findMany({
-    where: { storeId: store.id, active: true },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-  });
+  // Producto "en oferta": tiene precio de oferta válido (0 < oferta < precio).
+  // Usa referencia de campo de Prisma para comparar dos columnas.
+  const saleWhere = {
+    salePriceCents: { gt: 0, lt: prisma.product.fields.priceCents },
+  };
+
+  // Banner (slider): promociones manuales + una diapositiva automática por cada
+  // producto en oferta. Si no hay nada, se usa el banner de la tienda.
+  const [promotions, offerProducts] = await Promise.all([
+    prisma.promotion.findMany({
+      where: { storeId: store.id, active: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.product.findMany({
+      where: { storeId: store.id, active: true, ...saleWhere },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: {
+        name: true,
+        slug: true,
+        imageUrl: true,
+        priceCents: true,
+        salePriceCents: true,
+      },
+    }),
+  ]);
+
+  const promoSlides: BannerSlide[] = promotions.map((p) => ({
+    imageUrl: p.imageUrl,
+    title: p.title,
+    subtitle: p.subtitle,
+    linkUrl: p.linkUrl,
+  }));
+  const offerSlides: BannerSlide[] = offerProducts.map((p) => ({
+    imageUrl: p.imageUrl,
+    title: p.name,
+    subtitle: `Oferta -${discountPercent(p)}% · ${formatPrice(
+      effectivePriceCents(p),
+      store.currency,
+    )}`,
+    linkUrl: `/${store.slug}/${p.slug}`,
+  }));
+  const combinedSlides = [...promoSlides, ...offerSlides];
   const bannerSlides: BannerSlide[] =
-    promotions.length > 0
-      ? promotions.map((p) => ({
-          imageUrl: p.imageUrl,
-          title: p.title,
-          subtitle: p.subtitle,
-          linkUrl: p.linkUrl,
-        }))
+    combinedSlides.length > 0
+      ? combinedSlides
       : store.bannerUrl
         ? [
             {
@@ -95,12 +129,6 @@ export default async function StorefrontPage({
       : sort === "price_desc"
         ? { priceCents: "desc" as const }
         : { createdAt: "desc" as const };
-
-  // Producto "en oferta": tiene precio de oferta válido (0 < oferta < precio).
-  // Usa referencia de campo de Prisma para comparar dos columnas.
-  const saleWhere = {
-    salePriceCents: { gt: 0, lt: prisma.product.fields.priceCents },
-  };
 
   const where = {
     storeId: store.id,
