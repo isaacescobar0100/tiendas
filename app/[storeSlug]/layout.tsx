@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Store, PackageSearch, User } from "lucide-react";
+import { Store } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartButton } from "@/components/cart/cart-button";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { FavoritesProvider } from "@/components/favorites/favorites-context";
-import { FavoritesLink } from "@/components/favorites/favorites-link";
+import { getCurrentCustomer } from "@/lib/customer-auth";
+import { AccountMenu } from "./cuenta/account-menu";
 
 export default async function StoreLayout({
   params,
@@ -19,6 +20,7 @@ export default async function StoreLayout({
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
     select: {
+      id: true,
       name: true,
       slug: true,
       currency: true,
@@ -29,6 +31,8 @@ export default async function StoreLayout({
     },
   });
   if (!store) notFound();
+
+  const customer = await getCurrentCustomer(store.id);
 
   return (
     <FavoritesProvider storeSlug={store.slug}>
@@ -67,23 +71,10 @@ export default async function StoreLayout({
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              <Link
-                href={`/${store.slug}/rastrear`}
-                className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
-                aria-label="Rastrear pedido"
-              >
-                <PackageSearch className="h-5 w-5" />
-                <span className="hidden sm:inline">Rastrear</span>
-              </Link>
-              <Link
-                href={`/${store.slug}/cuenta`}
-                className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
-                aria-label="Mi cuenta"
-              >
-                <User className="h-5 w-5" />
-                <span className="hidden sm:inline">Mi cuenta</span>
-              </Link>
-              <FavoritesLink storeSlug={store.slug} />
+              <AccountMenu
+                storeSlug={store.slug}
+                customerName={customer?.name ?? null}
+              />
               <CartButton />
             </div>
           </div>

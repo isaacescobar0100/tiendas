@@ -5,7 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { getTransaction } from "@/lib/wompi";
 import { markOrderPaid } from "@/lib/orders";
+import { getCurrentCustomer } from "@/lib/customer-auth";
 import ClearCart from "./clear-cart";
+import { PostOrderAccount } from "../post-order-account";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +87,20 @@ export default async function OrderSuccessPage({
   // Vacía el carrito salvo que el pago haya fallado (para poder reintentar).
   const shouldClearCart = payment !== "failed";
 
+  // Invitar a crear cuenta solo si no hay sesión ni ya existe una con ese correo.
+  const loggedIn = await getCurrentCustomer(order.storeId);
+  const hasAccount = loggedIn
+    ? true
+    : !!(await prisma.customer.findUnique({
+        where: {
+          storeId_email: {
+            storeId: order.storeId,
+            email: order.customerEmail.toLowerCase(),
+          },
+        },
+      }));
+  const showAccountInvite = payment !== "failed" && !hasAccount;
+
   return (
     <div className="mx-auto max-w-lg text-center">
       {shouldClearCart && <ClearCart />}
@@ -160,6 +176,14 @@ export default async function OrderSuccessPage({
           </p>
         )}
       </div>
+
+      {showAccountInvite && (
+        <PostOrderAccount
+          storeSlug={storeSlug}
+          name={order.customerName}
+          email={order.customerEmail}
+        />
+      )}
 
       {payment === "failed" ? (
         <Link
