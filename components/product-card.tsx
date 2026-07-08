@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { formatPrice } from "@/lib/utils";
+import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { flyToCart } from "@/lib/fly-to-cart";
 
 type Variant = { id: string; color: string; size: string; stock: number };
@@ -15,6 +16,7 @@ export type CardProduct = {
   slug: string;
   name: string;
   priceCents: number;
+  salePriceCents?: number | null;
   imageUrl?: string | null;
   imagePosition?: string | null;
   imageZoom?: number | null;
@@ -53,11 +55,16 @@ export function ProductCard({
   const hasColors = colors.length > 0;
   const hasSizes = sizes.length > 0;
 
+  const onSale = isOnSale(product);
+  const effectiveCents = effectivePriceCents(product);
+  const pct = discountPercent(product);
+
   const favItem = {
     productId: product.id,
     slug: product.slug,
     name: product.name,
-    priceCents: product.priceCents,
+    // Guardamos el precio efectivo (con oferta) para carrito y favoritos.
+    priceCents: effectiveCents,
     imageUrl: product.imageUrl,
     hasVariants,
   };
@@ -118,6 +125,12 @@ export function ProductCard({
         <FavoriteButton item={favItem} size="sm" />
       </div>
 
+      {onSale && (
+        <span className="absolute left-2 top-2 z-10 rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white shadow">
+          -{pct}%
+        </span>
+      )}
+
       <Link href={`/${storeSlug}/${product.slug}`} className="block">
         <div className="aspect-square overflow-hidden bg-gray-100">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -136,9 +149,16 @@ export function ProductCard({
           <h3 className="truncate text-sm font-medium text-gray-900">
             {product.name}
           </h3>
-          <p className="mt-1 font-semibold text-gray-900">
-            {formatPrice(product.priceCents, currency)}
-          </p>
+          <div className="mt-1 flex items-baseline gap-2">
+            <p className="font-semibold text-gray-900">
+              {formatPrice(effectiveCents, currency)}
+            </p>
+            {onSale && (
+              <p className="text-xs text-gray-400 line-through">
+                {formatPrice(product.priceCents, currency)}
+              </p>
+            )}
+          </div>
           {freeShipping && (
             <span className="mt-1 inline-block rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
               Envío gratis

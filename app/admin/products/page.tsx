@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
+import { isOnSale } from "@/lib/pricing";
 import { deleteProductAction } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +85,18 @@ export default async function ProductsPage() {
                     {p.category?.name ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-gray-900">
-                    {formatPrice(p.priceCents, store.currency)}
+                    {isOnSale(p) ? (
+                      <span className="flex flex-col">
+                        <span className="font-medium text-red-600">
+                          {formatPrice(p.salePriceCents!, store.currency)}
+                        </span>
+                        <span className="text-xs text-gray-400 line-through">
+                          {formatPrice(p.priceCents, store.currency)}
+                        </span>
+                      </span>
+                    ) : (
+                      formatPrice(p.priceCents, store.currency)
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-600">{stockOf(p)}</td>
                   <td className="px-4 py-3">

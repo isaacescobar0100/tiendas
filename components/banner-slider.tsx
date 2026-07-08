@@ -67,7 +67,7 @@ function Slide({ slide, active }: { slide: BannerSlide; active: boolean }) {
         <div className="h-full w-full bg-[var(--brand)]" />
       )}
 
-      {(slide.title || slide.subtitle) && (
+      {(slide.title || slide.subtitle || slide.linkUrl) && (
         <>
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent" />
           <div className="absolute inset-0 flex items-center">
@@ -81,6 +81,11 @@ function Slide({ slide, active }: { slide: BannerSlide; active: boolean }) {
                 <p className="mt-1 text-sm text-white/90 drop-shadow sm:text-base">
                   {slide.subtitle}
                 </p>
+              )}
+              {slide.linkUrl && (
+                <span className="mt-3 inline-flex items-center gap-1 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-900 shadow sm:text-sm">
+                  Ver más →
+                </span>
               )}
             </div>
           </div>

@@ -120,6 +120,7 @@ model Product {
   slug        String
   description String?
   priceCents  Int       @default(0) // precio en céntimos para evitar errores de coma flotante
+  salePriceCents Int?    // precio de oferta (en céntimos); si es menor al normal, hay descuento
   stock       Int       @default(0)
   imageUrl      String?   // imagen principal (portada)
   imagePosition String    @default("50% 50%") // punto focal de la portada (object-position)

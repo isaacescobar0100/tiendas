@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { AddToCart } from "@/components/cart/add-to-cart";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { ProductGallery } from "@/components/product-gallery";
@@ -56,7 +57,7 @@ export async function generateMetadata({
   if (!data) return { title: "Producto no encontrado" };
 
   const { store, product } = data;
-  const price = formatPrice(product.priceCents, store.currency);
+  const price = formatPrice(effectivePriceCents(product), store.currency);
   // Descripción para buscadores y para el preview al compartir (WhatsApp, etc.).
   const description = product.description
     ? `${price} · ${product.description.slice(0, 150)}`
@@ -90,6 +91,10 @@ export default async function ProductPage({
   const data = await getData(storeSlug, productSlug);
   if (!data) notFound();
   const { store, product } = data;
+
+  const onSale = isOnSale(product);
+  const effectiveCents = effectivePriceCents(product);
+  const pct = discountPercent(product);
 
   // Galería con encuadre: portada primero, luego las imágenes adicionales.
   const galleryItems = [
@@ -139,7 +144,7 @@ export default async function ProductPage({
                 productId: product.id,
                 slug: product.slug,
                 name: product.name,
-                priceCents: product.priceCents,
+                priceCents: effectiveCents,
                 imageUrl: product.imageUrl,
                 hasVariants: product.variants.length > 0,
               }}
@@ -160,9 +165,21 @@ export default async function ProductPage({
           <h1 className="mt-2 text-3xl font-bold text-gray-900">
             {product.name}
           </h1>
-          <p className="mt-3 text-2xl font-semibold text-gray-900">
-            {formatPrice(product.priceCents, store.currency)}
-          </p>
+          <div className="mt-3 flex flex-wrap items-baseline gap-3">
+            <p className="text-2xl font-semibold text-gray-900">
+              {formatPrice(effectiveCents, store.currency)}
+            </p>
+            {onSale && (
+              <>
+                <p className="text-lg text-gray-400 line-through">
+                  {formatPrice(product.priceCents, store.currency)}
+                </p>
+                <span className="rounded-full bg-red-500 px-2 py-0.5 text-sm font-semibold text-white">
+                  -{pct}%
+                </span>
+              </>
+            )}
+          </div>
 
           {(() => {
             const hasVariants = product.variants.length > 0;
@@ -201,7 +218,7 @@ export default async function ProductPage({
               productId: product.id,
               slug: product.slug,
               name: product.name,
-              priceCents: product.priceCents,
+              priceCents: effectiveCents,
               imageUrl: product.imageUrl,
             }}
           />
@@ -225,6 +242,7 @@ export default async function ProductPage({
                   slug: p.slug,
                   name: p.name,
                   priceCents: p.priceCents,
+                  salePriceCents: p.salePriceCents,
                   imageUrl: p.imageUrl,
                   imagePosition: p.imagePosition,
                   imageZoom: p.imageZoom,

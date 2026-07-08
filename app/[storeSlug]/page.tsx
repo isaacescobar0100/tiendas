@@ -222,6 +222,7 @@ export default async function StorefrontPage({
                 slug: p.slug,
                 name: p.name,
                 priceCents: p.priceCents,
+                salePriceCents: p.salePriceCents,
                 imageUrl: p.imageUrl,
                 imagePosition: p.imagePosition,
                 imageZoom: p.imageZoom,

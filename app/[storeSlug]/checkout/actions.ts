@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { isWompiConfigured, buildCheckoutUrl } from "@/lib/wompi";
 import { computeShipping } from "@/lib/shipping";
+import { effectivePriceCents } from "@/lib/pricing";
 
 // `checkoutUrl` presente = hay que redirigir al cliente a pagar en Wompi.
 export type CheckoutState =
@@ -123,6 +124,9 @@ export async function placeOrderAction(
     const product = byId.get(item.productId);
     if (!product) return { error: `Un producto ya no está disponible.` };
 
+    // Precio a cobrar: el de oferta si es válido, si no el normal.
+    const unitCents = effectivePriceCents(product);
+
     if (product.variants.length > 0) {
       // El producto tiene variantes: se exige elegir una válida con stock
       if (!item.variantId) {
@@ -136,7 +140,7 @@ export async function placeOrderAction(
         const label = [variant.color, variant.size].filter(Boolean).join(" ");
         return { error: `Sin stock de "${product.name}" ${label}.` };
       }
-      totalCents += product.priceCents * item.quantity;
+      totalCents += unitCents * item.quantity;
       lineItems.push({
         productId: product.id,
         variantId: variant.id,
@@ -144,7 +148,7 @@ export async function placeOrderAction(
         color: variant.color || null,
         size: variant.size || null,
         imageUrl: product.imageUrl,
-        priceCents: product.priceCents,
+        priceCents: unitCents,
         quantity: item.quantity,
       });
     } else {
@@ -152,7 +156,7 @@ export async function placeOrderAction(
       if (product.stock < item.quantity) {
         return { error: `Sin stock suficiente de "${product.name}".` };
       }
-      totalCents += product.priceCents * item.quantity;
+      totalCents += unitCents * item.quantity;
       lineItems.push({
         productId: product.id,
         variantId: null,
@@ -160,7 +164,7 @@ export async function placeOrderAction(
         color: null,
         size: null,
         imageUrl: product.imageUrl,
-        priceCents: product.priceCents,
+        priceCents: unitCents,
         quantity: item.quantity,
       });
     }

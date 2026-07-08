@@ -13,6 +13,7 @@ const productSchema = z.object({
   name: z.string().min(2, "El nombre es muy corto."),
   description: z.string().optional(),
   price: z.string().min(1, "Indica un precio."),
+  salePrice: z.string().optional(),
   stock: z.string().optional(),
   imageUrl: z.string().url("URL de imagen inválida.").optional().or(z.literal("")),
   imagePosition: z.string().optional(),
@@ -45,6 +46,7 @@ function readProductForm(formData: FormData) {
     name: formData.get("name"),
     description: formData.get("description") ?? "",
     price: formData.get("price"),
+    salePrice: formData.get("salePrice") ?? "",
     stock: formData.get("stock") ?? "0",
     imageUrl: formData.get("imageUrl") ?? "",
     imagePosition: formData.get("imagePosition") ?? "50% 50%",
@@ -124,6 +126,28 @@ async function syncVariants(productId: string, variants: VariantInput[]) {
   }
 }
 
+/**
+ * Resuelve el precio de oferta (en céntimos) a partir del texto del formulario.
+ * Devuelve null si no hay oferta; error si es inválido o no es menor al normal.
+ */
+function resolveSalePrice(
+  raw: string | undefined,
+  priceCents: number,
+): { value: number | null; error?: string } {
+  const s = (raw ?? "").trim();
+  if (!s) return { value: null };
+  const c = parsePriceToCents(s);
+  if (c === null) return { value: null, error: "Precio de oferta inválido." };
+  if (c <= 0) return { value: null };
+  if (c >= priceCents) {
+    return {
+      value: null,
+      error: "El precio de oferta debe ser menor que el precio normal.",
+    };
+  }
+  return { value: c };
+}
+
 export async function createProductAction(
   _prev: ActionState,
   formData: FormData,
@@ -136,6 +160,9 @@ export async function createProductAction(
   const priceCents = parsePriceToCents(parsed.data.price);
   if (priceCents === null) return { error: "Precio inválido." };
 
+  const sale = resolveSalePrice(parsed.data.salePrice, priceCents);
+  if (sale.error) return { error: sale.error };
+
   const slug = await uniqueProductSlug(store.id, parsed.data.name);
   const gallery = readGallery(formData);
 
@@ -146,6 +173,7 @@ export async function createProductAction(
       slug,
       description: parsed.data.description || null,
       priceCents,
+      salePriceCents: sale.value,
       stock: Number(parsed.data.stock) || 0,
       imageUrl: parsed.data.imageUrl || null,
       imagePosition: parsed.data.imagePosition || "50% 50%",
@@ -181,6 +209,9 @@ export async function updateProductAction(
   const priceCents = parsePriceToCents(parsed.data.price);
   if (priceCents === null) return { error: "Precio inválido." };
 
+  const sale = resolveSalePrice(parsed.data.salePrice, priceCents);
+  if (sale.error) return { error: sale.error };
+
   const slug = await uniqueProductSlug(store.id, parsed.data.name, id);
   const gallery = readGallery(formData);
 
@@ -191,6 +222,7 @@ export async function updateProductAction(
       slug,
       description: parsed.data.description || null,
       priceCents,
+      salePriceCents: sale.value,
       stock: Number(parsed.data.stock) || 0,
       imageUrl: parsed.data.imageUrl || null,
       imagePosition: parsed.data.imagePosition || "50% 50%",

@@ -20,6 +20,7 @@ type ProductDefaults = {
   name?: string;
   description?: string | null;
   priceCents?: number;
+  salePriceCents?: number | null;
   stock?: number;
   imageUrl?: string | null;
   imagePosition?: string;
@@ -217,6 +218,28 @@ export function ProductForm({
             </p>
           )}
         </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          Precio de oferta (opcional)
+        </label>
+        <input
+          name="salePrice"
+          inputMode="decimal"
+          defaultValue={
+            defaults?.salePriceCents != null
+              ? String(defaults.salePriceCents / 100)
+              : ""
+          }
+          placeholder="Ej: 39900"
+          className={inputCls}
+        />
+        <p className="mt-1 text-xs text-gray-400">
+          Si lo rellenas (y es menor que el precio), el producto se muestra en
+          oferta: precio normal tachado, precio rebajado y etiqueta de
+          descuento. Déjalo vacío para quitar la oferta.
+        </p>
       </div>
 
       {/* Variantes: se definen colores y tallas por separado y se combinan */}
