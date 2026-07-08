@@ -110,6 +110,17 @@ export default async function StorefrontPage({
 
   return (
     <div>
+      {store.bannerUrl && (
+        <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={store.bannerUrl}
+            alt={`Banner de ${store.name}`}
+            className="h-40 w-full object-cover sm:h-56 md:h-64"
+          />
+        </div>
+      )}
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">{store.name}</h1>
         {store.description && (

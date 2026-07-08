@@ -13,6 +13,11 @@ const storeSchema = z.object({
   name: z.string().min(2, "El nombre es muy corto."),
   description: z.string().optional(),
   logoUrl: z.string().url("URL de logo inválida.").optional().or(z.literal("")),
+  bannerUrl: z
+    .string()
+    .url("URL de banner inválida.")
+    .optional()
+    .or(z.literal("")),
   // Color de marca en formato hex (#rrggbb). La moneda es fija (COP).
   themeColor: z
     .string()
@@ -35,6 +40,7 @@ export async function updateStoreAction(
     name: formData.get("name"),
     description: formData.get("description") ?? "",
     logoUrl: formData.get("logoUrl") ?? "",
+    bannerUrl: formData.get("bannerUrl") ?? "",
     themeColor: (formData.get("themeColor") as string) || undefined,
     shipping: (formData.get("shipping") as string) ?? "",
     freeShippingOver: (formData.get("freeShippingOver") as string) ?? "",
@@ -54,6 +60,7 @@ export async function updateStoreAction(
       name: parsed.data.name,
       description: parsed.data.description || null,
       logoUrl: parsed.data.logoUrl || null,
+      bannerUrl: parsed.data.bannerUrl || null,
       whatsapp: parsed.data.whatsapp?.trim() || null,
       notifyEmail: formData.get("notifyEmail") === "on",
       notifyWhatsapp: formData.get("notifyWhatsapp") === "on",

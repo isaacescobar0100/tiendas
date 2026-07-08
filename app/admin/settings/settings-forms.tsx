@@ -25,6 +25,7 @@ type StoreData = {
   name: string;
   description: string | null;
   logoUrl: string | null;
+  bannerUrl: string | null;
   whatsapp: string | null;
   notifyEmail: boolean;
   notifyWhatsapp: boolean;
@@ -61,6 +62,20 @@ export function StoreForm({ store }: { store: StoreData }) {
       </div>
 
       <ImageUpload name="logoUrl" label="Logo" defaultUrl={store.logoUrl} />
+
+      <div>
+        <ImageUpload
+          name="bannerUrl"
+          label="Banner (portada de la tienda)"
+          defaultUrl={store.bannerUrl}
+          aspect="wide"
+        />
+        <p className="mt-1 text-xs text-gray-400">
+          Se muestra como portada en la parte superior de tu tienda. Ideal una
+          imagen horizontal (por ejemplo 1600×500). Déjalo vacío para no
+          mostrarlo.
+        </p>
+      </div>
 
       <div>
         <label className={labelCls}>WhatsApp (para avisos de pedido)</label>

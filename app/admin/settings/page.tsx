@@ -20,6 +20,7 @@ export default async function SettingsPage() {
           name: store.name,
           description: store.description,
           logoUrl: store.logoUrl,
+          bannerUrl: store.bannerUrl,
           whatsapp: store.whatsapp,
           notifyEmail: store.notifyEmail,
           notifyWhatsapp: store.notifyWhatsapp,
