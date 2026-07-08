@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ShoppingCart, X } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
+import { FreeShippingNote } from "@/components/cart/free-shipping-note";
 import { formatPrice, variantLabel } from "@/lib/utils";
 
 export default function CartPage() {
@@ -91,7 +92,10 @@ export default function CartPage() {
         ))}
       </ul>
 
-      <div className="mt-6 flex items-center justify-between rounded-2xl border border-gray-200 p-4">
+      <div className="mt-6">
+        <FreeShippingNote />
+      </div>
+      <div className="mt-3 flex items-center justify-between rounded-2xl border border-gray-200 p-4">
         <span className="text-gray-500">Total</span>
         <span className="text-2xl font-bold text-gray-900">
           {formatPrice(totalCents, currency)}

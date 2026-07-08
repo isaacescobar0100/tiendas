@@ -24,13 +24,20 @@ export default async function StoreLayout({
       currency: true,
       logoUrl: true,
       themeColor: true,
+      shippingCents: true,
+      freeShippingOverCents: true,
     },
   });
   if (!store) notFound();
 
   return (
     <FavoritesProvider storeSlug={store.slug}>
-    <CartProvider storeSlug={store.slug} currency={store.currency}>
+    <CartProvider
+      storeSlug={store.slug}
+      currency={store.currency}
+      shippingCents={store.shippingCents}
+      freeShippingOverCents={store.freeShippingOverCents}
+    >
       {/* --brand: color de marca de la tienda, usado por botones y acentos */}
       <div
         className="contents"

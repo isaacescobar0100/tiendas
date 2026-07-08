@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { ShoppingCart, X } from "lucide-react";
 import { useCart } from "./cart-context";
+import { FreeShippingNote } from "./free-shipping-note";
 import { formatPrice, variantLabel } from "@/lib/utils";
 
 export function CartDrawer() {
@@ -126,6 +127,9 @@ export function CartDrawer() {
             </ul>
 
             <div className="border-t border-gray-200 p-5">
+              <div className="mb-3">
+                <FreeShippingNote />
+              </div>
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-gray-500">Total</span>
                 <span className="text-lg font-bold text-gray-900">

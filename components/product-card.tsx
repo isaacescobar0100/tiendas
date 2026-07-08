@@ -26,10 +26,12 @@ export function ProductCard({
   storeSlug,
   currency,
   product,
+  freeShipping = false,
 }: {
   storeSlug: string;
   currency: string;
   product: CardProduct;
+  freeShipping?: boolean;
 }) {
   const { add } = useCart();
   const [added, setAdded] = useState(false);
@@ -137,6 +139,11 @@ export function ProductCard({
           <p className="mt-1 font-semibold text-gray-900">
             {formatPrice(product.priceCents, currency)}
           </p>
+          {freeShipping && (
+            <span className="mt-1 inline-block rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+              Envío gratis
+            </span>
+          )}
         </div>
       </Link>
 

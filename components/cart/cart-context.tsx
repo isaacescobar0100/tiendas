@@ -33,6 +33,8 @@ type CartContextValue = {
   totalCents: number;
   currency: string;
   storeSlug: string;
+  shippingCents: number; // costo de envío fijo de la tienda (0 = gratis)
+  freeShippingOverCents: number; // umbral de envío gratis (0 = desactivado)
   add: (item: Omit<CartItem, "quantity" | "key">, quantity?: number) => void;
   setQuantity: (key: string, quantity: number) => void;
   remove: (key: string) => void;
@@ -48,10 +50,14 @@ const CartContext = createContext<CartContextValue | null>(null);
 export function CartProvider({
   storeSlug,
   currency = "COP",
+  shippingCents = 0,
+  freeShippingOverCents = 0,
   children,
 }: {
   storeSlug: string;
   currency?: string;
+  shippingCents?: number;
+  freeShippingOverCents?: number;
   children: React.ReactNode;
 }) {
   const storageKey = `cart:${storeSlug}`;
@@ -117,6 +123,8 @@ export function CartProvider({
       totalCents,
       currency,
       storeSlug,
+      shippingCents,
+      freeShippingOverCents,
       add,
       setQuantity,
       remove,
@@ -130,6 +138,8 @@ export function CartProvider({
     items,
     currency,
     storeSlug,
+    shippingCents,
+    freeShippingOverCents,
     add,
     setQuantity,
     remove,

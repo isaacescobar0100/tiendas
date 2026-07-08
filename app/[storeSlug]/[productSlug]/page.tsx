@@ -219,6 +219,7 @@ export default async function ProductPage({
                 key={p.id}
                 storeSlug={store.slug}
                 currency={store.currency}
+                freeShipping={store.shippingCents === 0}
                 product={{
                   id: p.id,
                   slug: p.slug,
