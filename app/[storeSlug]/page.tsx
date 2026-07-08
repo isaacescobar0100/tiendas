@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/product-card";
+import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,31 @@ export default async function StorefrontPage({
 
   const store = await getStore(storeSlug);
   if (!store) notFound();
+
+  // Banner: promociones activas (slider). Si no hay, se usa el banner de la
+  // tienda con el nombre/descripción como única diapositiva.
+  const promotions = await prisma.promotion.findMany({
+    where: { storeId: store.id, active: true },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+  });
+  const bannerSlides: BannerSlide[] =
+    promotions.length > 0
+      ? promotions.map((p) => ({
+          imageUrl: p.imageUrl,
+          title: p.title,
+          subtitle: p.subtitle,
+          linkUrl: p.linkUrl,
+        }))
+      : store.bannerUrl
+        ? [
+            {
+              imageUrl: store.bannerUrl,
+              title: store.name,
+              subtitle: store.description,
+              linkUrl: null,
+            },
+          ]
+        : [];
 
   const orderBy =
     sort === "price_asc"
@@ -110,18 +136,7 @@ export default async function StorefrontPage({
 
   return (
     <div>
-      {store.bannerUrl && (
-        <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200">
-          {/* Franja baja: altura pequeña y fija; la imagen la rellena a lo ancho
-              (recorta lo mínimo por arriba/abajo). Compacta en PC y en móvil. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={store.bannerUrl}
-            alt={`Banner de ${store.name}`}
-            className="block h-24 w-full object-cover sm:h-28 md:h-32"
-          />
-        </div>
-      )}
+      <BannerSlider slides={bannerSlides} />
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">{store.name}</h1>

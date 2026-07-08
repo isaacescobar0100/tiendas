@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/products", label: "Productos" },
   { href: "/admin/orders", label: "Pedidos" },
   { href: "/admin/categories", label: "Categorías" },
+  { href: "/admin/promotions", label: "Promociones" },
   { href: "/admin/settings", label: "Ajustes" },
 ];
 

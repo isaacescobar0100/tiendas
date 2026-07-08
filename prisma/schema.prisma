@@ -68,8 +68,25 @@ model Store {
   products    Product[]
   orders      Order[]
   customers   Customer[]
+  promotions  Promotion[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+}
+
+// Promoción del banner (slider). Cada una es una diapositiva de la portada.
+model Promotion {
+  id        String   @id @default(cuid())
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId   String
+  imageUrl  String?  // imagen de fondo de la diapositiva
+  title     String?  // titular (p. ej. "50% en zapatillas")
+  subtitle  String?  // texto secundario
+  linkUrl   String?  // destino al hacer clic (ruta interna o URL)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) // menor = aparece antes
+  createdAt DateTime @default(now())
+
+  @@index([storeId])
 }
 
 // Cuenta de cliente de una tienda (para ver su historial de pedidos).
