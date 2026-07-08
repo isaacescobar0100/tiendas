@@ -71,9 +71,9 @@ export function StoreForm({ store }: { store: StoreData }) {
           aspect="wide"
         />
         <p className="mt-1 text-xs text-gray-400">
-          Se muestra como portada en la parte superior de tu tienda, a todo el
-          ancho. Se ve entera y se adapta sola a PC y móvil. Usa una imagen
-          horizontal (recomendado 1600×450). Déjalo vacío para no mostrarlo.
+          Portada en la parte superior de tu tienda, a todo el ancho y en franja
+          baja. Usa una imagen bien horizontal (recomendado 1600×400) y pon lo
+          importante hacia el centro. Déjalo vacío para no mostrarlo.
         </p>
       </div>
 

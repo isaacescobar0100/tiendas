@@ -112,13 +112,13 @@ export default async function StorefrontPage({
     <div>
       {store.bannerUrl && (
         <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200">
-          {/* Ancho completo y altura automática: la imagen se ve entera y se
-              adapta sola a PC y móvil sin recortes. */}
+          {/* Franja baja: altura pequeña y fija; la imagen la rellena a lo ancho
+              (recorta lo mínimo por arriba/abajo). Compacta en PC y en móvil. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={store.bannerUrl}
             alt={`Banner de ${store.name}`}
-            className="block h-auto w-full"
+            className="block h-24 w-full object-cover sm:h-28 md:h-32"
           />
         </div>
       )}
