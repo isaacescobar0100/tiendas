@@ -84,7 +84,7 @@ function Slide({ slide, active }: { slide: BannerSlide; active: boolean }) {
               )}
               {slide.linkUrl && (
                 <span className="mt-3 inline-flex items-center gap-1 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-900 shadow sm:text-sm">
-                  Ver más →
+                  Ver oferta →
                 </span>
               )}
             </div>

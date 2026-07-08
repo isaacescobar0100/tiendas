@@ -50,10 +50,16 @@ export default async function StorefrontPage({
   searchParams,
 }: {
   params: Promise<{ storeSlug: string }>;
-  searchParams: Promise<{ cat?: string; q?: string; sort?: string; page?: string }>;
+  searchParams: Promise<{
+    cat?: string;
+    q?: string;
+    sort?: string;
+    page?: string;
+    offers?: string;
+  }>;
 }) {
   const { storeSlug } = await params;
-  const { cat, q, sort, page } = await searchParams;
+  const { cat, q, sort, page, offers } = await searchParams;
 
   const store = await getStore(storeSlug);
   if (!store) notFound();
@@ -90,17 +96,24 @@ export default async function StorefrontPage({
         ? { priceCents: "desc" as const }
         : { createdAt: "desc" as const };
 
+  // Producto "en oferta": tiene precio de oferta válido (0 < oferta < precio).
+  // Usa referencia de campo de Prisma para comparar dos columnas.
+  const saleWhere = {
+    salePriceCents: { gt: 0, lt: prisma.product.fields.priceCents },
+  };
+
   const where = {
     storeId: store.id,
     active: true,
     ...(cat ? { category: { slug: cat } } : {}),
     ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
+    ...(offers ? saleWhere : {}),
   };
 
   const PAGE_SIZE = 12;
   const pageNum = Math.max(1, Number(page) || 1);
 
-  const [total, products] = await Promise.all([
+  const [total, products, offersCount] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
       where,
@@ -113,8 +126,13 @@ export default async function StorefrontPage({
       skip: (pageNum - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
+    // ¿Hay al menos un producto en oferta? (para mostrar la pestaña).
+    prisma.product.count({
+      where: { storeId: store.id, active: true, ...saleWhere },
+    }),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasOffers = offersCount > 0;
 
   // Construye un href de la propia tienda preservando/actualizando filtros.
   // Cambiar categoría/orden reinicia a la página 1; solo la paginación pasa `page`.
@@ -122,13 +140,16 @@ export default async function StorefrontPage({
     cat?: string | null;
     sort?: string | null;
     page?: number;
+    offers?: boolean | null;
   }) => {
     const sp = new URLSearchParams();
     const nextCat = over.cat === undefined ? cat : over.cat;
     const nextSort = over.sort === undefined ? sort : over.sort;
+    const nextOffers = over.offers === undefined ? Boolean(offers) : over.offers;
     if (nextCat) sp.set("cat", nextCat);
     if (q) sp.set("q", q);
     if (nextSort) sp.set("sort", nextSort);
+    if (nextOffers) sp.set("offers", "1");
     if (over.page && over.page > 1) sp.set("page", String(over.page));
     const qs = sp.toString();
     return `/${store.slug}${qs ? `?${qs}` : ""}`;
@@ -150,6 +171,7 @@ export default async function StorefrontPage({
         <form method="get" className="flex w-full gap-2 sm:max-w-sm">
           {cat && <input type="hidden" name="cat" value={cat} />}
           {sort && <input type="hidden" name="sort" value={sort} />}
+          {offers && <input type="hidden" name="offers" value="1" />}
           <input
             name="q"
             defaultValue={q ?? ""}
@@ -182,16 +204,25 @@ export default async function StorefrontPage({
         </div>
       </div>
 
-      {store.categories.length > 0 && (
+      {(store.categories.length > 0 || hasOffers) && (
         <div className="mb-8 flex flex-wrap gap-2">
-          <FilterPill href={mkHref({ cat: null })} active={!cat}>
+          <FilterPill href={mkHref({ cat: null, offers: null })} active={!cat && !offers}>
             Todos
           </FilterPill>
+          {hasOffers && (
+            <FilterPill
+              href={mkHref({ cat: null, offers: true })}
+              active={!!offers}
+              tone="sale"
+            >
+              Ofertas
+            </FilterPill>
+          )}
           {store.categories.map((c) => (
             <FilterPill
               key={c.id}
-              href={mkHref({ cat: c.slug })}
-              active={cat === c.slug}
+              href={mkHref({ cat: c.slug, offers: null })}
+              active={cat === c.slug && !offers}
             >
               {c.name}
             </FilterPill>
@@ -207,7 +238,15 @@ export default async function StorefrontPage({
 
       {products.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-300 p-12 text-center text-gray-500">
-          No hay productos {q ? "que coincidan con tu búsqueda" : cat ? "en esta categoría" : "todavía"}.
+          No hay productos{" "}
+          {q
+            ? "que coincidan con tu búsqueda"
+            : offers
+              ? "en oferta por ahora"
+              : cat
+                ? "en esta categoría"
+                : "todavía"}
+          .
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
@@ -284,20 +323,26 @@ export default async function StorefrontPage({
 function FilterPill({
   href,
   active,
+  tone = "default",
   children,
 }: {
   href: string;
   active: boolean;
+  tone?: "default" | "sale";
   children: React.ReactNode;
 }) {
+  const styles =
+    tone === "sale"
+      ? active
+        ? "border-red-600 bg-red-600 text-white"
+        : "border-red-300 text-red-600 hover:border-red-600"
+      : active
+        ? "border-gray-900 bg-gray-900 text-white"
+        : "border-gray-300 text-gray-600 hover:border-gray-900";
   return (
     <Link
       href={href}
-      className={`rounded-full border px-4 py-1.5 text-sm transition ${
-        active
-          ? "border-gray-900 bg-gray-900 text-white"
-          : "border-gray-300 text-gray-600 hover:border-gray-900"
-      }`}
+      className={`rounded-full border px-4 py-1.5 text-sm transition ${styles}`}
     >
       {children}
     </Link>
