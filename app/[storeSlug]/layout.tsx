@@ -83,12 +83,6 @@ export default async function StoreLayout({
                 <User className="h-5 w-5" />
                 <span className="hidden sm:inline">Mi cuenta</span>
               </Link>
-              <Link
-                href="/"
-                className="hidden text-sm text-gray-400 hover:text-gray-600 sm:inline"
-              >
-                Todas las tiendas
-              </Link>
               <FavoritesLink storeSlug={store.slug} />
               <CartButton />
             </div>
