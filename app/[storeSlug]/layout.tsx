@@ -85,13 +85,27 @@ export default async function StoreLayout({
         </main>
 
         <footer className="border-t border-gray-200 py-6 text-center text-sm text-gray-400">
-          <Link
-            href={`/${store.slug}/rastrear`}
-            className="font-medium text-gray-500 hover:text-gray-900"
-          >
-            Rastrear pedido
-          </Link>
-          <div className="mt-1">{store.name} · con tecnología de MiTienda</div>
+          <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <Link
+              href={`/${store.slug}/rastrear`}
+              className="font-medium text-gray-500 hover:text-gray-900"
+            >
+              Rastrear pedido
+            </Link>
+            <Link
+              href={`/${store.slug}/legal/terminos`}
+              className="text-gray-500 hover:text-gray-900"
+            >
+              Términos y condiciones
+            </Link>
+            <Link
+              href={`/${store.slug}/legal/privacidad`}
+              className="text-gray-500 hover:text-gray-900"
+            >
+              Política de privacidad
+            </Link>
+          </nav>
+          <div className="mt-2">{store.name} · con tecnología de MiTienda</div>
         </footer>
       </div>
       <CartDrawer />
