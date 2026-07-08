@@ -1,13 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import {
-  ArrowDown,
-  ArrowUp,
-  ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/product-card";
 
@@ -55,21 +49,10 @@ export default async function StorefrontPage({
   searchParams,
 }: {
   params: Promise<{ storeSlug: string }>;
-  searchParams: Promise<{
-    cat?: string;
-    q?: string;
-    sort?: string;
-    page?: string;
-    size?: string;
-    color?: string;
-    min?: string;
-    max?: string;
-    stock?: string;
-  }>;
+  searchParams: Promise<{ cat?: string; q?: string; sort?: string; page?: string }>;
 }) {
   const { storeSlug } = await params;
-  const { cat, q, sort, page, size, color, min, max, stock } =
-    await searchParams;
+  const { cat, q, sort, page } = await searchParams;
 
   const store = await getStore(storeSlug);
   if (!store) notFound();
@@ -81,53 +64,17 @@ export default async function StorefrontPage({
         ? { priceCents: "desc" as const }
         : { createdAt: "desc" as const };
 
-  // Precio: el cliente escribe en pesos; en la BD está en céntimos.
-  const minCents = min && Number(min) > 0 ? Math.round(Number(min) * 100) : null;
-  const maxCents = max && Number(max) > 0 ? Math.round(Number(max) * 100) : null;
-  const priceFilter =
-    minCents || maxCents
-      ? {
-          priceCents: {
-            ...(minCents ? { gte: minCents } : {}),
-            ...(maxCents ? { lte: maxCents } : {}),
-          },
-        }
-      : {};
-
-  // Talla y color: si ambos están, deben coincidir en la MISMA variante.
-  const variantFilter =
-    size && color
-      ? { variants: { some: { size, color } } }
-      : size
-        ? { variants: { some: { size } } }
-        : color
-          ? { variants: { some: { color } } }
-          : {};
-
-  // Solo disponibles: stock del producto o de alguna variante.
-  const stockFilter = stock
-    ? {
-        OR: [
-          { stock: { gt: 0 } },
-          { variants: { some: { stock: { gt: 0 } } } },
-        ],
-      }
-    : {};
-
   const where = {
     storeId: store.id,
     active: true,
     ...(cat ? { category: { slug: cat } } : {}),
     ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
-    ...priceFilter,
-    ...variantFilter,
-    ...stockFilter,
   };
 
   const PAGE_SIZE = 12;
   const pageNum = Math.max(1, Number(page) || 1);
 
-  const [total, products, variantOpts] = await Promise.all([
+  const [total, products] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
       where,
@@ -140,48 +87,23 @@ export default async function StorefrontPage({
       skip: (pageNum - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    // Tallas y colores disponibles en la tienda (para las opciones de filtro).
-    prisma.productVariant.findMany({
-      where: { product: { storeId: store.id, active: true } },
-      select: { color: true, size: true },
-    }),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const sizes = [...new Set(variantOpts.map((v) => v.size).filter(Boolean))].sort(
-    (a, b) => a.localeCompare(b, "es", { numeric: true }),
-  );
-  const colors = [
-    ...new Set(variantOpts.map((v) => v.color).filter(Boolean)),
-  ].sort((a, b) => a.localeCompare(b, "es"));
-
-  const activeFilters =
-    (cat ? 1 : 0) +
-    (size ? 1 : 0) +
-    (color ? 1 : 0) +
-    (minCents || maxCents ? 1 : 0) +
-    (stock ? 1 : 0);
-
-  // Construye un href de la tienda combinando los filtros actuales con `over`.
-  // Cualquier cambio de filtro reinicia a la página 1 (solo la paginación pasa `page`).
-  const current: Record<string, string | undefined> = {
-    cat,
-    q,
-    sort,
-    size,
-    color,
-    min,
-    max,
-    stock,
-  };
-  const mkHref = (over: Record<string, string | number | null | undefined>) => {
-    const merged = { ...current, ...over };
+  // Construye un href de la propia tienda preservando/actualizando filtros.
+  // Cambiar categoría/orden reinicia a la página 1; solo la paginación pasa `page`.
+  const mkHref = (over: {
+    cat?: string | null;
+    sort?: string | null;
+    page?: number;
+  }) => {
     const sp = new URLSearchParams();
-    for (const [k, v] of Object.entries(merged)) {
-      if (k === "page") continue;
-      if (v !== null && v !== undefined && v !== "") sp.set(k, String(v));
-    }
-    if (over.page && Number(over.page) > 1) sp.set("page", String(over.page));
+    const nextCat = over.cat === undefined ? cat : over.cat;
+    const nextSort = over.sort === undefined ? sort : over.sort;
+    if (nextCat) sp.set("cat", nextCat);
+    if (q) sp.set("q", q);
+    if (nextSort) sp.set("sort", nextSort);
+    if (over.page && over.page > 1) sp.set("page", String(over.page));
     const qs = sp.toString();
     return `/${store.slug}${qs ? `?${qs}` : ""}`;
   };
@@ -200,11 +122,6 @@ export default async function StorefrontPage({
         <form method="get" className="flex w-full gap-2 sm:max-w-sm">
           {cat && <input type="hidden" name="cat" value={cat} />}
           {sort && <input type="hidden" name="sort" value={sort} />}
-          {size && <input type="hidden" name="size" value={size} />}
-          {color && <input type="hidden" name="color" value={color} />}
-          {min && <input type="hidden" name="min" value={min} />}
-          {max && <input type="hidden" name="max" value={max} />}
-          {stock && <input type="hidden" name="stock" value={stock} />}
           <input
             name="q"
             defaultValue={q ?? ""}
@@ -253,120 +170,6 @@ export default async function StorefrontPage({
           ))}
         </div>
       )}
-
-      {/* Filtros avanzados: precio, talla, color y disponibilidad */}
-      <details className="mb-8 rounded-2xl border border-gray-200 p-4">
-        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-gray-700">
-          <SlidersHorizontal className="h-4 w-4" />
-          Filtros
-          {activeFilters > 0 && (
-            <span className="rounded-full bg-gray-900 px-2 py-0.5 text-xs text-white">
-              {activeFilters}
-            </span>
-          )}
-        </summary>
-
-        <div className="mt-4 space-y-5">
-          {/* Precio (en pesos) */}
-          <form method="get" className="flex flex-wrap items-end gap-2">
-            {cat && <input type="hidden" name="cat" value={cat} />}
-            {q && <input type="hidden" name="q" value={q} />}
-            {sort && <input type="hidden" name="sort" value={sort} />}
-            {size && <input type="hidden" name="size" value={size} />}
-            {color && <input type="hidden" name="color" value={color} />}
-            {stock && <input type="hidden" name="stock" value={stock} />}
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
-                Precio desde
-              </label>
-              <input
-                name="min"
-                type="number"
-                min="0"
-                inputMode="numeric"
-                defaultValue={min ?? ""}
-                placeholder="0"
-                className="w-28 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
-                hasta
-              </label>
-              <input
-                name="max"
-                type="number"
-                min="0"
-                inputMode="numeric"
-                defaultValue={max ?? ""}
-                placeholder="Sin tope"
-                className="w-28 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
-              />
-            </div>
-            <button className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110">
-              Aplicar
-            </button>
-          </form>
-
-          {sizes.length > 0 && (
-            <div>
-              <p className="mb-2 text-xs font-medium text-gray-500">Talla</p>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map((s) => (
-                  <FilterPill
-                    key={s}
-                    href={mkHref({ size: size === s ? null : s })}
-                    active={size === s}
-                  >
-                    {s}
-                  </FilterPill>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {colors.length > 0 && (
-            <div>
-              <p className="mb-2 text-xs font-medium text-gray-500">Color</p>
-              <div className="flex flex-wrap gap-2">
-                {colors.map((c) => (
-                  <FilterPill
-                    key={c}
-                    href={mkHref({ color: color === c ? null : c })}
-                    active={color === c}
-                  >
-                    {c}
-                  </FilterPill>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <FilterPill
-              href={mkHref({ stock: stock ? null : "1" })}
-              active={!!stock}
-            >
-              Solo disponibles
-            </FilterPill>
-            {activeFilters > 0 && (
-              <Link
-                href={mkHref({
-                  cat: null,
-                  size: null,
-                  color: null,
-                  min: null,
-                  max: null,
-                  stock: null,
-                })}
-                className="text-sm text-gray-500 underline hover:text-gray-900"
-              >
-                Limpiar filtros
-              </Link>
-            )}
-          </div>
-        </div>
-      </details>
 
       {q && (
         <p className="mb-4 text-sm text-gray-500">
