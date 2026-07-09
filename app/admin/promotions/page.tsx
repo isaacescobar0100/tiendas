@@ -26,7 +26,7 @@ export default async function PromotionsPage() {
     prisma.category.findMany({
       where: { storeId: store.id },
       orderBy: { name: "asc" },
-      select: { name: true, slug: true },
+      select: { id: true, name: true, slug: true },
     }),
     prisma.product.findMany({
       where: { storeId: store.id, active: true },
@@ -68,6 +68,7 @@ export default async function PromotionsPage() {
         specialLinks={specialLinks}
         categoryLinks={categoryLinks}
         productLinks={productLinks}
+        categories={categories}
       />
 
       {/* Existentes */}
@@ -85,6 +86,7 @@ export default async function PromotionsPage() {
               specialLinks={specialLinks}
               categoryLinks={categoryLinks}
               productLinks={productLinks}
+              categories={categories}
             />
           ))}
         </div>
@@ -101,6 +103,7 @@ function PromotionForm({
   specialLinks,
   categoryLinks,
   productLinks,
+  categories,
 }: {
   action: (formData: FormData) => void | Promise<void>;
   promotion?: Promotion;
@@ -109,6 +112,7 @@ function PromotionForm({
   specialLinks: LinkOption[];
   categoryLinks: LinkOption[];
   productLinks: LinkOption[];
+  categories: { id: string; name: string }[];
 }) {
   // Si la promoción ya tiene un enlace que no está entre las opciones
   // (p. ej. una URL externa antigua), lo mantenemos como opción extra.
@@ -196,6 +200,48 @@ function PromotionForm({
             Elige a dónde lleva la promoción: la página de ofertas, una categoría
             o un producto. No necesitas copiar ninguna dirección.
           </p>
+        </div>
+
+        {/* Destinos: dónde se muestra esta promoción */}
+        <div className="rounded-lg border border-gray-200 p-4">
+          <p className="mb-2 text-sm font-medium text-gray-700">
+            ¿Dónde se muestra?
+          </p>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              name="showOnBanner"
+              defaultChecked={promotion ? promotion.showOnBanner : true}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            En el banner de inicio
+          </label>
+          <label className="mt-2 flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              name="showOnOffers"
+              defaultChecked={promotion ? promotion.showOnOffers : false}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            En la página de Ofertas
+          </label>
+          <div className="mt-3">
+            <label className="mb-1 block text-sm text-gray-700">
+              En una categoría (opcional)
+            </label>
+            <select
+              name="categoryId"
+              defaultValue={promotion?.categoryId ?? ""}
+              className={inputCls}
+            >
+              <option value="">Ninguna</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="flex items-end gap-4">

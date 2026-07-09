@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatPrice } from "@/lib/utils";
-import { effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 
@@ -72,47 +70,38 @@ export default async function StorefrontPage({
     salePriceCents: { gt: 0, lt: prisma.product.fields.priceCents },
   };
 
-  // Banner (slider): promociones manuales + una diapositiva automática por cada
-  // producto en oferta. Si no hay nada, se usa el banner de la tienda.
-  const [promotions, offerProducts] = await Promise.all([
-    prisma.promotion.findMany({
-      where: { storeId: store.id, active: true },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    }),
-    prisma.product.findMany({
-      where: { storeId: store.id, active: true, ...saleWhere },
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      select: {
-        name: true,
-        slug: true,
-        imageUrl: true,
-        priceCents: true,
-        salePriceCents: true,
-      },
-    }),
-  ]);
+  // Banner (slider): promociones que el admin marcó para esta vista.
+  //  - Ofertas (offers): las marcadas "en Ofertas".
+  //  - Categoría (cat):  las asignadas a esa categoría.
+  //  - Inicio:           las marcadas "en el banner de inicio".
+  const promotions = await prisma.promotion.findMany({
+    where: { storeId: store.id, active: true },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+  });
 
-  const promoSlides: BannerSlide[] = promotions.map((p) => ({
+  const currentCategory = cat
+    ? (store.categories.find((c) => c.slug === cat) ?? null)
+    : null;
+
+  const viewPromos = offers
+    ? promotions.filter((p) => p.showOnOffers)
+    : currentCategory
+      ? promotions.filter((p) => p.categoryId === currentCategory.id)
+      : promotions.filter((p) => p.showOnBanner);
+
+  const promoSlides: BannerSlide[] = viewPromos.map((p) => ({
     imageUrl: p.imageUrl,
     title: p.title,
     subtitle: p.subtitle,
     linkUrl: p.linkUrl,
   }));
-  const offerSlides: BannerSlide[] = offerProducts.map((p) => ({
-    imageUrl: p.imageUrl,
-    title: p.name,
-    subtitle: `Oferta -${discountPercent(p)}% · ${formatPrice(
-      effectivePriceCents(p),
-      store.currency,
-    )}`,
-    linkUrl: `/${store.slug}/${p.slug}`,
-  }));
-  const combinedSlides = [...promoSlides, ...offerSlides];
+
+  // En el inicio (sin filtros), si no hay promociones, usamos el banner base.
+  const isHome = !offers && !cat && !q;
   const bannerSlides: BannerSlide[] =
-    combinedSlides.length > 0
-      ? combinedSlides
-      : store.bannerUrl
+    promoSlides.length > 0
+      ? promoSlides
+      : isHome && store.bannerUrl
         ? [
             {
               imageUrl: store.bannerUrl,

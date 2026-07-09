@@ -84,9 +84,15 @@ model Promotion {
   linkUrl   String?  // destino al hacer clic (ruta interna o URL)
   active    Boolean  @default(true)
   sortOrder Int      @default(0) // menor = aparece antes
+  // Destinos donde se muestra la promoción (el admin los elige con casillas)
+  showOnBanner Boolean @default(true)  // banner de inicio
+  showOnOffers Boolean @default(false) // vista de Ofertas
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId  String?  // si está, se muestra también en esa categoría
   createdAt DateTime @default(now())
 
   @@index([storeId])
+  @@index([categoryId])
 }
 
 // Cuenta de cliente de una tienda (para ver su historial de pedidos).
@@ -109,6 +115,7 @@ model Category {
   store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
   storeId   String
   products  Product[]
+  promotions Promotion[]
   createdAt DateTime  @default(now())
 
   @@unique([storeId, slug])
