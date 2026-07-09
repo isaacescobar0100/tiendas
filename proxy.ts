@@ -98,7 +98,10 @@ export default auth(async (req) => {
     return NextResponse.redirect(new URL("/superadmin", nextUrl));
   }
 
-  return NextResponse.next();
+  // Expone la ruta a los server components (para redirigir slugs antiguos).
+  const reqHeaders = new Headers(req.headers);
+  reqHeaders.set("x-pathname", nextUrl.pathname);
+  return NextResponse.next({ request: { headers: reqHeaders } });
 });
 
 export const config = {

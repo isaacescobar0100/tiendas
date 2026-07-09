@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { Store } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { CartProvider } from "@/components/cart/cart-context";
@@ -30,7 +31,20 @@ export default async function StoreLayout({
       freeShippingOverCents: true,
     },
   });
-  if (!store) notFound();
+  if (!store) {
+    // ¿Es un slug antiguo? Redirige al actual conservando el resto de la ruta.
+    const alias = await prisma.storeSlugAlias.findUnique({
+      where: { slug: storeSlug },
+      select: { store: { select: { slug: true } } },
+    });
+    if (alias?.store) {
+      const path = (await headers()).get("x-pathname") ?? `/${storeSlug}`;
+      const prefix = `/${storeSlug}`;
+      const rest = path.startsWith(prefix) ? path.slice(prefix.length) : "";
+      redirect(`/${alias.store.slug}${rest}`);
+    }
+    notFound();
+  }
 
   const customer = await getCurrentCustomer(store.id);
 

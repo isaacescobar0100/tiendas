@@ -141,6 +141,17 @@ export async function updateStoreConfigAction(
     return t.length ? t : null;
   };
 
+  // Si cambia el slug, guardamos el anterior como alias (para redirigir viejos
+  // enlaces al nuevo) y liberamos el nuevo por si era un alias.
+  if (slug !== store.slug) {
+    await prisma.storeSlugAlias.deleteMany({ where: { slug } });
+    await prisma.storeSlugAlias.upsert({
+      where: { slug: store.slug },
+      update: { storeId: store.id },
+      create: { slug: store.slug, storeId: store.id },
+    });
+  }
+
   await prisma.store.update({
     where: { id: store.id },
     data: {
@@ -154,6 +165,7 @@ export async function updateStoreConfigAction(
   });
 
   revalidatePath("/superadmin");
+  revalidatePath(`/${store.slug}`);
   revalidatePath(`/${slug}`);
   return { ok: true };
 }
