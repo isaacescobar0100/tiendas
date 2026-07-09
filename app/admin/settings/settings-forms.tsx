@@ -48,7 +48,16 @@ export function StoreForm({ store }: { store: StoreData }) {
     >
       <h2 className="text-sm font-semibold text-gray-900">Datos de la tienda</h2>
 
-      <Field label="Nombre" name="name" defaultValue={store.name} required />
+      <div>
+        <label className={labelCls}>Nombre de la tienda</label>
+        <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
+          {store.name}
+        </p>
+        <p className="mt-1 text-xs text-gray-400">
+          El nombre lo gestiona el administrador de la plataforma. Escríbele si
+          necesitas cambiarlo.
+        </p>
+      </div>
 
       <div>
         <label className={labelCls}>Descripción</label>

@@ -90,6 +90,7 @@ function normalizeDomain(raw?: string): string | null {
 
 const configSchema = z.object({
   storeId: z.string().min(1),
+  storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
   slug: z.string().min(2, "El slug es muy corto."),
   customDomain: z.string().optional(),
   wompiPublicKey: z.string().optional(),
@@ -107,6 +108,7 @@ export async function updateStoreConfigAction(
 
   const parsed = configSchema.safeParse({
     storeId: formData.get("storeId"),
+    storeName: formData.get("storeName"),
     slug: formData.get("slug"),
     customDomain: formData.get("customDomain") ?? "",
     wompiPublicKey: formData.get("wompiPublicKey") ?? "",
@@ -155,6 +157,7 @@ export async function updateStoreConfigAction(
   await prisma.store.update({
     where: { id: store.id },
     data: {
+      name: d.storeName.trim(),
       slug,
       customDomain,
       wompiPublicKey: s(d.wompiPublicKey),

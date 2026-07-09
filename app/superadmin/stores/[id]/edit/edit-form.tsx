@@ -6,6 +6,7 @@ import { updateStoreConfigAction, type ActionState } from "../../../actions";
 
 type StoreCfg = {
   id: string;
+  name: string;
   slug: string;
   customDomain: string | null;
   wompiPublicKey: string | null;
@@ -34,8 +35,20 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
       {/* URL y dominio */}
       <fieldset className="space-y-4">
         <legend className="text-sm font-semibold text-gray-900">
-          Dirección de la tienda
+          Datos de la tienda
         </legend>
+        <div>
+          <label className={labelCls}>Nombre de la tienda</label>
+          <input
+            name="storeName"
+            defaultValue={store.name}
+            required
+            className={inputCls}
+          />
+          <p className="mt-1 text-xs text-gray-400">
+            Lo edita solo el superadmin (el admin no puede cambiarlo).
+          </p>
+        </div>
         <div>
           <label className={labelCls}>URL corta (slug)</label>
           <div className="flex items-center gap-1 text-sm">

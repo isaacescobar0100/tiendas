@@ -10,7 +10,6 @@ import { parsePriceToCents } from "@/lib/utils";
 export type SettingsState = { error?: string; ok?: boolean } | undefined;
 
 const storeSchema = z.object({
-  name: z.string().min(2, "El nombre es muy corto."),
   description: z.string().optional(),
   logoUrl: z.string().url("URL de logo inválida.").optional().or(z.literal("")),
   bannerUrl: z
@@ -37,7 +36,6 @@ export async function updateStoreAction(
   const { store } = await requireAdminStore();
 
   const parsed = storeSchema.safeParse({
-    name: formData.get("name"),
     description: formData.get("description") ?? "",
     logoUrl: formData.get("logoUrl") ?? "",
     bannerUrl: formData.get("bannerUrl") ?? "",
@@ -57,7 +55,6 @@ export async function updateStoreAction(
   await prisma.store.update({
     where: { id: store.id },
     data: {
-      name: parsed.data.name,
       description: parsed.data.description || null,
       logoUrl: parsed.data.logoUrl || null,
       bannerUrl: parsed.data.bannerUrl || null,

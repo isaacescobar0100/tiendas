@@ -38,6 +38,7 @@ export default async function EditStorePage({
       <EditStoreForm
         store={{
           id: store.id,
+          name: store.name,
           slug: store.slug,
           customDomain: store.customDomain,
           wompiPublicKey: store.wompiPublicKey,
