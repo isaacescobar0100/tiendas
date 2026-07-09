@@ -25,7 +25,7 @@ export function BannerSlider({ slides }: { slides: BannerSlide[] }) {
   if (n === 0) return null;
 
   return (
-    <div className="relative mb-8 h-[216px] overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 sm:h-[264px] md:h-[360px]">
+    <div className="relative mb-8 h-[216px] overflow-hidden rounded-2xl border border-gray-200 sm:h-[264px] md:h-[312px]">
       {slides.map((s, idx) => (
         <Slide key={idx} slide={s} active={idx === i} />
       ))}
@@ -61,8 +61,8 @@ function Slide({ slide, active }: { slide: BannerSlide; active: boolean }) {
         <img
           src={slide.imageUrl}
           alt={slide.title ?? "Promoción"}
-          // Móvil: llena a lo ancho (recorta lo mínimo). PC: imagen completa.
-          className="h-full w-full object-cover md:object-contain"
+          // Rellena todo el banner (recorta lo que sobre para no dejar bordes).
+          className="h-full w-full object-cover"
         />
       ) : (
         <div className="h-full w-full bg-[var(--brand)]" />
