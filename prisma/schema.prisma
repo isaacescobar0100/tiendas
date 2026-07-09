@@ -116,6 +116,18 @@ model Customer {
   @@unique([storeId, email])
 }
 
+// Token para restablecer contraseña (admin o cliente). Se guarda solo el hash.
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  kind       String    // "admin" | "customer"
+  userId     String?   // si kind = admin
+  customerId String?   // si kind = customer
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+}
+
 model Category {
   id        String    @id @default(cuid())
   name      String

@@ -91,6 +91,15 @@ function LoginForm() {
               {pending ? "Entrando…" : "Entrar"}
             </button>
           </form>
+
+          <p className="mt-4 text-center text-sm">
+            <Link
+              href="/recuperar"
+              className="text-gray-500 hover:text-gray-900"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </p>
         </div>
         <p className="mt-6 text-center text-xs text-gray-400">
           Panel para superadmin y administradores de tienda.

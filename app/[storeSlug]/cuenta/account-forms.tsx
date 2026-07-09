@@ -76,6 +76,14 @@ function LoginForm({ storeSlug }: { storeSlug: string }) {
       <button type="submit" disabled={pending} className={btnCls}>
         {pending ? "Entrando…" : "Iniciar sesión"}
       </button>
+      <p className="text-center text-sm">
+        <a
+          href={`/${storeSlug}/cuenta/recuperar`}
+          className="text-gray-500 hover:text-gray-900"
+        >
+          ¿Olvidaste tu contraseña?
+        </a>
+      </p>
     </form>
   );
 }

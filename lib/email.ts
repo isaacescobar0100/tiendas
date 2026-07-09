@@ -216,3 +216,34 @@ export async function sendStatusEmail(opts: {
     return false;
   }
 }
+
+/** Envía el correo con el enlace para restablecer la contraseña. */
+export async function sendPasswordResetEmail(opts: {
+  to: string;
+  name: string;
+  resetUrl: string;
+  brandName: string;
+}): Promise<boolean> {
+  if (!BREVO_API_KEY || !SENDER_EMAIL) {
+    console.warn("[email] Brevo no configurado — no se envía el reseteo.");
+    return false;
+  }
+  const body = `<h2 style="margin:0 0 8px">Restablecer tu contraseña</h2>
+    <p>Hola ${esc(opts.name)}, recibimos una solicitud para restablecer la contraseña de tu cuenta en ${esc(opts.brandName)}.</p>
+    <p style="margin:20px 0">
+      <a href="${opts.resetUrl}" style="background:#111827;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Crear nueva contraseña</a>
+    </p>
+    <p style="color:#555;font-size:13px">Este enlace caduca en 1 hora y solo puede usarse una vez. Si no fuiste tú, ignora este correo: tu contraseña no cambiará.</p>`;
+  try {
+    await brevoSend({
+      to: opts.to,
+      senderName: opts.brandName,
+      subject: "Restablecer tu contraseña",
+      html: wrap(body),
+    });
+    return true;
+  } catch (e) {
+    console.error("[email] Error enviando reseteo:", e);
+    return false;
+  }
+}
