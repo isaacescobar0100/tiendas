@@ -9,6 +9,8 @@ type StoreCfg = {
   name: string;
   slug: string;
   customDomain: string | null;
+  plan: "SALE" | "RENT";
+  paidUntil: string; // YYYY-MM-DD o ""
   wompiPublicKey: string | null;
   wompiPrivateKey: string | null;
   wompiIntegritySecret: string | null;
@@ -76,6 +78,37 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
           <p className="mt-1 text-xs text-gray-400">
             Escribe solo el dominio (sin https:// ni /ruta). Recuerda añadirlo
             también en Vercel → Domains para que funcione.
+          </p>
+        </div>
+      </fieldset>
+
+      {/* Cobro */}
+      <fieldset className="space-y-4 border-t border-gray-100 pt-6">
+        <legend className="text-sm font-semibold text-gray-900">
+          Cobro
+        </legend>
+        <div>
+          <label className={labelCls}>Tipo</label>
+          <select
+            name="plan"
+            defaultValue={store.plan}
+            className={inputCls}
+          >
+            <option value="SALE">Venta única (es del cliente)</option>
+            <option value="RENT">Renta (pago recurrente)</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelCls}>Pagada hasta (solo renta)</label>
+          <input
+            type="date"
+            name="paidUntil"
+            defaultValue={store.paidUntil}
+            className={inputCls}
+          />
+          <p className="mt-1 text-xs text-gray-400">
+            El panel te avisará cuando esté vencida. También puedes usar
+            &ldquo;Renovar +1 mes&rdquo; desde la lista de tiendas.
           </p>
         </div>
       </fieldset>

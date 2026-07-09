@@ -8,6 +8,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { requireSuperadmin } from "@/lib/guards";
+import { setImpersonation, clearImpersonation } from "@/lib/impersonation";
 
 const createStoreSchema = z.object({
   storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
@@ -93,6 +94,8 @@ const configSchema = z.object({
   storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
   slug: z.string().min(2, "El slug es muy corto."),
   customDomain: z.string().optional(),
+  plan: z.enum(["SALE", "RENT"]).optional(),
+  paidUntil: z.string().optional(),
   wompiPublicKey: z.string().optional(),
   wompiPrivateKey: z.string().optional(),
   wompiIntegritySecret: z.string().optional(),
@@ -111,6 +114,8 @@ export async function updateStoreConfigAction(
     storeName: formData.get("storeName"),
     slug: formData.get("slug"),
     customDomain: formData.get("customDomain") ?? "",
+    plan: (formData.get("plan") as string) || "SALE",
+    paidUntil: formData.get("paidUntil") ?? "",
     wompiPublicKey: formData.get("wompiPublicKey") ?? "",
     wompiPrivateKey: formData.get("wompiPrivateKey") ?? "",
     wompiIntegritySecret: formData.get("wompiIntegritySecret") ?? "",
@@ -154,12 +159,18 @@ export async function updateStoreConfigAction(
     });
   }
 
+  const plan = d.plan === "RENT" ? "RENT" : "SALE";
+  const paidUntil =
+    plan === "RENT" && d.paidUntil ? new Date(d.paidUntil) : null;
+
   await prisma.store.update({
     where: { id: store.id },
     data: {
       name: d.storeName.trim(),
       slug,
       customDomain,
+      plan,
+      paidUntil,
       wompiPublicKey: s(d.wompiPublicKey),
       wompiPrivateKey: s(d.wompiPrivateKey),
       wompiIntegritySecret: s(d.wompiIntegritySecret),
@@ -171,6 +182,44 @@ export async function updateStoreConfigAction(
   revalidatePath(`/${store.slug}`);
   revalidatePath(`/${slug}`);
   return { ok: true };
+}
+
+/** Renta: suma 1 mes a la fecha de pago (desde la actual si es futura, si no
+ *  desde hoy) y reactiva la tienda. Marca el plan como RENT. */
+export async function renewStoreAction(formData: FormData) {
+  await requireSuperadmin();
+  const storeId = String(formData.get("storeId"));
+  const store = await prisma.store.findUnique({ where: { id: storeId } });
+  if (!store) return;
+
+  const base =
+    store.paidUntil && store.paidUntil.getTime() > Date.now()
+      ? new Date(store.paidUntil)
+      : new Date();
+  base.setMonth(base.getMonth() + 1);
+
+  await prisma.store.update({
+    where: { id: storeId },
+    data: { plan: "RENT", paidUntil: base, active: true },
+  });
+  revalidatePath("/superadmin");
+}
+
+/** "Entrar a la tienda": abre el panel del admin de esa tienda. */
+export async function impersonateStoreAction(formData: FormData) {
+  await requireSuperadmin();
+  const storeId = String(formData.get("storeId"));
+  const store = await prisma.store.findUnique({ where: { id: storeId } });
+  if (!store) return;
+  await setImpersonation(storeId);
+  redirect("/admin");
+}
+
+/** Salir del modo "ver como tienda" y volver al panel del superadmin. */
+export async function stopImpersonationAction() {
+  await requireSuperadmin();
+  await clearImpersonation();
+  redirect("/superadmin");
 }
 
 export async function toggleStoreActiveAction(formData: FormData) {

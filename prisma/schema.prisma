@@ -15,6 +15,12 @@ enum Role {
   ADMIN
 }
 
+// Modelo de cobro de la tienda: venta única (del cliente) o renta (recurrente).
+enum StorePlan {
+  SALE
+  RENT
+}
+
 // Estado de PAGO del pedido (SHIPPED queda en desuso; el envío va aparte).
 enum OrderStatus {
   PENDING
@@ -72,6 +78,9 @@ model Store {
   wompiPrivateKey      String?
   wompiIntegritySecret String?
   wompiEventsSecret    String?
+  // Cobro: tipo de plan y (para renta) hasta cuándo está pagada.
+  plan       StorePlan @default(SALE)
+  paidUntil  DateTime?
   owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId     String     @unique
   categories  Category[]

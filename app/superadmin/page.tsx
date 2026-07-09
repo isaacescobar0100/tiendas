@@ -7,7 +7,12 @@ import {
   toggleStoreActiveAction,
   toggleStorePaymentAction,
   resetAdminPasswordAction,
+  renewStoreAction,
+  impersonateStoreAction,
 } from "./actions";
+import type { StorePlan } from "@prisma/client";
+
+const dateFmt = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +22,7 @@ export default async function SuperadminHome({
   searchParams: Promise<{ resetEmail?: string; tempPass?: string }>;
 }) {
   const { resetEmail, tempPass } = await searchParams;
-  const [stores, totalOrders, paidAgg] = await Promise.all([
+  const [stores, totalOrders, paidAgg, revByStoreRaw] = await Promise.all([
     prisma.store.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -32,11 +37,27 @@ export default async function SuperadminHome({
       where: { fulfillment: "DELIVERED" },
       _sum: { totalCents: true },
     }),
+    // Facturado por tienda (entregados) para el ranking.
+    prisma.order.groupBy({
+      by: ["storeId"],
+      where: { fulfillment: "DELIVERED" },
+      _sum: { totalCents: true },
+    }),
   ]);
 
   const totalProducts = stores.reduce((n, s) => n + s._count.products, 0);
   // La facturación mezcla monedas; se muestra como referencia agregada en COP
   const grossCents = paidAgg._sum.totalCents ?? 0;
+
+  const revByStore = new Map(
+    revByStoreRaw.map((r) => [r.storeId, r._sum.totalCents ?? 0]),
+  );
+
+  // Rentas vencidas (fecha de pago ya pasada).
+  const now = Date.now();
+  const overdueCount = stores.filter(
+    (s) => s.plan === "RENT" && s.paidUntil && s.paidUntil.getTime() < now,
+  ).length;
 
   return (
     <div className="space-y-8">
@@ -79,7 +100,7 @@ export default async function SuperadminHome({
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Tiendas" value={String(stores.length)} />
         <StatCard
           label="Activas"
@@ -88,6 +109,11 @@ export default async function SuperadminHome({
         <StatCard label="Productos" value={String(totalProducts)} />
         <StatCard label="Pedidos" value={String(totalOrders)} />
         <StatCard label="Facturado*" value={formatPrice(grossCents)} />
+        <StatCard
+          label="Rentas vencidas"
+          value={String(overdueCount)}
+          highlight={overdueCount > 0}
+        />
       </div>
       <p className="-mt-4 text-xs text-gray-400">
         * Suma de los pedidos ENTREGADOS (dinero ya recibido); los no entregados
@@ -111,7 +137,8 @@ export default async function SuperadminHome({
               <tr>
                 <th className="px-4 py-3 font-medium">Tienda</th>
                 <th className="px-4 py-3 font-medium">Admin</th>
-                <th className="px-4 py-3 font-medium">Productos</th>
+                <th className="px-4 py-3 font-medium">Facturado</th>
+                <th className="px-4 py-3 font-medium">Plan</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 font-medium">Pagos</th>
                 <th className="px-4 py-3 font-medium text-right">Acciones</th>
@@ -135,8 +162,14 @@ export default async function SuperadminHome({
                   <td className="px-4 py-3 text-gray-600">
                     {store.owner.email}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {store._count.products}
+                  <td className="px-4 py-3 text-gray-900">
+                    {formatPrice(revByStore.get(store.id) ?? 0, store.currency)}
+                    <div className="text-xs text-gray-400">
+                      {store._count.products} prod.
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <PlanCell plan={store.plan} paidUntil={store.paidUntil} />
                   </td>
                   <td className="px-4 py-3">
                     {store.active ? (
@@ -173,6 +206,24 @@ export default async function SuperadminHome({
                       >
                         Configurar
                       </Link>
+                      <form action={impersonateStoreAction}>
+                        <input type="hidden" name="storeId" value={store.id} />
+                        <button className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">
+                          Entrar
+                        </button>
+                      </form>
+                      {store.plan === "RENT" && (
+                        <form action={renewStoreAction}>
+                          <input
+                            type="hidden"
+                            name="storeId"
+                            value={store.id}
+                          />
+                          <button className="rounded-md border border-blue-200 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50">
+                            Renovar +1 mes
+                          </button>
+                        </form>
+                      )}
                       <form action={toggleStoreActiveAction}>
                         <input type="hidden" name="storeId" value={store.id} />
                         <button className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">
@@ -199,6 +250,48 @@ export default async function SuperadminHome({
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+// Celda de plan: "Venta única" o "Renta" con su fecha y estado.
+function PlanCell({
+  plan,
+  paidUntil,
+}: {
+  plan: StorePlan;
+  paidUntil: Date | null;
+}) {
+  if (plan === "SALE") {
+    return <span className="text-xs text-gray-500">Venta única</span>;
+  }
+  if (!paidUntil) {
+    return (
+      <div>
+        <div className="text-xs font-medium text-gray-700">Renta</div>
+        <span className="text-xs text-amber-600">Sin fecha</span>
+      </div>
+    );
+  }
+  const days = Math.ceil((paidUntil.getTime() - Date.now()) / 86400000);
+  const badge =
+    days < 0
+      ? "bg-red-100 text-red-700"
+      : days <= 3
+        ? "bg-amber-100 text-amber-700"
+        : "bg-green-100 text-green-700";
+  const label = days < 0 ? "Vencida" : days <= 3 ? "Vence pronto" : "Al día";
+  return (
+    <div>
+      <div className="text-xs font-medium text-gray-700">Renta</div>
+      <span
+        className={`rounded-full px-1.5 py-0.5 text-[11px] font-medium ${badge}`}
+      >
+        {label}
+      </span>
+      <div className="mt-0.5 text-[11px] text-gray-400">
+        {dateFmt.format(paidUntil)}
+      </div>
     </div>
   );
 }
@@ -233,10 +326,26 @@ function PayToggle({
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5">
-      <div className="text-2xl font-bold text-gray-900">{value}</div>
+    <div
+      className={`rounded-2xl border bg-white p-5 ${
+        highlight ? "border-red-300" : "border-gray-200"
+      }`}
+    >
+      <div
+        className={`text-2xl font-bold ${highlight ? "text-red-600" : "text-gray-900"}`}
+      >
+        {value}
+      </div>
       <div className="text-sm text-gray-500">{label}</div>
     </div>
   );

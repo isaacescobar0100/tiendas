@@ -90,7 +90,10 @@ export async function changePasswordAction(
   _prev: SettingsState,
   formData: FormData,
 ): Promise<SettingsState> {
-  const { user } = await requireAdminStore();
+  const { user, impersonating } = await requireAdminStore();
+  if (impersonating) {
+    return { error: "No disponible mientras entras como superadmin." };
+  }
 
   const parsed = passwordSchema.safeParse({
     currentPassword: formData.get("currentPassword"),

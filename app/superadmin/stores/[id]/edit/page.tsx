@@ -41,6 +41,10 @@ export default async function EditStorePage({
           name: store.name,
           slug: store.slug,
           customDomain: store.customDomain,
+          plan: store.plan,
+          paidUntil: store.paidUntil
+            ? store.paidUntil.toISOString().slice(0, 10)
+            : "",
           wompiPublicKey: store.wompiPublicKey,
           wompiPrivateKey: store.wompiPrivateKey,
           wompiIntegritySecret: store.wompiIntegritySecret,

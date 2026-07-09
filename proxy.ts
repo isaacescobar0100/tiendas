@@ -93,10 +93,11 @@ export default auth(async (req) => {
   if (isSuperadminArea && role !== "SUPERADMIN") {
     return NextResponse.redirect(new URL("/admin", nextUrl));
   }
-  if (isAdminArea && role !== "ADMIN") {
-    // Un superadmin no gestiona un catálogo concreto: lo llevamos a su panel
+  if (isAdminArea && role !== "ADMIN" && role !== "SUPERADMIN") {
     return NextResponse.redirect(new URL("/superadmin", nextUrl));
   }
+  // El superadmin solo entra a /admin si está "impersonando" una tienda; de eso
+  // se encarga requireAdminStore (redirige a /superadmin si no lo está).
 
   // Expone la ruta a los server components (para redirigir slugs antiguos).
   const reqHeaders = new Headers(req.headers);
