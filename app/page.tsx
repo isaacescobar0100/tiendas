@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ShoppingBag, Store } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+// La lista de todas las tiendas es interna: no debe indexarse ni aparecer en
+// Google. `follow` deja que Google siga los enlaces a las tiendas (que sí se
+// indexan), pero esta página no sale en los resultados.
+export const metadata: Metadata = {
+  title: "MiTienda",
+  robots: { index: false, follow: true },
+};
 
 export default async function Home() {
   const stores = await prisma.store.findMany({

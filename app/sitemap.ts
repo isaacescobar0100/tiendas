@@ -19,16 +19,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   });
 
-  const entries: MetadataRoute.Sitemap = [
-    { url: base, changeFrequency: "weekly", priority: 1 },
-  ];
+  // No incluimos la raíz (lista de todas las tiendas): es interna y va noindex.
+  const entries: MetadataRoute.Sitemap = [];
 
   for (const store of stores) {
     entries.push({
       url: `${base}/${store.slug}`,
       lastModified: store.updatedAt,
       changeFrequency: "daily",
-      priority: 0.8,
+      priority: 0.9,
     });
     for (const p of store.products) {
       entries.push({
