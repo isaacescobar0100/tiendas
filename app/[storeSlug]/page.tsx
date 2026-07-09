@@ -224,7 +224,7 @@ export default async function StorefrontPage({
       </div>
 
       {(store.categories.length > 0 || hasOffers) && (
-        <div className="mb-8 flex flex-wrap gap-2">
+        <div className="mb-8 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden">
           <FilterPill href={mkHref({ cat: null, offers: null })} active={!cat && !offers}>
             Todos
           </FilterPill>
@@ -361,7 +361,7 @@ function FilterPill({
   return (
     <Link
       href={href}
-      className={`rounded-full border px-4 py-1.5 text-sm transition ${styles}`}
+      className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm transition ${styles}`}
     >
       {children}
     </Link>
