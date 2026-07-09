@@ -246,6 +246,7 @@ export async function deleteProductAction(formData: FormData) {
   await prisma.product.deleteMany({ where: { id, storeId: store.id } });
   revalidatePath("/admin");
   revalidatePath("/admin/products");
+  redirect("/admin/products");
 }
 
 export async function createCategoryAction(formData: FormData) {

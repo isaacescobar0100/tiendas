@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { ProductForm } from "@/components/product-form";
-import { updateProductAction } from "../../../actions";
+import { updateProductAction, deleteProductAction } from "../../../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +53,24 @@ export default async function EditProductPage({
         }}
         submitLabel="Guardar cambios"
       />
+
+      {/* Borrar el producto (los pedidos antiguos se conservan) */}
+      <div className="mt-6 flex items-center justify-between rounded-2xl border border-red-200 bg-red-50/50 p-4">
+        <div>
+          <p className="text-sm font-medium text-gray-900">
+            Borrar este producto
+          </p>
+          <p className="text-xs text-gray-500">
+            Se quita del catálogo. Los pedidos anteriores no se pierden.
+          </p>
+        </div>
+        <form action={deleteProductAction}>
+          <input type="hidden" name="id" value={product.id} />
+          <button className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
+            Borrar
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

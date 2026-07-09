@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
 import { isOnSale } from "@/lib/pricing";
-import { deleteProductAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -142,14 +141,16 @@ export default async function ProductsPage({
                 <th className="px-4 py-3 font-medium">Precio</th>
                 <th className="px-4 py-3 font-medium">Stock</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {products.map((p) => (
                 <tr key={p.id}>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
+                    <Link
+                      href={`/admin/products/${p.id}/edit`}
+                      className="flex items-center gap-3 hover:underline"
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={p.imageUrl || "https://placehold.co/48x48?text=%20"}
@@ -159,7 +160,7 @@ export default async function ProductsPage({
                       <span className="font-medium text-gray-900">
                         {p.name}
                       </span>
-                    </div>
+                    </Link>
                   </td>
                   <td className="px-4 py-3 text-gray-600">
                     {p.category?.name ?? "—"}
@@ -189,22 +190,6 @@ export default async function ProductsPage({
                         Oculto
                       </span>
                     )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/admin/products/${p.id}/edit`}
-                        className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
-                      >
-                        Editar
-                      </Link>
-                      <form action={deleteProductAction}>
-                        <input type="hidden" name="id" value={p.id} />
-                        <button className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50">
-                          Borrar
-                        </button>
-                      </form>
-                    </div>
                   </td>
                 </tr>
               ))}
