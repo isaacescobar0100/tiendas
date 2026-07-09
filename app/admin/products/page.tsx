@@ -7,16 +7,42 @@ import { deleteProductAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cat?: string; q?: string }>;
+}) {
   const { store } = await requireAdminStore();
-  const products = await prisma.product.findMany({
-    where: { storeId: store.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      category: { select: { name: true } },
-      variants: { select: { stock: true } },
-    },
-  });
+  const { cat, q } = await searchParams;
+
+  // Filtro por categoría (slug) o "sin categoría", + búsqueda por nombre.
+  const where = {
+    storeId: store.id,
+    ...(cat === "none"
+      ? { categoryId: null }
+      : cat
+        ? { category: { slug: cat } }
+        : {}),
+    ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
+  };
+
+  const [products, categories, totalCount, noneCount] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: {
+        category: { select: { name: true } },
+        variants: { select: { stock: true } },
+      },
+    }),
+    prisma.category.findMany({
+      where: { storeId: store.id },
+      orderBy: { name: "asc" },
+      include: { _count: { select: { products: true } } },
+    }),
+    prisma.product.count({ where: { storeId: store.id } }),
+    prisma.product.count({ where: { storeId: store.id, categoryId: null } }),
+  ]);
 
   // Stock real: suma de variantes si las hay; si no, el stock del producto.
   const stockOf = (p: (typeof products)[number]) =>
@@ -24,14 +50,24 @@ export default async function ProductsPage() {
       ? p.variants.reduce((n, v) => n + v.stock, 0)
       : p.stock;
 
+  // Construye enlaces del filtro conservando la búsqueda.
+  const mkHref = (nextCat: string | null) => {
+    const sp = new URLSearchParams();
+    if (nextCat) sp.set("cat", nextCat);
+    if (q) sp.set("q", q);
+    const qs = sp.toString();
+    return `/admin/products${qs ? `?${qs}` : ""}`;
+  };
+
+  const hasFilter = Boolean(cat || q);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
           <p className="text-sm text-gray-500">
-            {products.length} producto{products.length === 1 ? "" : "s"} en tu
-            catálogo.
+            {totalCount} producto{totalCount === 1 ? "" : "s"} en tu catálogo.
           </p>
         </div>
         <Link
@@ -42,15 +78,59 @@ export default async function ProductsPage() {
         </Link>
       </div>
 
+      {/* Búsqueda */}
+      <form method="get" className="flex gap-2 sm:max-w-sm">
+        {cat && <input type="hidden" name="cat" value={cat} />}
+        <input
+          name="q"
+          defaultValue={q ?? ""}
+          placeholder="Buscar producto por nombre…"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+        />
+        <button className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+          Buscar
+        </button>
+      </form>
+
+      {/* Filtro por categoría */}
+      <div className="flex flex-wrap gap-2">
+        <Pill href={mkHref(null)} active={!cat}>
+          Todos <Count>{totalCount}</Count>
+        </Pill>
+        {categories.map((c) => (
+          <Pill key={c.id} href={mkHref(c.slug)} active={cat === c.slug}>
+            {c.name} <Count>{c._count.products}</Count>
+          </Pill>
+        ))}
+        {noneCount > 0 && (
+          <Pill href={mkHref("none")} active={cat === "none"}>
+            Sin categoría <Count>{noneCount}</Count>
+          </Pill>
+        )}
+      </div>
+
       {products.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center">
-          <p className="text-gray-500">Todavía no tienes productos.</p>
-          <Link
-            href="/admin/products/new"
-            className="mt-3 inline-block text-sm font-medium text-gray-900 underline"
-          >
-            Añade el primero
-          </Link>
+          <p className="text-gray-500">
+            {hasFilter
+              ? "No hay productos que coincidan con el filtro."
+              : "Todavía no tienes productos."}
+          </p>
+          {hasFilter ? (
+            <Link
+              href="/admin/products"
+              className="mt-3 inline-block text-sm font-medium text-gray-900 underline"
+            >
+              Quitar filtros
+            </Link>
+          ) : (
+            <Link
+              href="/admin/products/new"
+              className="mt-3 inline-block text-sm font-medium text-gray-900 underline"
+            >
+              Añade el primero
+            </Link>
+          )}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
@@ -133,5 +213,34 @@ export default async function ProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function Pill({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
+        active
+          ? "border-gray-900 bg-gray-900 text-white"
+          : "border-gray-300 text-gray-600 hover:border-gray-900"
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function Count({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-full bg-black/10 px-1.5 text-xs">{children}</span>
   );
 }
