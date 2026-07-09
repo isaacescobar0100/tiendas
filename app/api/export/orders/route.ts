@@ -3,7 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { variantLabel } from "@/lib/utils";
 import { PAYMENT_LABEL, FULFILLMENT_LABEL } from "@/lib/order-status";
 
-// Calcula el rango [inicio, fin) según el tipo de filtro y el valor.
+// Medianoche en Colombia (UTC−5, sin horario de verano) expresada en UTC.
+const bogota = (y: number, mo: number, d: number) =>
+  new Date(Date.UTC(y, mo - 1, d, 5, 0, 0));
+
+// Calcula el rango [inicio, fin) según el tipo de filtro y el valor,
+// usando los límites del día/mes/año en hora de Colombia.
 function computeRange(
   type: string,
   value: string,
@@ -12,23 +17,19 @@ function computeRange(
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
     if (!m) return null;
     const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
-    return {
-      start: new Date(y, mo - 1, d),
-      end: new Date(y, mo - 1, d + 1),
-      label: value,
-    };
+    return { start: bogota(y, mo, d), end: bogota(y, mo, d + 1), label: value };
   }
   if (type === "month") {
     const m = /^(\d{4})-(\d{2})$/.exec(value);
     if (!m) return null;
     const [y, mo] = [Number(m[1]), Number(m[2])];
-    return { start: new Date(y, mo - 1, 1), end: new Date(y, mo, 1), label: value };
+    return { start: bogota(y, mo, 1), end: bogota(y, mo + 1, 1), label: value };
   }
   if (type === "year") {
     const m = /^(\d{4})$/.exec(value);
     if (!m) return null;
     const y = Number(m[1]);
-    return { start: new Date(y, 0, 1), end: new Date(y + 1, 0, 1), label: value };
+    return { start: bogota(y, 1, 1), end: bogota(y + 1, 1, 1), label: value };
   }
   return null;
 }
@@ -85,6 +86,7 @@ export async function GET(request: Request) {
   ];
 
   const dateFmt = new Intl.DateTimeFormat("es", {
+    timeZone: "America/Bogota",
     dateStyle: "short",
     timeStyle: "short",
   });

@@ -6,15 +6,18 @@ export const dynamic = "force-dynamic";
 export default async function ExportPage() {
   await requireAdminStore();
 
-  // Valores por defecto (hoy) calculados en el servidor para evitar desajustes.
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
+  // "Hoy" en hora de Colombia (el servidor está en UTC; Colombia es UTC−5).
+  // en-CA da el formato YYYY-MM-DD.
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
   const defaults = {
-    day: `${yyyy}-${mm}-${dd}`,
-    month: `${yyyy}-${mm}`,
-    year: String(yyyy),
+    day: today,
+    month: today.slice(0, 7),
+    year: today.slice(0, 4),
   };
 
   return (
