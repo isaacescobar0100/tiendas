@@ -12,6 +12,9 @@ function readForm(formData: FormData) {
   };
   return {
     imageUrl: str("imageUrl"),
+    imagePosition:
+      String(formData.get("imagePosition") ?? "").trim() || "50% 50%",
+    imageZoom: Math.max(1, Math.min(3, Number(formData.get("imageZoom")) || 1)),
     title: str("title"),
     subtitle: str("subtitle"),
     linkUrl: str("linkUrl"),

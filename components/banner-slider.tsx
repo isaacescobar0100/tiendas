@@ -5,6 +5,8 @@ import Link from "next/link";
 
 export type BannerSlide = {
   imageUrl: string | null;
+  imagePosition?: string | null;
+  imageZoom?: number | null;
   title: string | null;
   subtitle: string | null;
   linkUrl: string | null;
@@ -61,7 +63,11 @@ function Slide({ slide, active }: { slide: BannerSlide; active: boolean }) {
         <img
           src={slide.imageUrl}
           alt={slide.title ?? "Promoción"}
-          // Rellena todo el banner (recorta lo que sobre para no dejar bordes).
+          // Rellena todo el banner (recorta lo que sobre) con el encuadre elegido.
+          style={{
+            objectPosition: slide.imagePosition ?? "50% 50%",
+            transform: `scale(${slide.imageZoom ?? 1})`,
+          }}
           className="h-full w-full object-cover"
         />
       ) : (

@@ -79,6 +79,8 @@ model Promotion {
   store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   storeId   String
   imageUrl  String?  // imagen de fondo de la diapositiva
+  imagePosition String @default("50% 50%") // encuadre de la imagen (object-position)
+  imageZoom     Float  @default(1)          // zoom de la imagen (1 = sin zoom)
   title     String?  // titular (p. ej. "50% en zapatillas")
   subtitle  String?  // texto secundario
   linkUrl   String?  // destino al hacer clic (ruta interna o URL)

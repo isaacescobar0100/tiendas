@@ -91,6 +91,8 @@ export default async function StorefrontPage({
 
   const promoSlides: BannerSlide[] = viewPromos.map((p) => ({
     imageUrl: p.imageUrl,
+    imagePosition: p.imagePosition,
+    imageZoom: p.imageZoom,
     title: p.title,
     subtitle: p.subtitle,
     linkUrl: p.linkUrl,

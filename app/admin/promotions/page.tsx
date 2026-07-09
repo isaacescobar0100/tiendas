@@ -137,6 +137,11 @@ function PromotionForm({
           label="Imagen de la promoción"
           defaultUrl={promotion?.imageUrl ?? undefined}
           aspect="wide"
+          reposition
+          positionName="imagePosition"
+          defaultPosition={promotion?.imagePosition ?? "50% 50%"}
+          zoomName="imageZoom"
+          defaultZoom={promotion?.imageZoom ?? 1}
         />
 
         <div>
