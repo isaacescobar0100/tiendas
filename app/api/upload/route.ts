@@ -4,6 +4,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { put } from "@vercel/blob";
 import { auth } from "@/auth";
+import { rateLimit, clientIpFromRequest } from "@/lib/rate-limit";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -20,6 +21,14 @@ export async function POST(request: Request) {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+    }
+
+    const rl = rateLimit(`upload:${clientIpFromRequest(request)}`, 40, 60 * 1000);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Demasiadas subidas. Espera un momento." },
+        { status: 429 },
+      );
     }
 
     const formData = await request.formData();

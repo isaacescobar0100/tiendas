@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { variantLabel } from "@/lib/utils";
 import { PAYMENT_LABEL, FULFILLMENT_LABEL } from "@/lib/order-status";
+import { rateLimit, clientIpFromRequest } from "@/lib/rate-limit";
 
 // Medianoche en Colombia (UTC−5, sin horario de verano) expresada en UTC.
 const bogota = (y: number, mo: number, d: number) =>
@@ -51,6 +52,13 @@ export async function GET(request: Request) {
     where: { ownerId: session.user.id },
   });
   if (!store) return new Response("Sin tienda.", { status: 404 });
+
+  const rl = rateLimit(`export:${clientIpFromRequest(request)}`, 20, 60 * 1000);
+  if (!rl.ok) {
+    return new Response("Demasiadas descargas. Espera un momento.", {
+      status: 429,
+    });
+  }
 
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") ?? "month";

@@ -7,6 +7,7 @@ import { sendOrderEmails } from "@/lib/email";
 import { isWompiConfigured, buildCheckoutUrl } from "@/lib/wompi";
 import { computeShipping } from "@/lib/shipping";
 import { effectivePriceCents } from "@/lib/pricing";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 // `checkoutUrl` presente = hay que redirigir al cliente a pagar en Wompi.
 export type CheckoutState =
@@ -45,6 +46,13 @@ export async function placeOrderAction(
   _prev: CheckoutState,
   formData: FormData,
 ): Promise<CheckoutState> {
+  const rl = rateLimit(`checkout:${await clientIp()}`, 15, 5 * 60 * 1000);
+  if (!rl.ok) {
+    return {
+      error: `Demasiados intentos. Espera ${rl.retryAfter}s e inténtalo de nuevo.`,
+    };
+  }
+
   const storeSlug = String(formData.get("storeSlug") ?? "");
 
   const parsed = customerSchema.safeParse({

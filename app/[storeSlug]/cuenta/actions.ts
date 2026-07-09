@@ -8,6 +8,7 @@ import {
   setCustomerSession,
   clearCustomerSession,
 } from "@/lib/customer-auth";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export type AccountState = { error?: string } | undefined;
 
@@ -28,6 +29,11 @@ export async function registerAction(
   _prev: AccountState,
   formData: FormData,
 ): Promise<AccountState> {
+  const rl = rateLimit(`register:${await clientIp()}`, 5, 10 * 60 * 1000);
+  if (!rl.ok) {
+    return { error: `Demasiados intentos. Espera ${rl.retryAfter}s.` };
+  }
+
   const store = await storeBySlug(String(formData.get("storeSlug") ?? ""));
   if (!store) return { error: "Tienda no encontrada." };
 
@@ -58,6 +64,11 @@ export async function loginAction(
   _prev: AccountState,
   formData: FormData,
 ): Promise<AccountState> {
+  const rl = rateLimit(`login:${await clientIp()}`, 10, 5 * 60 * 1000);
+  if (!rl.ok) {
+    return { error: `Demasiados intentos. Espera ${rl.retryAfter}s.` };
+  }
+
   const store = await storeBySlug(String(formData.get("storeSlug") ?? ""));
   if (!store) return { error: "Tienda no encontrada." };
 
