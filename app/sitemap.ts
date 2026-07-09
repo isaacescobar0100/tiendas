@@ -2,7 +2,9 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { getBaseUrl } from "@/lib/site-url";
 
-// Se regenera cada hora (nuevos productos/tiendas aparecen sin redesplegar).
+// Dinámico: se genera al pedirlo (no en el build), así no depende de la BD
+// durante la compilación. Se cachea 1 hora.
+export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

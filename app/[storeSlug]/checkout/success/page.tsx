@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Check, Clock, X, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
-import { getTransaction } from "@/lib/wompi";
+import { getTransaction, resolveWompiKeys } from "@/lib/wompi";
 import { markOrderPaid } from "@/lib/orders";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import ClearCart from "./clear-cart";
@@ -31,7 +31,16 @@ export default async function OrderSuccessPage({
     where: { id: orderId, store: { slug: storeSlug } },
     include: {
       items: true,
-      store: { select: { name: true, whatsapp: true } },
+      store: {
+        select: {
+          name: true,
+          whatsapp: true,
+          wompiPublicKey: true,
+          wompiPrivateKey: true,
+          wompiIntegritySecret: true,
+          wompiEventsSecret: true,
+        },
+      },
     },
   });
   if (!order) notFound();
@@ -39,7 +48,7 @@ export default async function OrderSuccessPage({
   // Determina el estado del pago.
   let payment: Payment;
   if (txId) {
-    const tx = await getTransaction(txId);
+    const tx = await getTransaction(txId, resolveWompiKeys(order.store));
     if (tx && tx.reference === order.id && tx.status === "APPROVED") {
       await markOrderPaid(order.id);
       payment = "approved";

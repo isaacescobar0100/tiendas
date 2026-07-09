@@ -5,25 +5,46 @@
 // Configúralo en Wompi → Desarrolladores → URL de eventos:
 //   https://TU-DOMINIO/api/wompi/webhook
 import type { NextRequest } from "next/server";
-import { verifyEvent } from "@/lib/wompi";
+import { verifyEvent, resolveWompiKeys } from "@/lib/wompi";
+import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/lib/orders";
 
 export async function POST(request: NextRequest) {
-  let event: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let event: any;
   try {
     event = await request.json();
   } catch {
     return Response.json({ error: "JSON inválido" }, { status: 400 });
   }
 
-  // Verifica la firma con el secreto de eventos. Devuelve la transacción o null.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tx = verifyEvent(event as any);
+  // La referencia = id del pedido. Con ella ubicamos la tienda y su secreto de
+  // eventos (respaldo al .env si la tienda no tiene el suyo).
+  const reference: string = event?.data?.transaction?.reference ?? "";
+  const order = reference
+    ? await prisma.order.findUnique({
+        where: { id: reference },
+        select: {
+          store: {
+            select: {
+              wompiPublicKey: true,
+              wompiPrivateKey: true,
+              wompiIntegritySecret: true,
+              wompiEventsSecret: true,
+            },
+          },
+        },
+      })
+    : null;
+
+  const keys = resolveWompiKeys(order?.store ?? null);
+
+  // Verifica la firma con el secreto de eventos de esa tienda.
+  const tx = verifyEvent(event, keys.eventsSecret);
   if (!tx) {
     return Response.json({ error: "Firma inválida" }, { status: 401 });
   }
 
-  // La referencia que enviamos al iniciar el pago es el id del pedido.
   if (tx.status === "APPROVED") {
     await markOrderPaid(tx.reference);
   }

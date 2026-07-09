@@ -167,6 +167,12 @@ export default async function SuperadminHome({
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/superadmin/stores/${store.id}/edit`}
+                        className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                      >
+                        Configurar
+                      </Link>
                       <form action={toggleStoreActiveAction}>
                         <input type="hidden" name="storeId" value={store.id} />
                         <button className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">

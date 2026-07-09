@@ -7,24 +7,51 @@ import { createHash } from "crypto";
 // precios de la tienda están en COP (ver README de pagos).
 export const WOMPI_CURRENCY = "COP";
 
-const PUBLIC_KEY = process.env.WOMPI_PUBLIC_KEY ?? "";
-const PRIVATE_KEY = process.env.WOMPI_PRIVATE_KEY ?? "";
-const INTEGRITY_SECRET = process.env.WOMPI_INTEGRITY_SECRET ?? "";
-const EVENTS_SECRET = process.env.WOMPI_EVENTS_SECRET ?? "";
+export type WompiKeys = {
+  publicKey: string;
+  privateKey: string;
+  integritySecret: string;
+  eventsSecret: string;
+};
+
+type StoreWompi = {
+  wompiPublicKey?: string | null;
+  wompiPrivateKey?: string | null;
+  wompiIntegritySecret?: string | null;
+  wompiEventsSecret?: string | null;
+};
+
+/**
+ * Llaves de Wompi de la tienda. Si la tienda no tiene las suyas, se usan las
+ * del entorno (.env) como respaldo (útil para pruebas con una sola cuenta).
+ */
+export function resolveWompiKeys(store?: StoreWompi | null): WompiKeys {
+  return {
+    publicKey: store?.wompiPublicKey || process.env.WOMPI_PUBLIC_KEY || "",
+    privateKey: store?.wompiPrivateKey || process.env.WOMPI_PRIVATE_KEY || "",
+    integritySecret:
+      store?.wompiIntegritySecret || process.env.WOMPI_INTEGRITY_SECRET || "",
+    eventsSecret:
+      store?.wompiEventsSecret || process.env.WOMPI_EVENTS_SECRET || "",
+  };
+}
 
 /** ¿Están las llaves mínimas para iniciar un cobro? (pública + privada + integridad) */
-export function isWompiConfigured(): boolean {
-  return Boolean(PUBLIC_KEY && PRIVATE_KEY && INTEGRITY_SECRET);
+export function isWompiConfigured(keys: WompiKeys): boolean {
+  return Boolean(keys.publicKey && keys.privateKey && keys.integritySecret);
 }
 
 /** El entorno (sandbox/producción) se deduce del prefijo de la llave. */
-function isSandbox(): boolean {
-  return PRIVATE_KEY.startsWith("prv_test") || PUBLIC_KEY.startsWith("pub_test");
+function isSandbox(keys: WompiKeys): boolean {
+  return (
+    keys.privateKey.startsWith("prv_test") ||
+    keys.publicKey.startsWith("pub_test")
+  );
 }
 
 /** Base de la API REST de Wompi según el entorno de las llaves. */
-function apiBase(): string {
-  return isSandbox()
+function apiBase(keys: WompiKeys): string {
+  return isSandbox(keys)
     ? "https://sandbox.wompi.co/v1"
     : "https://production.wompi.co/v1";
 }
@@ -37,8 +64,9 @@ function integritySignature(
   reference: string,
   amountInCents: number,
   currency: string,
+  integritySecret: string,
 ): string {
-  const raw = `${reference}${amountInCents}${currency}${INTEGRITY_SECRET}`;
+  const raw = `${reference}${amountInCents}${currency}${integritySecret}`;
   return createHash("sha256").update(raw).digest("hex");
 }
 
@@ -46,17 +74,25 @@ function integritySignature(
  * Construye la URL del Web Checkout de Wompi a la que redirigir al cliente.
  * `reference` = id del pedido (para reconciliar el pago con el pedido).
  */
-export function buildCheckoutUrl(opts: {
-  reference: string;
-  amountInCents: number;
-  redirectUrl: string;
-  customerEmail?: string;
-}): string {
+export function buildCheckoutUrl(
+  opts: {
+    reference: string;
+    amountInCents: number;
+    redirectUrl: string;
+    customerEmail?: string;
+  },
+  keys: WompiKeys,
+): string {
   const { reference, amountInCents, redirectUrl, customerEmail } = opts;
-  const signature = integritySignature(reference, amountInCents, WOMPI_CURRENCY);
+  const signature = integritySignature(
+    reference,
+    amountInCents,
+    WOMPI_CURRENCY,
+    keys.integritySecret,
+  );
 
   const params: [string, string][] = [
-    ["public-key", PUBLIC_KEY],
+    ["public-key", keys.publicKey],
     ["currency", WOMPI_CURRENCY],
     ["amount-in-cents", String(amountInCents)],
     ["reference", reference],
@@ -83,10 +119,11 @@ export type WompiTransaction = {
 /** Consulta el estado de una transacción por su id (usa la llave privada). */
 export async function getTransaction(
   id: string,
+  keys: WompiKeys,
 ): Promise<WompiTransaction | null> {
   try {
-    const res = await fetch(`${apiBase()}/transactions/${id}`, {
-      headers: { Authorization: `Bearer ${PRIVATE_KEY}` },
+    const res = await fetch(`${apiBase(keys)}/transactions/${id}`, {
+      headers: { Authorization: `Bearer ${keys.privateKey}` },
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -121,15 +158,18 @@ function readPath(obj: unknown, path: string): string {
  * Verifica la firma del webhook: SHA256 de (valores de `properties` en orden) +
  * timestamp + secreto de eventos. Devuelve la transacción solo si la firma es válida.
  */
-export function verifyEvent(event: WompiEvent): WompiTransaction | null {
-  if (!EVENTS_SECRET) return null;
+export function verifyEvent(
+  event: WompiEvent,
+  eventsSecret: string,
+): WompiTransaction | null {
+  if (!eventsSecret) return null;
   const { signature, timestamp, data } = event;
   if (!signature?.checksum || !Array.isArray(signature.properties)) return null;
 
   const concatenated = signature.properties
     .map((prop) => readPath(data, prop))
     .join("");
-  const raw = `${concatenated}${timestamp}${EVENTS_SECRET}`;
+  const raw = `${concatenated}${timestamp}${eventsSecret}`;
   const expected = createHash("sha256").update(raw).digest("hex");
 
   if (expected.toLowerCase() !== signature.checksum.toLowerCase()) return null;

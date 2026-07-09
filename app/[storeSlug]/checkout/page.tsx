@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { isWompiConfigured } from "@/lib/wompi";
+import { isWompiConfigured, resolveWompiKeys } from "@/lib/wompi";
 import CheckoutForm from "./checkout-form";
 
 // Server component: decide qué métodos de pago ofrecer según los ajustes de la
@@ -18,12 +18,17 @@ export default async function CheckoutPage({
       codEnabled: true,
       shippingCents: true,
       freeShippingOverCents: true,
+      wompiPublicKey: true,
+      wompiPrivateKey: true,
+      wompiIntegritySecret: true,
+      wompiEventsSecret: true,
     },
   });
   if (!store) notFound();
 
   // El pago en línea requiere que la tienda lo permita Y que haya llaves Wompi.
-  const onlineEnabled = store.onlinePaymentEnabled && isWompiConfigured();
+  const onlineEnabled =
+    store.onlinePaymentEnabled && isWompiConfigured(resolveWompiKeys(store));
   const codEnabled = store.codEnabled;
 
   return (

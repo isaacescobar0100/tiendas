@@ -49,6 +49,7 @@ model Store {
   id          String     @id @default(cuid())
   name        String
   slug        String     @unique
+  customDomain String?   @unique // dominio propio (ej. yoswill.com) → mapea a esta tienda
   description String?
   logoUrl     String?
   bannerUrl   String?    // imagen de banner (portada) en la página de la tienda
@@ -65,6 +66,12 @@ model Store {
   // Envío: costo fijo por pedido y umbral opcional de envío gratis (0 = desactivado)
   shippingCents        Int     @default(0)
   freeShippingOverCents Int    @default(0)
+  // Llaves de Wompi POR TIENDA (las gestiona el superadmin). Si están vacías,
+  // se usan las del entorno (.env) como respaldo para pruebas.
+  wompiPublicKey       String?
+  wompiPrivateKey      String?
+  wompiIntegritySecret String?
+  wompiEventsSecret    String?
   owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId     String     @unique
   categories  Category[]

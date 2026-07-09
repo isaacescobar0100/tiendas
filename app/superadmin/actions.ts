@@ -78,6 +78,86 @@ export async function createStoreAction(
   redirect("/superadmin");
 }
 
+/** Normaliza un dominio: minúsculas, sin protocolo, sin ruta ni puerto. */
+function normalizeDomain(raw?: string): string | null {
+  const d = (raw ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/[/:].*$/, "");
+  return d || null;
+}
+
+const configSchema = z.object({
+  storeId: z.string().min(1),
+  slug: z.string().min(2, "El slug es muy corto."),
+  customDomain: z.string().optional(),
+  wompiPublicKey: z.string().optional(),
+  wompiPrivateKey: z.string().optional(),
+  wompiIntegritySecret: z.string().optional(),
+  wompiEventsSecret: z.string().optional(),
+});
+
+/** El superadmin edita la URL (slug), el dominio propio y las llaves de Wompi. */
+export async function updateStoreConfigAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireSuperadmin();
+
+  const parsed = configSchema.safeParse({
+    storeId: formData.get("storeId"),
+    slug: formData.get("slug"),
+    customDomain: formData.get("customDomain") ?? "",
+    wompiPublicKey: formData.get("wompiPublicKey") ?? "",
+    wompiPrivateKey: formData.get("wompiPrivateKey") ?? "",
+    wompiIntegritySecret: formData.get("wompiIntegritySecret") ?? "",
+    wompiEventsSecret: formData.get("wompiEventsSecret") ?? "",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const d = parsed.data;
+
+  const store = await prisma.store.findUnique({ where: { id: d.storeId } });
+  if (!store) return { error: "Tienda no encontrada." };
+
+  const slug = slugify(d.slug);
+  if (!slug) return { error: "Slug inválido." };
+  if (await prisma.store.findFirst({ where: { slug, id: { not: store.id } } })) {
+    return { error: "Ese slug ya está en uso por otra tienda." };
+  }
+
+  const customDomain = normalizeDomain(d.customDomain);
+  if (
+    customDomain &&
+    (await prisma.store.findFirst({
+      where: { customDomain, id: { not: store.id } },
+    }))
+  ) {
+    return { error: "Ese dominio ya está asignado a otra tienda." };
+  }
+
+  const s = (v?: string) => {
+    const t = (v ?? "").trim();
+    return t.length ? t : null;
+  };
+
+  await prisma.store.update({
+    where: { id: store.id },
+    data: {
+      slug,
+      customDomain,
+      wompiPublicKey: s(d.wompiPublicKey),
+      wompiPrivateKey: s(d.wompiPrivateKey),
+      wompiIntegritySecret: s(d.wompiIntegritySecret),
+      wompiEventsSecret: s(d.wompiEventsSecret),
+    },
+  });
+
+  revalidatePath("/superadmin");
+  revalidatePath(`/${slug}`);
+  return { ok: true };
+}
+
 export async function toggleStoreActiveAction(formData: FormData) {
   await requireSuperadmin();
   const storeId = String(formData.get("storeId"));

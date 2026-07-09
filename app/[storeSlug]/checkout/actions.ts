@@ -4,7 +4,11 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
-import { isWompiConfigured, buildCheckoutUrl } from "@/lib/wompi";
+import {
+  isWompiConfigured,
+  buildCheckoutUrl,
+  resolveWompiKeys,
+} from "@/lib/wompi";
 import { computeShipping } from "@/lib/shipping";
 import { effectivePriceCents } from "@/lib/pricing";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
@@ -96,7 +100,8 @@ export async function placeOrderAction(
   if (!store) return { error: "Tienda no encontrada." };
 
   // Resuelve el método de pago según lo elegido y lo que la tienda permite.
-  const onlineAvailable = store.onlinePaymentEnabled && isWompiConfigured();
+  const wompiKeys = resolveWompiKeys(store);
+  const onlineAvailable = store.onlinePaymentEnabled && isWompiConfigured(wompiKeys);
   const codAvailable = store.codEnabled;
   const requested = String(formData.get("paymentMethod") ?? "");
   let useOnline: boolean;
@@ -249,12 +254,15 @@ export async function placeOrderAction(
       const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
       const proto = h.get("x-forwarded-proto") ?? "http";
       const redirectUrl = `${proto}://${host}/${storeSlug}/checkout/success?order=${order.id}`;
-      const checkoutUrl = buildCheckoutUrl({
-        reference: order.id,
-        amountInCents: grandTotalCents,
-        redirectUrl,
-        customerEmail: d.customerEmail,
-      });
+      const checkoutUrl = buildCheckoutUrl(
+        {
+          reference: order.id,
+          amountInCents: grandTotalCents,
+          redirectUrl,
+          customerEmail: d.customerEmail,
+        },
+        wompiKeys,
+      );
       return { orderId: order.id, checkoutUrl };
     }
 
