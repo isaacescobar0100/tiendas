@@ -8,6 +8,7 @@ import { CartButton } from "@/components/cart/cart-button";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { FavoritesProvider } from "@/components/favorites/favorites-context";
 import { getCurrentCustomer } from "@/lib/customer-auth";
+import { StoreUnavailable } from "@/components/store-unavailable";
 import { AccountMenu } from "./cuenta/account-menu";
 
 export default async function StoreLayout({
@@ -19,11 +20,12 @@ export default async function StoreLayout({
 }) {
   const { storeSlug } = await params;
   const store = await prisma.store.findFirst({
-    where: { slug: storeSlug, active: true },
+    where: { slug: storeSlug },
     select: {
       id: true,
       name: true,
       slug: true,
+      active: true,
       currency: true,
       logoUrl: true,
       themeColor: true,
@@ -44,6 +46,17 @@ export default async function StoreLayout({
       redirect(`/${alias.store.slug}${rest}`);
     }
     notFound();
+  }
+
+  // Tienda desactivada: página de mantenimiento (no renderizamos la tienda).
+  if (!store.active) {
+    return (
+      <StoreUnavailable
+        name={store.name}
+        logoUrl={store.logoUrl}
+        themeColor={store.themeColor}
+      />
+    );
   }
 
   const customer = await getCurrentCustomer(store.id);
