@@ -25,7 +25,7 @@ export function BannerSlider({ slides }: { slides: BannerSlide[] }) {
   if (n === 0) return null;
 
   return (
-    <div className="relative mb-8 h-36 overflow-hidden rounded-2xl border border-gray-200 sm:h-44 md:h-52">
+    <div className="relative mb-8 h-[216px] overflow-hidden rounded-2xl border border-gray-200 sm:h-[264px] md:h-[312px]">
       {slides.map((s, idx) => (
         <Slide key={idx} slide={s} active={idx === i} />
       ))}
