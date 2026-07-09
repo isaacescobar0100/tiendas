@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, X, Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { SalesBars, HBars } from "@/components/charts";
 import {
   deleteStoreAction,
   toggleStoreActiveAction,
@@ -13,6 +14,7 @@ import {
 import type { StorePlan } from "@prisma/client";
 
 const dateFmt = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
+const dayFmt = new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit" });
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +47,31 @@ export default async function SuperadminHome({
     }),
   ]);
 
+  // Ventas de los últimos 14 días (toda la plataforma, sin cancelados).
+  const startDay = new Date();
+  startDay.setHours(0, 0, 0, 0);
+  startDay.setDate(startDay.getDate() - 13);
+  const recentOrders = await prisma.order.findMany({
+    where: { status: { not: "CANCELLED" }, createdAt: { gte: startDay } },
+    select: { createdAt: true, totalCents: true },
+  });
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(startDay);
+    d.setDate(d.getDate() + i);
+    return { date: d, cents: 0 };
+  });
+  const dayIdx = new Map(days.map((d, i) => [d.date.getTime(), i]));
+  for (const o of recentOrders) {
+    const od = new Date(o.createdAt);
+    od.setHours(0, 0, 0, 0);
+    const j = dayIdx.get(od.getTime());
+    if (j !== undefined) days[j].cents += o.totalCents;
+  }
+  const dayPoints = days.map((d) => ({
+    label: dayFmt.format(d.date),
+    cents: d.cents,
+  }));
+
   const totalProducts = stores.reduce((n, s) => n + s._count.products, 0);
   // La facturación mezcla monedas; se muestra como referencia agregada en COP
   const grossCents = paidAgg._sum.totalCents ?? 0;
@@ -58,6 +85,17 @@ export default async function SuperadminHome({
   const overdueCount = stores.filter(
     (s) => s.plan === "RENT" && s.paidUntil && s.paidUntil.getTime() < now,
   ).length;
+
+  // Ranking: facturado por tienda (entregados).
+  const rankItems = stores
+    .map((s) => ({
+      label: s.name,
+      value: revByStore.get(s.id) ?? 0,
+      display: formatPrice(revByStore.get(s.id) ?? 0, s.currency),
+    }))
+    .filter((i) => i.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8);
 
   return (
     <div className="space-y-8">
@@ -92,12 +130,20 @@ export default async function SuperadminHome({
             Gestiona todas las tiendas de la plataforma.
           </p>
         </div>
-        <Link
-          href="/superadmin/stores/new"
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
-        >
-          + Nueva tienda
-        </Link>
+        <div className="flex gap-2">
+          <a
+            href="/api/superadmin/export?store=all"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Download className="h-4 w-4" /> Exportar todo
+          </a>
+          <Link
+            href="/superadmin/stores/new"
+            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+          >
+            + Nueva tienda
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -119,6 +165,30 @@ export default async function SuperadminHome({
         * Suma de los pedidos ENTREGADOS (dinero ya recibido); los no entregados
         no cuentan (referencia; las tiendas pueden usar distintas monedas).
       </p>
+
+      {/* Gráficas */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white lg:col-span-2">
+          <div className="border-b border-gray-100 px-5 py-3">
+            <h2 className="text-sm font-semibold text-gray-900">
+              Ventas de la plataforma (últimos 14 días)
+            </h2>
+          </div>
+          <div className="px-5 py-4">
+            <SalesBars days={dayPoints} color="#111827" currency="COP" />
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+          <div className="border-b border-gray-100 px-5 py-3">
+            <h2 className="text-sm font-semibold text-gray-900">
+              Facturado por tienda
+            </h2>
+          </div>
+          <div className="px-5 py-4">
+            <HBars items={rankItems} color="#111827" />
+          </div>
+        </div>
+      </div>
 
       {stores.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center">
@@ -148,13 +218,16 @@ export default async function SuperadminHome({
               {stores.map((store) => (
                 <tr key={store.id}>
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">
+                    <Link
+                      href={`/superadmin/stores/${store.id}`}
+                      className="font-medium text-gray-900 hover:underline"
+                    >
                       {store.name}
-                    </div>
+                    </Link>
                     <Link
                       href={`/${store.slug}`}
                       target="_blank"
-                      className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
                     >
                       /{store.slug} <ExternalLink className="h-3 w-3" />
                     </Link>
