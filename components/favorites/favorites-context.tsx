@@ -31,12 +31,16 @@ const FavContext = createContext<FavContextValue | null>(null);
 
 export function FavoritesProvider({
   storeSlug,
+  customerId = null,
   children,
 }: {
   storeSlug: string;
+  customerId?: string | null;
   children: React.ReactNode;
 }) {
-  const storageKey = `favs:${storeSlug}`;
+  // Clave por tienda y por cliente: cada cuenta tiene sus propios favoritos
+  // (los invitados comparten un espacio "guest").
+  const storageKey = `favs:${storeSlug}:${customerId ?? "guest"}`;
   const [items, setItems] = useState<FavItem[]>([]);
   const [ready, setReady] = useState(false);
 

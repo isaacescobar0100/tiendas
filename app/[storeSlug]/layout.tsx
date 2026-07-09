@@ -35,9 +35,10 @@ export default async function StoreLayout({
   const customer = await getCurrentCustomer(store.id);
 
   return (
-    <FavoritesProvider storeSlug={store.slug}>
+    <FavoritesProvider storeSlug={store.slug} customerId={customer?.id ?? null}>
     <CartProvider
       storeSlug={store.slug}
+      customerId={customer?.id ?? null}
       currency={store.currency}
       shippingCents={store.shippingCents}
       freeShippingOverCents={store.freeShippingOverCents}

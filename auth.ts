@@ -41,8 +41,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         if (!user) return null;
 
+        // Bloqueo por intentos fallidos (3 → bloqueo 15 min).
+        const now = Date.now();
+        if (user.lockedUntil && user.lockedUntil.getTime() > now) return null;
+
         const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+        if (!valid) {
+          const attempts = (user.lockedUntil ? 0 : user.failedAttempts) + 1;
+          await prisma.user.update({
+            where: { id: user.id },
+            data:
+              attempts >= 3
+                ? { failedAttempts: 0, lockedUntil: new Date(now + 15 * 60000) }
+                : { failedAttempts: attempts, lockedUntil: null },
+          });
+          return null;
+        }
+
+        // Éxito: limpia el conteo.
+        if (user.failedAttempts !== 0 || user.lockedUntil) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { failedAttempts: 0, lockedUntil: null },
+          });
+        }
 
         return {
           id: user.id,

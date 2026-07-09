@@ -12,6 +12,11 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export type AccountState = { error?: string } | undefined;
 
+// Bloqueo por intentos fallidos.
+const MAX_ATTEMPTS = 3;
+const LOCK_MIN = 15;
+const LOCK_MS = LOCK_MIN * 60 * 1000;
+
 const registerSchema = z.object({
   name: z.string().min(2, "Indica tu nombre."),
   email: z.string().email("Email inválido."),
@@ -79,8 +84,46 @@ export async function loginAction(
   const customer = await prisma.customer.findUnique({
     where: { storeId_email: { storeId: store.id, email } },
   });
-  if (!customer || !(await bcrypt.compare(password, customer.passwordHash))) {
-    return { error: "Email o contraseña incorrectos." };
+  if (!customer) return { error: "Email o contraseña incorrectos." };
+
+  const now = Date.now();
+  // ¿Cuenta bloqueada todavía?
+  if (customer.lockedUntil && customer.lockedUntil.getTime() > now) {
+    const mins = Math.ceil((customer.lockedUntil.getTime() - now) / 60000);
+    return {
+      error: `Cuenta bloqueada por seguridad. Inténtalo en ${mins} min.`,
+    };
+  }
+
+  const valid = await bcrypt.compare(password, customer.passwordHash);
+  if (!valid) {
+    // Si el bloqueo anterior ya expiró, se reinicia el conteo.
+    const attempts = (customer.lockedUntil ? 0 : customer.failedAttempts) + 1;
+    if (attempts >= MAX_ATTEMPTS) {
+      await prisma.customer.update({
+        where: { id: customer.id },
+        data: { failedAttempts: 0, lockedUntil: new Date(now + LOCK_MS) },
+      });
+      return {
+        error: `Demasiados intentos. Cuenta bloqueada ${LOCK_MIN} minutos.`,
+      };
+    }
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: { failedAttempts: attempts, lockedUntil: null },
+    });
+    const left = MAX_ATTEMPTS - attempts;
+    return {
+      error: `Email o contraseña incorrectos. Te queda${left === 1 ? "" : "n"} ${left} intento${left === 1 ? "" : "s"}.`,
+    };
+  }
+
+  // Éxito: limpia el conteo de intentos.
+  if (customer.failedAttempts !== 0 || customer.lockedUntil) {
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: { failedAttempts: 0, lockedUntil: null },
+    });
   }
 
   await setCustomerSession({ customerId: customer.id, storeId: store.id });

@@ -36,6 +36,9 @@ model User {
   name         String?
   passwordHash String
   role         Role     @default(ADMIN)
+  // Anti fuerza bruta: intentos fallidos y bloqueo temporal de la cuenta.
+  failedAttempts Int      @default(0)
+  lockedUntil    DateTime?
   // Un ADMIN es dueño de (como máximo) una tienda. SUPERADMIN no tiene tienda.
   store        Store?
   createdAt    DateTime @default(now())
@@ -105,6 +108,9 @@ model Customer {
   email        String
   name         String
   passwordHash String
+  // Anti fuerza bruta: intentos fallidos y bloqueo temporal de la cuenta.
+  failedAttempts Int      @default(0)
+  lockedUntil    DateTime?
   createdAt    DateTime @default(now())
 
   @@unique([storeId, email])

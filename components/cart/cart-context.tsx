@@ -49,18 +49,22 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({
   storeSlug,
+  customerId = null,
   currency = "COP",
   shippingCents = 0,
   freeShippingOverCents = 0,
   children,
 }: {
   storeSlug: string;
+  customerId?: string | null;
   currency?: string;
   shippingCents?: number;
   freeShippingOverCents?: number;
   children: React.ReactNode;
 }) {
-  const storageKey = `cart:${storeSlug}`;
+  // Clave por tienda y por cliente: cada cuenta tiene su propio carrito
+  // (los invitados comparten un espacio "guest").
+  const storageKey = `cart:${storeSlug}:${customerId ?? "guest"}`;
   const [items, setItems] = useState<CartItem[]>([]);
   const [ready, setReady] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
