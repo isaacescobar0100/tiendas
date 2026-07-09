@@ -76,7 +76,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
       {/* Panel lateral (móvil) */}
       <div
         className={`fixed inset-0 z-50 sm:hidden ${open ? "" : "pointer-events-none"}`}
-        aria-hidden={!open}
+        inert={!open}
       >
         {/* Fondo */}
         <div

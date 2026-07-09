@@ -29,7 +29,7 @@ export function BannerSlider({ slides }: { slides: BannerSlide[] }) {
   return (
     <div className="relative mb-8 h-[216px] overflow-hidden rounded-2xl border border-gray-200 sm:h-[264px] md:h-[312px]">
       {slides.map((s, idx) => (
-        <Slide key={idx} slide={s} active={idx === i} />
+        <Slide key={idx} slide={s} active={idx === i} priority={idx === 0} />
       ))}
 
       {n > 1 && (
@@ -51,7 +51,15 @@ export function BannerSlider({ slides }: { slides: BannerSlide[] }) {
   );
 }
 
-function Slide({ slide, active }: { slide: BannerSlide; active: boolean }) {
+function Slide({
+  slide,
+  active,
+  priority = false,
+}: {
+  slide: BannerSlide;
+  active: boolean;
+  priority?: boolean;
+}) {
   const cls = `absolute inset-0 transition-opacity duration-700 ${
     active ? "opacity-100" : "pointer-events-none opacity-0"
   }`;
@@ -63,6 +71,9 @@ function Slide({ slide, active }: { slide: BannerSlide; active: boolean }) {
         <img
           src={slide.imageUrl}
           alt={slide.title ?? "Promoción"}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          decoding="async"
           // Rellena todo el banner (recorta lo que sobre) con el encuadre elegido.
           style={{
             objectPosition: slide.imagePosition ?? "50% 50%",
