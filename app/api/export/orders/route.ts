@@ -85,10 +85,16 @@ export async function GET(request: Request) {
     "Total",
   ];
 
-  const dateFmt = new Intl.DateTimeFormat("es", {
+  const dateFmt = new Intl.DateTimeFormat("es-CO", {
     timeZone: "America/Bogota",
     dateStyle: "short",
-    timeStyle: "short",
+  });
+  // Hora en formato 12 h (ej. 4:19 p. m. en vez de 16:19).
+  const timeFmt = new Intl.DateTimeFormat("es-CO", {
+    timeZone: "America/Bogota",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
   });
 
   const rows = orders.map((o) => {
@@ -99,7 +105,7 @@ export async function GET(request: Request) {
       })
       .join(" | ");
     return [
-      dateFmt.format(o.createdAt),
+      `${dateFmt.format(o.createdAt)} ${timeFmt.format(o.createdAt)}`,
       o.id.slice(-8),
       o.customerName,
       o.customerEmail,
