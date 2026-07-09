@@ -81,6 +81,8 @@ model Store {
   // Cobro: tipo de plan y (para renta) hasta cuándo está pagada.
   plan       StorePlan @default(SALE)
   paidUntil  DateTime?
+  // Último aviso de renta enviado (ej. "soon:2026-08-09"); evita reenvíos diarios.
+  rentNotice String?
   owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId     String     @unique
   categories  Category[]

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { requireSuperadmin } from "@/lib/guards";
 import { setImpersonation, clearImpersonation } from "@/lib/impersonation";
+import { sendRentEmail } from "@/lib/email";
 
 const createStoreSchema = z.object({
   storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
@@ -162,6 +163,9 @@ export async function updateStoreConfigAction(
   const plan = d.plan === "RENT" ? "RENT" : "SALE";
   const paidUntil =
     plan === "RENT" && d.paidUntil ? new Date(d.paidUntil) : null;
+  // Si cambia la fecha de pago, reinicia el aviso para el nuevo ciclo.
+  const paidChanged =
+    (paidUntil?.getTime() ?? null) !== (store.paidUntil?.getTime() ?? null);
 
   await prisma.store.update({
     where: { id: store.id },
@@ -171,6 +175,7 @@ export async function updateStoreConfigAction(
       customDomain,
       plan,
       paidUntil,
+      ...(paidChanged ? { rentNotice: null } : {}),
       wompiPublicKey: s(d.wompiPublicKey),
       wompiPrivateKey: s(d.wompiPrivateKey),
       wompiIntegritySecret: s(d.wompiIntegritySecret),
@@ -189,7 +194,10 @@ export async function updateStoreConfigAction(
 export async function renewStoreAction(formData: FormData) {
   await requireSuperadmin();
   const storeId = String(formData.get("storeId"));
-  const store = await prisma.store.findUnique({ where: { id: storeId } });
+  const store = await prisma.store.findUnique({
+    where: { id: storeId },
+    include: { owner: { select: { email: true } } },
+  });
   if (!store) return;
 
   const base =
@@ -200,7 +208,14 @@ export async function renewStoreAction(formData: FormData) {
 
   await prisma.store.update({
     where: { id: storeId },
-    data: { plan: "RENT", paidUntil: base, active: true },
+    data: { plan: "RENT", paidUntil: base, active: true, rentNotice: null },
+  });
+  // Confirmación al admin de la tienda (no bloquea si el correo falla).
+  await sendRentEmail({
+    to: store.owner.email,
+    storeName: store.name,
+    kind: "renewed",
+    paidUntil: base,
   });
   revalidatePath("/superadmin");
 }

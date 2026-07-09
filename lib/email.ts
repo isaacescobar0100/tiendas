@@ -217,6 +217,54 @@ export async function sendStatusEmail(opts: {
   }
 }
 
+/** Aviso de renta al admin de la tienda (vence pronto / vencida / renovada). */
+export async function sendRentEmail(opts: {
+  to: string;
+  storeName: string;
+  kind: "soon" | "overdue" | "renewed";
+  paidUntil: Date;
+}): Promise<boolean> {
+  if (!BREVO_API_KEY || !SENDER_EMAIL) return false;
+  const fecha = new Intl.DateTimeFormat("es", {
+    timeZone: "America/Bogota",
+    dateStyle: "long",
+  }).format(opts.paidUntil);
+
+  const map = {
+    soon: {
+      subject: `Tu plan de ${opts.storeName} vence pronto`,
+      body: `<h2 style="margin:0 0 8px">Tu plan vence pronto</h2>
+        <p>El plan de tu tienda <strong>${esc(opts.storeName)}</strong> vence el <strong>${fecha}</strong>.</p>
+        <p>Renueva el pago a tiempo para que tu tienda siga activa sin interrupciones.</p>`,
+    },
+    overdue: {
+      subject: `Tu plan de ${opts.storeName} está vencido`,
+      body: `<h2 style="margin:0 0 8px">Tu plan está vencido</h2>
+        <p>El plan de tu tienda <strong>${esc(opts.storeName)}</strong> venció el <strong>${fecha}</strong>.</p>
+        <p>Ponte al día con el pago para no perder el acceso a tu tienda.</p>`,
+    },
+    renewed: {
+      subject: `Plan renovado — ${opts.storeName}`,
+      body: `<h2 style="margin:0 0 8px">¡Plan renovado! ✅</h2>
+        <p>El plan de tu tienda <strong>${esc(opts.storeName)}</strong> quedó activo hasta el <strong>${fecha}</strong>.</p>
+        <p>¡Gracias!</p>`,
+    },
+  }[opts.kind];
+
+  try {
+    await brevoSend({
+      to: opts.to,
+      senderName: opts.storeName,
+      subject: map.subject,
+      html: wrap(map.body),
+    });
+    return true;
+  } catch (e) {
+    console.error("[email] Error enviando aviso de renta:", e);
+    return false;
+  }
+}
+
 /** Envía el correo con el enlace para restablecer la contraseña. */
 export async function sendPasswordResetEmail(opts: {
   to: string;
