@@ -155,6 +155,8 @@ export default async function ProductsPage({
                       <img
                         src={p.imageUrl || "https://placehold.co/48x48?text=%20"}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                         className="h-10 w-10 rounded-md object-cover"
                       />
                       <span className="font-medium text-gray-900">

@@ -29,11 +29,15 @@ export function ProductCard({
   currency,
   product,
   freeShipping = false,
+  priority = false,
 }: {
   storeSlug: string;
   currency: string;
   product: CardProduct;
   freeShipping?: boolean;
+  // Imágenes visibles de entrada: cargan con prioridad (mejor LCP). El resto,
+  // en diferido (lazy) para aligerar la primera vista.
+  priority?: boolean;
 }) {
   const { add } = useCart();
   const [added, setAdded] = useState(false);
@@ -138,6 +142,9 @@ export function ProductCard({
             ref={imgRef}
             src={product.imageUrl || "https://placehold.co/400x400?text=Producto"}
             alt={product.name}
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
+            decoding="async"
             style={{
               objectPosition: product.imagePosition ?? "50% 50%",
               transform: `scale(${product.imageZoom ?? 1})`,
@@ -146,9 +153,9 @@ export function ProductCard({
           />
         </div>
         <div className="p-3 pb-2">
-          <h3 className="truncate text-sm font-medium text-gray-900">
+          <p className="truncate text-sm font-medium text-gray-900">
             {product.name}
-          </h3>
+          </p>
           <div className="mt-1 flex items-baseline gap-2">
             <p className="font-semibold text-gray-900">
               {formatPrice(effectiveCents, currency)}

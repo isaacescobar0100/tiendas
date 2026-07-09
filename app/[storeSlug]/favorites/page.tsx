@@ -48,13 +48,15 @@ export default function FavoritesPage() {
                 <img
                   src={p.imageUrl || "https://placehold.co/400x400?text=Producto"}
                   alt={p.name}
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover transition group-hover:scale-105"
                 />
               </div>
               <div className="p-3">
-                <h3 className="truncate text-sm font-medium text-gray-900">
+                <p className="truncate text-sm font-medium text-gray-900">
                   {p.name}
-                </h3>
+                </p>
                 <p className="mt-1 font-semibold text-gray-900">
                   {formatPrice(p.priceCents, currency)}
                 </p>

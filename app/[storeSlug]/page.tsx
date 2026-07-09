@@ -269,12 +269,13 @@ export default async function StorefrontPage({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
-          {products.map((p) => (
+          {products.map((p, i) => (
             <ProductCard
               key={p.id}
               storeSlug={store.slug}
               currency={store.currency}
               freeShipping={store.shippingCents === 0}
+              priority={i < 4}
               product={{
                 id: p.id,
                 slug: p.slug,
