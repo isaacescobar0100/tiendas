@@ -50,3 +50,8 @@ next-env.d.ts
 
 # temporales de scripts
 tmp-*
+
+# Configuracion local de herramientas de desarrollo
+.claude/
+CLAUDE.md
+AGENTS.md
