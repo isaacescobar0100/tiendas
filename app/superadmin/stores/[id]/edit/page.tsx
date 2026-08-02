@@ -45,6 +45,8 @@ export default async function EditStorePage({
           paidUntil: store.paidUntil
             ? store.paidUntil.toISOString().slice(0, 10)
             : "",
+          onlinePaymentEnabled: store.onlinePaymentEnabled,
+          codEnabled: store.codEnabled,
           wompiPublicKey: store.wompiPublicKey,
           wompiPrivateKey: store.wompiPrivateKey,
           wompiIntegritySecret: store.wompiIntegritySecret,

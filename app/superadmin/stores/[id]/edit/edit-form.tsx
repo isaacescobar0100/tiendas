@@ -11,6 +11,8 @@ type StoreCfg = {
   customDomain: string | null;
   plan: "SALE" | "RENT";
   paidUntil: string; // YYYY-MM-DD o ""
+  onlinePaymentEnabled: boolean;
+  codEnabled: boolean;
   wompiPublicKey: string | null;
   wompiPrivateKey: string | null;
   wompiIntegritySecret: string | null;
@@ -82,10 +84,39 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
         </div>
       </fieldset>
 
+      {/* Métodos de pago */}
+      <fieldset className="space-y-3 border-t border-gray-100 pt-6">
+        <legend className="text-sm font-semibold text-gray-900">
+          Métodos de pago (en la tienda)
+        </legend>
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            name="onlinePayment"
+            defaultChecked={store.onlinePaymentEnabled}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          Pago en línea (Wompi)
+        </label>
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            name="codPayment"
+            defaultChecked={store.codEnabled}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          Contra entrega / coordinado (sin pasarela)
+        </label>
+        <p className="text-xs text-gray-400">
+          Debe quedar al menos uno activo. Para negocios que cobran por
+          transferencia/WhatsApp, deja solo &ldquo;Contra entrega&rdquo;.
+        </p>
+      </fieldset>
+
       {/* Cobro */}
       <fieldset className="space-y-4 border-t border-gray-100 pt-6">
         <legend className="text-sm font-semibold text-gray-900">
-          Cobro
+          Cobro (plan de la tienda)
         </legend>
         <div>
           <label className={labelCls}>Tipo</label>

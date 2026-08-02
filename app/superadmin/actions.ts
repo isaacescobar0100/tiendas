@@ -167,6 +167,13 @@ export async function updateStoreConfigAction(
   const paidChanged =
     (paidUntil?.getTime() ?? null) !== (store.paidUntil?.getTime() ?? null);
 
+  // Métodos de pago (checkboxes). Debe quedar al menos uno activo.
+  const onlinePaymentEnabled = formData.get("onlinePayment") === "on";
+  const codEnabled = formData.get("codPayment") === "on";
+  if (!onlinePaymentEnabled && !codEnabled) {
+    return { error: "Debe quedar al menos un método de pago activo." };
+  }
+
   await prisma.store.update({
     where: { id: store.id },
     data: {
@@ -175,6 +182,8 @@ export async function updateStoreConfigAction(
       customDomain,
       plan,
       paidUntil,
+      onlinePaymentEnabled,
+      codEnabled,
       ...(paidChanged ? { rentNotice: null } : {}),
       wompiPublicKey: s(d.wompiPublicKey),
       wompiPrivateKey: s(d.wompiPrivateKey),
