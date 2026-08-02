@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { normalizeWhatsapp } from "@/lib/whatsapp";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 import { VideoHero } from "@/components/video-hero";
@@ -175,6 +182,13 @@ export default async function StorefrontPage({
     return `/${store.slug}${qs ? `?${qs}` : ""}`;
   };
 
+  // Sedes/ubicaciones (para negocios con varias sedes).
+  const locations = await prisma.storeLocation.findMany({
+    where: { storeId: store.id },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: { id: true, name: true, address: true, whatsapp: true },
+  });
+
   return (
     <div>
       {store.bannerVideoUrl ? (
@@ -346,6 +360,47 @@ export default async function StorefrontPage({
             </span>
           )}
         </div>
+      )}
+
+      {locations.length > 0 && (
+        <section className="mt-16">
+          <h2 className="mb-6 text-lg font-bold text-gray-900">Ubicaciones</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {locations.map((l) => {
+              const wa = normalizeWhatsapp(l.whatsapp);
+              return (
+                <div
+                  key={l.id}
+                  className="flex flex-col rounded-2xl border border-gray-200 p-5"
+                >
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[var(--brand)]" />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900">{l.name}</p>
+                      {l.address && (
+                        <p className="mt-0.5 text-sm text-gray-500">
+                          {l.address}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {wa.length >= 10 && (
+                    <a
+                      href={`https://wa.me/${wa}?text=${encodeURIComponent(
+                        `Hola ${store.name}, quiero hacer un pedido en ${l.name}.`,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-medium text-white hover:brightness-105"
+                    >
+                      Pedir por WhatsApp
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       )}
     </div>
   );

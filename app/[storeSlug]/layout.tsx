@@ -62,7 +62,14 @@ export default async function StoreLayout({
     );
   }
 
-  const customer = await getCurrentCustomer(store.id);
+  const [customer, locations] = await Promise.all([
+    getCurrentCustomer(store.id),
+    prisma.storeLocation.findMany({
+      where: { storeId: store.id },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: { name: true, whatsapp: true },
+    }),
+  ]);
 
   return (
     <FavoritesProvider storeSlug={store.slug} customerId={customer?.id ?? null}>
@@ -150,7 +157,11 @@ export default async function StoreLayout({
         </footer>
       </div>
       <CartDrawer />
-      <WhatsappFab whatsapp={store.whatsapp} storeName={store.name} />
+      <WhatsappFab
+        whatsapp={store.whatsapp}
+        storeName={store.name}
+        locations={locations}
+      />
       </div>
     </CartProvider>
     </FavoritesProvider>

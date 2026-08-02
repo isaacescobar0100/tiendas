@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/admin/orders", label: "Pedidos" },
   { href: "/admin/categories", label: "Categorías" },
   { href: "/admin/promotions", label: "Promociones" },
+  { href: "/admin/sedes", label: "Sedes" },
   { href: "/admin/exportar", label: "Exportar" },
   { href: "/admin/settings", label: "Ajustes" },
 ];
