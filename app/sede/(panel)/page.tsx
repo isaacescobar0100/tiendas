@@ -23,8 +23,9 @@ export default async function SedeDashboard() {
   const currency = sede.store.currency;
   const pending = orders.filter((o) => o.fulfillment !== "DELIVERED").length;
   const delivered = orders.filter((o) => isDelivered(o.fulfillment)).length;
+  // Facturado = pedidos PAGADOS (dinero recibido), no los solo entregados.
   const revenue = orders
-    .filter((o) => isDelivered(o.fulfillment))
+    .filter((o) => o.status === "PAID")
     .reduce((n, o) => n + o.totalCents, 0);
 
   const today = new Date();
@@ -86,7 +87,7 @@ export default async function SedeDashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Facturado" value={formatPrice(revenue, currency)} sub="entregados" />
+        <Stat label="Facturado" value={formatPrice(revenue, currency)} sub="pagados" />
         <Stat label="Pedidos" value={String(orders.length)} sub={`${pending} por atender`} />
         <Stat label="Por atender" value={String(pending)} highlight={pending > 0} />
         <Stat label="Entregados" value={String(delivered)} />

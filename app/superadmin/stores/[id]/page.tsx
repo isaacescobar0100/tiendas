@@ -10,11 +10,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/guards";
 import { formatPrice, variantLabel } from "@/lib/utils";
-import {
-  PAYMENT_BADGE,
-  PAYMENT_LABEL,
-  isDelivered,
-} from "@/lib/order-status";
+import { PAYMENT_BADGE, PAYMENT_LABEL } from "@/lib/order-status";
 import { SalesBars, Donut, HBars } from "@/components/charts";
 import { impersonateStoreAction } from "../../actions";
 
@@ -51,7 +47,7 @@ export default async function SuperadminStoreDetail({
 
   const brand = store.themeColor || "#111827";
   const revenue = orders
-    .filter((o) => isDelivered(o.fulfillment))
+    .filter((o) => o.status === "PAID")
     .reduce((n, o) => n + o.totalCents, 0);
   const pending = orders.filter((o) => o.status === "PENDING").length;
   const lowStock = products.filter((p) => p.stock < 5).length;
@@ -156,7 +152,7 @@ export default async function SuperadminStoreDetail({
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat label="Facturado" value={formatPrice(revenue, store.currency)} sub="entregados" />
+        <Stat label="Facturado" value={formatPrice(revenue, store.currency)} sub="pagados" />
         <Stat label="Pedidos" value={String(orders.length)} sub={`${pending} pendientes`} />
         <Stat label="Productos" value={String(store._count.products)} />
         <Stat label="Stock bajo" value={String(lowStock)} highlight={lowStock > 0} />

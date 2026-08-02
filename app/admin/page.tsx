@@ -9,11 +9,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
-import {
-  PAYMENT_BADGE,
-  PAYMENT_LABEL,
-  isDelivered,
-} from "@/lib/order-status";
+import { PAYMENT_BADGE, PAYMENT_LABEL } from "@/lib/order-status";
 
 export const dynamic = "force-dynamic";
 
@@ -39,9 +35,9 @@ export default async function DashboardPage() {
     prisma.product.findMany({ where: { storeId: store.id } }),
   ]);
 
-  // Facturado = solo pedidos ENTREGADOS (dinero realmente recibido).
+  // Facturado = solo pedidos PAGADOS (dinero realmente recibido).
   const revenue = orders
-    .filter((o) => isDelivered(o.fulfillment))
+    .filter((o) => o.status === "PAID")
     .reduce((n, o) => n + o.totalCents, 0);
   const pending = orders.filter((o) => o.status === "PENDING").length;
   const lowStock = products
@@ -108,7 +104,7 @@ export default async function DashboardPage() {
         <StatCard
           label="Facturado"
           value={formatPrice(revenue, store.currency)}
-          sub="solo entregados"
+          sub="solo pagados"
           icon={<Wallet className="h-5 w-5" />}
           tint="green"
         />

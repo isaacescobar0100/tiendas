@@ -34,15 +34,15 @@ export default async function SuperadminHome({
     }),
     // Total de pedidos no cancelados (para la tarjeta "Pedidos").
     prisma.order.count({ where: { status: { not: "CANCELLED" } } }),
-    // Facturado: solo pedidos ENTREGADOS (dinero realmente recibido).
+    // Facturado: solo pedidos PAGADOS (dinero realmente recibido).
     prisma.order.aggregate({
-      where: { fulfillment: "DELIVERED" },
+      where: { status: "PAID" },
       _sum: { totalCents: true },
     }),
-    // Facturado por tienda (entregados) para el ranking.
+    // Facturado por tienda (pagados) para el ranking.
     prisma.order.groupBy({
       by: ["storeId"],
-      where: { fulfillment: "DELIVERED" },
+      where: { status: "PAID" },
       _sum: { totalCents: true },
     }),
   ]);
@@ -162,8 +162,9 @@ export default async function SuperadminHome({
         />
       </div>
       <p className="-mt-4 text-xs text-gray-400">
-        * Suma de los pedidos ENTREGADOS (dinero ya recibido); los no entregados
-        no cuentan (referencia; las tiendas pueden usar distintas monedas).
+        * Suma de los pedidos marcados como PAGADOS (dinero ya recibido); los no
+        pagados no cuentan (referencia; las tiendas pueden usar distintas
+        monedas).
       </p>
 
       {/* Gráficas */}
