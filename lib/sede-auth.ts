@@ -59,7 +59,9 @@ export async function getCurrentSede() {
       id: true,
       name: true,
       storeId: true,
-      store: { select: { name: true, slug: true, currency: true } },
+      store: {
+        select: { name: true, slug: true, currency: true, logoUrl: true },
+      },
     },
   });
   return sede;

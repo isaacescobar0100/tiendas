@@ -18,15 +18,24 @@ export default async function SedePanelLayout({
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <Store className="h-5 w-5 shrink-0 text-gray-700" />
+          <div className="flex min-w-0 items-center gap-2.5">
+            {sede.store.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={sede.store.logoUrl}
+                alt={sede.store.name}
+                className="h-9 w-9 shrink-0 rounded-lg object-cover"
+              />
+            ) : (
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white">
+                <Store className="h-4 w-4" />
+              </span>
+            )}
             <div className="min-w-0">
               <p className="truncate font-semibold text-gray-900">
-                {sede.name}
-              </p>
-              <p className="truncate text-xs text-gray-400">
                 {sede.store.name}
               </p>
+              <p className="truncate text-xs text-gray-400">{sede.name}</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
