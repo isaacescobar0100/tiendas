@@ -14,10 +14,12 @@ type Method = "online" | "cod";
 export default function CheckoutForm({
   onlineEnabled,
   codEnabled,
+  locations = [],
   shipping,
 }: {
   onlineEnabled: boolean;
   codEnabled: boolean;
+  locations?: { name: string; address: string | null }[];
   shipping: { shippingCents: number; freeShippingOverCents: number };
 }) {
   const { items, totalCents, currency, storeSlug, clear, ready } = useCart();
@@ -102,6 +104,30 @@ export default function CheckoutForm({
         <form action={formAction} className="space-y-5">
           <input type="hidden" name="storeSlug" value={storeSlug} />
           <input type="hidden" name="items" value={itemsPayload} />
+
+          {locations.length > 0 && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                ¿En qué sede quieres tu pedido?
+              </label>
+              <select
+                name="locationName"
+                required
+                defaultValue=""
+                className={inputCls}
+              >
+                <option value="" disabled>
+                  Elige una sede…
+                </option>
+                {locations.map((l) => (
+                  <option key={l.name} value={l.name}>
+                    {l.name}
+                    {l.address ? ` — ${l.address}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <Field label="Nombre completo" name="customerName" required />
           <Field

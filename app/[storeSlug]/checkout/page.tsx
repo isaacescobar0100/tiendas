@@ -14,6 +14,7 @@ export default async function CheckoutPage({
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
     select: {
+      id: true,
       onlinePaymentEnabled: true,
       codEnabled: true,
       shippingCents: true,
@@ -26,6 +27,12 @@ export default async function CheckoutPage({
   });
   if (!store) notFound();
 
+  const locations = await prisma.storeLocation.findMany({
+    where: { storeId: store.id },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    select: { name: true, address: true },
+  });
+
   // El pago en línea requiere que la tienda lo permita Y que haya llaves Wompi.
   const onlineEnabled =
     store.onlinePaymentEnabled && isWompiConfigured(resolveWompiKeys(store));
@@ -35,6 +42,7 @@ export default async function CheckoutPage({
     <CheckoutForm
       onlineEnabled={onlineEnabled}
       codEnabled={codEnabled}
+      locations={locations}
       shipping={{
         shippingCents: store.shippingCents,
         freeShippingOverCents: store.freeShippingOverCents,

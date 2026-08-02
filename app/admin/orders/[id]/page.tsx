@@ -165,6 +165,9 @@ export default async function OrderDetailPage({
               {order.customerPhone && (
                 <Row label="Teléfono" value={order.customerPhone} />
               )}
+              {order.locationName && (
+                <Row label="Sede" value={order.locationName} />
+              )}
             </dl>
           </div>
 

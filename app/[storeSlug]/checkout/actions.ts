@@ -95,9 +95,21 @@ export async function placeOrderAction(
 
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
-    include: { owner: { select: { email: true } } },
+    include: {
+      owner: { select: { email: true } },
+      locations: { select: { name: true } },
+    },
   });
   if (!store) return { error: "Tienda no encontrada." };
+
+  // Si la tienda tiene sedes, el cliente debe elegir una válida.
+  let locationName: string | null = null;
+  if (store.locations.length > 0) {
+    const chosen = String(formData.get("locationName") ?? "").trim();
+    const valid = store.locations.some((l) => l.name === chosen);
+    if (!valid) return { error: "Elige una sede para tu pedido." };
+    locationName = chosen;
+  }
 
   // Resuelve el método de pago según lo elegido y lo que la tienda permite.
   const wompiKeys = resolveWompiKeys(store);
@@ -221,6 +233,7 @@ export async function placeOrderAction(
           customerName: d.customerName,
           customerEmail: d.customerEmail,
           customerPhone: d.customerPhone ?? null,
+          locationName,
           street: d.street,
           neighborhood: d.neighborhood,
           city: d.city,
@@ -275,6 +288,7 @@ export async function placeOrderAction(
       customerName: d.customerName,
       customerEmail: d.customerEmail,
       customerPhone: d.customerPhone ?? null,
+      locationName,
       address,
       reference: d.reference ?? null,
       paymentLabel: "Contra entrega (pago al recibir)",

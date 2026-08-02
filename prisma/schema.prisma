@@ -240,6 +240,7 @@ model Order {
   customerName  String
   customerEmail String
   customerPhone String?
+  locationName  String? // sede elegida (para negocios con varias sedes)
   // Dirección desglosada (los pedidos antiguos solo tienen `address`)
   // `street` guarda la dirección completa (ej. "Cra 23D # 45-12, Apto 301").
   street        String?

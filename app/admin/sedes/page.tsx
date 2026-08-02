@@ -25,9 +25,9 @@ export default async function SedesPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Sedes</h1>
         <p className="text-sm text-gray-500">
-          Si tu negocio tiene varias sedes, agrégalas aquí con su WhatsApp. En la
-          tienda, el botón de WhatsApp deja elegir la sede y se muestran las
-          ubicaciones.
+          Si tu negocio tiene varias sedes, agrégalas aquí. Se muestran como
+          &ldquo;Ubicaciones&rdquo; en la tienda, y en el checkout el cliente
+          elige a qué sede es su pedido.
         </p>
       </div>
 
@@ -89,26 +89,14 @@ function LocationForm({
             className={inputCls}
           />
         </div>
-        <div className="flex items-end gap-4">
-          <div className="flex-1">
-            <label className={labelCls}>WhatsApp</label>
-            <input
-              name="whatsapp"
-              inputMode="tel"
-              defaultValue={location?.whatsapp ?? ""}
-              placeholder="300 123 4567"
-              className={inputCls}
-            />
-          </div>
-          <div className="w-24">
-            <label className={labelCls}>Orden</label>
-            <input
-              name="sortOrder"
-              type="number"
-              defaultValue={location?.sortOrder ?? 0}
-              className={inputCls}
-            />
-          </div>
+        <div className="w-24">
+          <label className={labelCls}>Orden</label>
+          <input
+            name="sortOrder"
+            type="number"
+            defaultValue={location?.sortOrder ?? 0}
+            className={inputCls}
+          />
         </div>
         <button
           type="submit"

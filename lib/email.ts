@@ -23,6 +23,7 @@ export type OrderEmailData = {
   customerName: string;
   customerEmail: string;
   customerPhone?: string | null;
+  locationName?: string | null; // sede elegida (negocios con varias sedes)
   address?: string | null; // resumen legible de la dirección
   reference?: string | null; // referencia / cómo llegar
   paymentLabel?: string; // p. ej. "Pagado en línea" o "Contra entrega"
@@ -85,6 +86,7 @@ function customerBlock(data: OrderEmailData): string {
     ["Cliente", esc(data.customerName)],
     ["Email", esc(data.customerEmail)],
     data.customerPhone ? ["Teléfono", esc(data.customerPhone)] : null,
+    data.locationName ? ["Sede", esc(data.locationName)] : null,
     data.address ? ["Dirección", esc(data.address)] : null,
     data.reference ? ["Referencia", esc(data.reference)] : null,
     data.paymentLabel ? ["Pago", esc(data.paymentLabel)] : null,
