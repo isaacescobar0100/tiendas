@@ -106,6 +106,9 @@ model StoreLocation {
   name      String   // ej. "Sede Las Nieves"
   address   String?  // dirección visible
   whatsapp  String?  // número de WhatsApp de esa sede
+  // Acceso propio de la sede (el admin lo crea). Ve solo los pedidos de su sede.
+  email        String? @unique
+  passwordHash String?
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 

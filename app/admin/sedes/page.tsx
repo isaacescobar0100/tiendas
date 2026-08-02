@@ -19,6 +19,7 @@ export default async function SedesPage() {
     where: { storeId: store.id },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
+  const loginUrl = "/sede/login";
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -28,6 +29,16 @@ export default async function SedesPage() {
           Si tu negocio tiene varias sedes, agrégalas aquí con su WhatsApp. En el
           checkout el cliente elige la sede, y al confirmar puede enviarte el
           pedido por WhatsApp a esa sede para que lo prepares.
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+        <p className="font-medium">Acceso por sede</p>
+        <p className="mt-1 text-blue-700">
+          Dale a cada sede un <strong>correo y contraseña</strong> abajo. Cada
+          sede entra en <span className="font-mono">{loginUrl}</span> y ve{" "}
+          <strong>solo los pedidos de su sede</strong>. Tú (admin) sigues viendo
+          todos en Pedidos.
         </p>
       </div>
 
@@ -114,6 +125,48 @@ function LocationForm({
             />
           </div>
         </div>
+
+        {/* Acceso propio de la sede */}
+        <div className="rounded-lg border border-gray-200 p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-700">Acceso de la sede</p>
+            {location?.email && (
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                Con acceso
+              </span>
+            )}
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelCls}>Correo de la sede</label>
+              <input
+                name="email"
+                type="email"
+                defaultValue={location?.email ?? ""}
+                placeholder="lasnieves@surenos.com"
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className={labelCls}>Contraseña</label>
+              <input
+                name="password"
+                type="password"
+                placeholder={
+                  location?.passwordHash
+                    ? "•••• (déjalo vacío para no cambiarla)"
+                    : "crea una clave (mín. 4)"
+                }
+                className={inputCls}
+              />
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-gray-400">
+            Con esto, la sede entra en{" "}
+            <span className="font-mono">/sede/login</span> y ve solo sus pedidos.
+          </p>
+        </div>
+
         <button
           type="submit"
           className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
