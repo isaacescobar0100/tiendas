@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 import { PackageSearch } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
-import { PAYMENT_LABEL, PAYMENT_BADGE } from "@/lib/order-status";
 import { getCurrentSede } from "@/lib/sede-auth";
 import { SedeFulfillmentSelect } from "@/components/sede-fulfillment-select";
+import { SedePaymentSelect } from "@/components/sede-payment-select";
 
 export const dynamic = "force-dynamic";
 
@@ -59,13 +59,18 @@ export default async function SedeOrders() {
                     {o.customerPhone ? ` · ${o.customerPhone}` : ""}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${PAYMENT_BADGE[o.status]}`}
-                  >
-                    {PAYMENT_LABEL[o.status]}
-                  </span>
-                  <SedeFulfillmentSelect orderId={o.id} current={o.fulfillment} />
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="flex items-center gap-1 text-xs text-gray-400">
+                    Pago
+                    <SedePaymentSelect orderId={o.id} current={o.status} />
+                  </label>
+                  <label className="flex items-center gap-1 text-xs text-gray-400">
+                    Envío
+                    <SedeFulfillmentSelect
+                      orderId={o.id}
+                      current={o.fulfillment}
+                    />
+                  </label>
                 </div>
               </div>
 

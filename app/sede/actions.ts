@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
-import type { Fulfillment } from "@prisma/client";
+import type { Fulfillment, OrderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   setSedeSession,
@@ -48,8 +48,9 @@ export async function sedeLogoutAction() {
 }
 
 const FULFILLMENTS: Fulfillment[] = ["PENDING", "SHIPPED", "DELIVERED"];
+const PAYMENTS: OrderStatus[] = ["PENDING", "PAID", "CANCELLED"];
 
-/** La sede cambia el estado de envío, solo de SUS pedidos. */
+/** La sede cambia el estado de ENVÍO, solo de SUS pedidos. */
 export async function updateSedeFulfillmentAction(formData: FormData) {
   const sede = await getCurrentSede();
   if (!sede) redirect("/sede/login");
@@ -62,5 +63,23 @@ export async function updateSedeFulfillmentAction(formData: FormData) {
     where: { id: orderId, storeId: sede.storeId, locationName: sede.name },
     data: { fulfillment: value },
   });
+  revalidatePath("/sede/pedidos");
+  revalidatePath("/sede");
+}
+
+/** La sede cambia el estado de PAGO, solo de SUS pedidos. */
+export async function updateSedePaymentAction(formData: FormData) {
+  const sede = await getCurrentSede();
+  if (!sede) redirect("/sede/login");
+
+  const orderId = String(formData.get("orderId") ?? "");
+  const value = String(formData.get("status") ?? "") as OrderStatus;
+  if (!PAYMENTS.includes(value)) return;
+
+  await prisma.order.updateMany({
+    where: { id: orderId, storeId: sede.storeId, locationName: sede.name },
+    data: { status: value },
+  });
+  revalidatePath("/sede/pedidos");
   revalidatePath("/sede");
 }
