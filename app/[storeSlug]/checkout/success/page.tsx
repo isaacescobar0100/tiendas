@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Check, Clock, X, Search } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
+import { normalizeWhatsapp } from "@/lib/whatsapp";
 import { getTransaction, resolveWompiKeys } from "@/lib/wompi";
 import { markOrderPaid } from "@/lib/orders";
 import { getCurrentCustomer } from "@/lib/customer-auth";
@@ -110,6 +111,31 @@ export default async function OrderSuccessPage({
   const accountCta: "create" | "login" | null =
     payment === "failed" || loggedIn ? null : accountExists ? "login" : "create";
 
+  // Envío del pedido por WhatsApp a la sede (para que lo preparen).
+  let sedeWaHref: string | null = null;
+  if (payment !== "failed" && order.locationName) {
+    const sede = await prisma.storeLocation.findFirst({
+      where: { storeId: order.storeId, name: order.locationName },
+      select: { whatsapp: true },
+    });
+    const number = normalizeWhatsapp(sede?.whatsapp);
+    if (number.length >= 10) {
+      const lines = order.items
+        .map((i) => {
+          const v = variantLabel(i.color, i.size);
+          return `• ${i.name}${v ? ` (${v})` : ""} x${i.quantity}`;
+        })
+        .join("\n");
+      const msg =
+        `Hola ${order.locationName}, este es mi pedido #${order.id.slice(-8)}:\n${lines}\n\n` +
+        `Total: ${formatPrice(order.totalCents, order.currency)}\n` +
+        `Nombre: ${order.customerName}\n` +
+        `Tel: ${order.customerPhone ?? ""}\n` +
+        `Envío a: ${order.address}`;
+      sedeWaHref = `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
+    }
+  }
+
   return (
     <div className="mx-auto max-w-lg text-center">
       {shouldClearCart && <ClearCart />}
@@ -127,10 +153,30 @@ export default async function OrderSuccessPage({
         Nº de pedido: <span className="font-mono">{order.id.slice(-8)}</span>
       </p>
 
+      {sedeWaHref && (
+        <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-5">
+          <p className="text-sm font-semibold text-gray-900">
+            Un último paso 👇
+          </p>
+          <p className="mt-1 text-sm text-gray-600">
+            Envía tu pedido a <strong>{order.locationName}</strong> por WhatsApp
+            para que empiecen a prepararlo.
+          </p>
+          <a
+            href={sedeWaHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-6 py-3 text-sm font-semibold text-white hover:brightness-105"
+          >
+            Enviar mi pedido por WhatsApp
+          </a>
+        </div>
+      )}
+
       {payment !== "failed" && (
         <Link
           href={`/${storeSlug}/rastrear?n=${order.id.slice(-8)}&email=${encodeURIComponent(order.customerEmail)}`}
-          className="mt-6 inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+          className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
         >
           <Search className="h-4 w-4" />
           Rastrear mi pedido
