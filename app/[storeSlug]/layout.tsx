@@ -9,6 +9,7 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 import { FavoritesProvider } from "@/components/favorites/favorites-context";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { StoreUnavailable } from "@/components/store-unavailable";
+import { WhatsappFab } from "@/components/whatsapp-fab";
 import { AccountMenu } from "./cuenta/account-menu";
 
 export default async function StoreLayout({
@@ -30,6 +31,7 @@ export default async function StoreLayout({
       logoUrl: true,
       themeColor: true,
       surveyUrl: true,
+      whatsapp: true,
       shippingCents: true,
       freeShippingOverCents: true,
     },
@@ -148,6 +150,7 @@ export default async function StoreLayout({
         </footer>
       </div>
       <CartDrawer />
+      <WhatsappFab whatsapp={store.whatsapp} storeName={store.name} />
       </div>
     </CartProvider>
     </FavoritesProvider>
