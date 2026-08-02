@@ -13,6 +13,7 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
+  "media-src 'self' blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https:",
   "frame-src 'self' https://checkout.wompi.co",

@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
+import { VideoHero } from "@/components/video-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -176,14 +177,24 @@ export default async function StorefrontPage({
 
   return (
     <div>
-      <BannerSlider slides={bannerSlides} />
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{store.name}</h1>
-        {store.description && (
-          <p className="mt-1 text-gray-500">{store.description}</p>
-        )}
-      </div>
+      {store.bannerVideoUrl ? (
+        <VideoHero
+          videoUrl={store.bannerVideoUrl}
+          poster={store.bannerUrl}
+          title={store.name}
+          subtitle={store.description}
+        />
+      ) : (
+        <>
+          <BannerSlider slides={bannerSlides} />
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">{store.name}</h1>
+            {store.description && (
+              <p className="mt-1 text-gray-500">{store.description}</p>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Búsqueda + orden */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

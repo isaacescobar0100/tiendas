@@ -17,6 +17,16 @@ const storeSchema = z.object({
     .url("URL de banner inválida.")
     .optional()
     .or(z.literal("")),
+  bannerVideoUrl: z
+    .string()
+    .url("URL de video inválida.")
+    .optional()
+    .or(z.literal("")),
+  surveyUrl: z
+    .string()
+    .url("URL de encuesta inválida.")
+    .optional()
+    .or(z.literal("")),
   // Color de marca en formato hex (#rrggbb). La moneda es fija (COP).
   themeColor: z
     .string()
@@ -39,6 +49,8 @@ export async function updateStoreAction(
     description: formData.get("description") ?? "",
     logoUrl: formData.get("logoUrl") ?? "",
     bannerUrl: formData.get("bannerUrl") ?? "",
+    bannerVideoUrl: formData.get("bannerVideoUrl") ?? "",
+    surveyUrl: formData.get("surveyUrl") ?? "",
     themeColor: (formData.get("themeColor") as string) || undefined,
     shipping: (formData.get("shipping") as string) ?? "",
     freeShippingOver: (formData.get("freeShippingOver") as string) ?? "",
@@ -58,6 +70,8 @@ export async function updateStoreAction(
       description: parsed.data.description || null,
       logoUrl: parsed.data.logoUrl || null,
       bannerUrl: parsed.data.bannerUrl || null,
+      bannerVideoUrl: parsed.data.bannerVideoUrl || null,
+      surveyUrl: parsed.data.surveyUrl || null,
       whatsapp: parsed.data.whatsapp?.trim() || null,
       notifyEmail: formData.get("notifyEmail") === "on",
       notifyWhatsapp: formData.get("notifyWhatsapp") === "on",

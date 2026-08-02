@@ -59,6 +59,8 @@ model Store {
   description String?
   logoUrl     String?
   bannerUrl   String?    // imagen de banner (portada) en la página de la tienda
+  bannerVideoUrl String? // video de portada (hero) opcional; si está, reemplaza el banner
+  surveyUrl   String?    // enlace a una encuesta de satisfacción (ej. Google Forms)
   whatsapp    String?    // número de WhatsApp de la tienda (para avisos de pedido)
   // Canales para avisar al cliente del estado del pedido (los elige el admin)
   notifyEmail    Boolean @default(true)

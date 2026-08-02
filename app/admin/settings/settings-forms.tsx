@@ -26,6 +26,8 @@ type StoreData = {
   description: string | null;
   logoUrl: string | null;
   bannerUrl: string | null;
+  bannerVideoUrl: string | null;
+  surveyUrl: string | null;
   whatsapp: string | null;
   notifyEmail: boolean;
   notifyWhatsapp: boolean;
@@ -83,6 +85,37 @@ export function StoreForm({ store }: { store: StoreData }) {
           Portada en la parte superior de tu tienda, a todo el ancho y en franja
           baja. Usa una imagen bien horizontal (recomendado 1600×400) y pon lo
           importante hacia el centro. Déjalo vacío para no mostrarlo.
+        </p>
+      </div>
+
+      <div>
+        <label className={labelCls}>Video de portada (opcional)</label>
+        <input
+          name="bannerVideoUrl"
+          inputMode="url"
+          defaultValue={store.bannerVideoUrl ?? ""}
+          placeholder="https://…/video.mp4"
+          className={inputCls}
+        />
+        <p className="mt-1 text-xs text-gray-400">
+          Pega la URL de un video <strong>.mp4</strong>. Si lo pones, la portada
+          muestra el video (en bucle, sin sonido) en vez del banner. Ideal para
+          un look tipo landing. Déjalo vacío para usar la imagen.
+        </p>
+      </div>
+
+      <div>
+        <label className={labelCls}>Enlace de encuesta (opcional)</label>
+        <input
+          name="surveyUrl"
+          inputMode="url"
+          defaultValue={store.surveyUrl ?? ""}
+          placeholder="https://forms.gle/…"
+          className={inputCls}
+        />
+        <p className="mt-1 text-xs text-gray-400">
+          Si lo rellenas (ej. un Google Forms), aparece un botón
+          &ldquo;Encuesta de satisfacción&rdquo; en el pie de tu tienda.
         </p>
       </div>
 

@@ -29,6 +29,7 @@ export default async function StoreLayout({
       currency: true,
       logoUrl: true,
       themeColor: true,
+      surveyUrl: true,
       shippingCents: true,
       freeShippingOverCents: true,
     },
@@ -132,6 +133,16 @@ export default async function StoreLayout({
             >
               Política de privacidad
             </Link>
+            {store.surveyUrl && (
+              <a
+                href={store.surveyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-gray-500 hover:text-gray-900"
+              >
+                Encuesta de satisfacción
+              </a>
+            )}
           </nav>
           <div className="mt-2">{store.name} · con tecnología de MiTienda</div>
         </footer>
