@@ -29,3 +29,13 @@ export async function getProductRating(productId: string): Promise<Rating> {
   });
   return { avg: r._avg.rating ?? 0, count: r._count.rating };
 }
+
+// Recalcula y guarda la valoración denormalizada del producto (ratingAvg /
+// ratingCount). Llamar tras crear, editar o borrar una reseña.
+export async function recalcProductRating(productId: string): Promise<void> {
+  const { avg, count } = await getProductRating(productId);
+  await prisma.product.update({
+    where: { id: productId },
+    data: { ratingAvg: avg, ratingCount: count },
+  });
+}

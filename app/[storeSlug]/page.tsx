@@ -8,10 +8,10 @@ import {
   ChevronRight,
   MapPin,
 } from "lucide-react";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isMerchProduct } from "@/lib/store-hours";
 import { parseModifiers } from "@/lib/modifiers";
-import { getStoreRatings } from "@/lib/reviews";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 import { VideoHero } from "@/components/video-hero";
@@ -124,12 +124,21 @@ export default async function StorefrontPage({
           ]
         : [];
 
-  const orderBy =
+  // Por defecto (sin ordenar por precio): primero los MEJOR VALORADOS
+  // (más estrellas y más reseñas), luego el resto por novedad. Aplica igual
+  // en "Todos" y dentro de cada categoría.
+  const orderBy:
+    | Prisma.ProductOrderByWithRelationInput
+    | Prisma.ProductOrderByWithRelationInput[] =
     sort === "price_asc"
-      ? { priceCents: "asc" as const }
+      ? { priceCents: "asc" }
       : sort === "price_desc"
-        ? { priceCents: "desc" as const }
-        : { createdAt: "desc" as const };
+        ? { priceCents: "desc" }
+        : [
+            { ratingAvg: "desc" },
+            { ratingCount: "desc" },
+            { createdAt: "desc" },
+          ];
 
   const where = {
     storeId: store.id,
@@ -191,8 +200,6 @@ export default async function StorefrontPage({
     select: { id: true, name: true, address: true },
   });
 
-  // Estrellas (promedio de reseñas) por producto para las tarjetas.
-  const ratings = await getStoreRatings(store.id);
 
   return (
     <div>
@@ -235,7 +242,7 @@ export default async function StorefrontPage({
         <div className="flex items-center gap-2 text-sm">
           <span className="text-gray-400">Ordenar:</span>
           <SortLink href={mkHref({ sort: null })} active={!sort}>
-            Novedades
+            Destacados
           </SortLink>
           <SortLink href={mkHref({ sort: "price_asc" })} active={sort === "price_asc"}>
             <span className="flex items-center gap-0.5">
@@ -306,7 +313,7 @@ export default async function StorefrontPage({
               currency={store.currency}
               freeShipping={store.shippingCents === 0}
               priority={i < 4}
-              rating={ratings.get(p.id)}
+              rating={{ avg: p.ratingAvg, count: p.ratingCount }}
               product={{
                 id: p.id,
                 slug: p.slug,

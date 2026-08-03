@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getCurrentCustomer } from "@/lib/customer-auth";
+import { recalcProductRating } from "@/lib/reviews";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export type ReviewState = { error?: string; ok?: boolean } | undefined;
@@ -65,6 +66,8 @@ export async function submitReviewAction(
       customerName: customer.name,
     },
   });
+
+  await recalcProductRating(product.id);
 
   revalidatePath(`/${store.slug}/${product.slug}`);
   revalidatePath(`/${store.slug}`);

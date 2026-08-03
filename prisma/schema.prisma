@@ -237,6 +237,10 @@ model Product {
   // Adiciones / opciones (para comida). JSON: grupos de opciones con precio.
   // Ej. "Término" (elegir uno), "Adiciones" (+queso), "Quitar" (sin cebolla).
   modifiersJson String  @default("[]")
+  // Valoración denormalizada (se recalcula al crear/editar/borrar reseñas).
+  // Permite ordenar el catálogo por "mejor valorados" en la base de datos.
+  ratingAvg   Float     @default(0)
+  ratingCount Int       @default(0)
   store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
   storeId     String
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)

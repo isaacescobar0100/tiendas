@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { isMerchProduct } from "@/lib/store-hours";
 import { parseModifiers } from "@/lib/modifiers";
-import { getStoreRatings } from "@/lib/reviews";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { AddToCart } from "@/components/cart/add-to-cart";
@@ -133,14 +132,13 @@ export default async function ProductPage({
     )
     .slice(0, 4);
 
-  // Reseñas del producto + estrellas de los productos relacionados.
-  const [reviews, ratings, customer] = await Promise.all([
+  // Reseñas del producto (lista) + cliente en sesión.
+  const [reviews, customer] = await Promise.all([
     prisma.review.findMany({
       where: { productId: product.id },
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
-    getStoreRatings(store.id),
     getCurrentCustomer(store.id),
   ]);
   const reviewCount = reviews.length;
@@ -333,7 +331,7 @@ export default async function ProductPage({
                 storeSlug={store.slug}
                 currency={store.currency}
                 freeShipping={store.shippingCents === 0}
-                rating={ratings.get(p.id)}
+                rating={{ avg: p.ratingAvg, count: p.ratingCount }}
                 product={{
                   id: p.id,
                   slug: p.slug,
