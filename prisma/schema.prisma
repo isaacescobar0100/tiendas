@@ -62,6 +62,9 @@ model Store {
   bannerVideoUrl String? // video de portada (hero) opcional; si está, reemplaza el banner
   surveyUrl   String?    // enlace a una encuesta de satisfacción (ej. Google Forms)
   whatsapp    String?    // número de WhatsApp de la tienda (para avisos de pedido)
+  // Horario de atención (JSON: {enabled, days[7]}). Vacío = siempre abierto.
+  // Si está activo, no deja hacer pedidos fuera de horario (hora de Colombia).
+  hoursJson   String     @default("")
   // Canales para avisar al cliente del estado del pedido (los elige el admin)
   notifyEmail    Boolean @default(true)
   notifyWhatsapp Boolean @default(false)

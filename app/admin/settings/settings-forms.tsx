@@ -4,6 +4,14 @@ import { useActionState, useState } from "react";
 import { Check } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import {
+  parseStoreHours,
+  defaultHours,
+  defaultDay,
+  serializeStoreHours,
+  DAY_ORDER,
+  type DayHours,
+} from "@/lib/store-hours";
+import {
   updateStoreAction,
   changePasswordAction,
   type SettingsState,
@@ -34,6 +42,7 @@ type StoreData = {
   themeColor: string;
   shippingCents: number;
   freeShippingOverCents: number;
+  hoursJson: string;
 };
 
 export function StoreForm({ store }: { store: StoreData }) {
@@ -244,6 +253,11 @@ export function StoreForm({ store }: { store: StoreData }) {
         </div>
       </div>
 
+      {/* Horario de atención */}
+      <div className="border-t border-gray-100 pt-5">
+        <HoursEditor initialJson={store.hoursJson} />
+      </div>
+
       {state?.error && <Alert type="error">{state.error}</Alert>}
       {state?.ok && <Alert type="ok">Cambios guardados</Alert>}
 
@@ -255,6 +269,87 @@ export function StoreForm({ store }: { store: StoreData }) {
         {pending ? "Guardando…" : "Guardar cambios"}
       </button>
     </form>
+  );
+}
+
+// Editor del horario de atención (7 días). Emite un JSON en el campo `hoursJson`.
+function HoursEditor({ initialJson }: { initialJson: string }) {
+  const initial = parseStoreHours(initialJson) ?? defaultHours();
+  const [enabled, setEnabled] = useState(initial.enabled);
+  const [days, setDays] = useState<DayHours[]>(initial.days);
+
+  const setDay = (idx: number, patch: Partial<DayHours>) =>
+    setDays((prev) =>
+      prev.map((d, i) => (i === idx ? { ...d, ...patch } : d)),
+    );
+
+  const hoursJson = serializeStoreHours({ enabled, days });
+
+  return (
+    <div>
+      <input type="hidden" name="hoursJson" value={hoursJson} />
+      <h2 className="mb-1 text-sm font-semibold text-gray-900">
+        Horario de atención
+      </h2>
+      <p className="mb-3 text-xs text-gray-400">
+        Si lo activas, la tienda no aceptará pedidos fuera de este horario
+        (hora de Colombia) y mostrará cuándo vuelve a abrir.
+      </p>
+
+      <label className="flex items-center gap-2 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => setEnabled(e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        Limitar pedidos a mi horario de atención
+      </label>
+
+      <div
+        className={`mt-4 space-y-2 ${enabled ? "" : "pointer-events-none opacity-50"}`}
+      >
+        {DAY_ORDER.map(({ idx, label }) => {
+          const d = days[idx] ?? defaultDay();
+          return (
+            <div
+              key={idx}
+              className="flex flex-wrap items-center gap-2 text-sm"
+            >
+              <span className="w-24 shrink-0 text-gray-700">{label}</span>
+              <label className="flex w-24 items-center gap-1.5 text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={!d.closed}
+                  onChange={(e) => setDay(idx, { closed: !e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                {d.closed ? "Cerrado" : "Abierto"}
+              </label>
+              <input
+                type="time"
+                value={d.open}
+                disabled={d.closed}
+                onChange={(e) => setDay(idx, { open: e.target.value })}
+                className="rounded-lg border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-50 disabled:text-gray-300"
+              />
+              <span className="text-gray-400">a</span>
+              <input
+                type="time"
+                value={d.close}
+                disabled={d.closed}
+                onChange={(e) => setDay(idx, { close: e.target.value })}
+                className="rounded-lg border border-gray-300 px-2 py-1 text-sm disabled:bg-gray-50 disabled:text-gray-300"
+              />
+            </div>
+          );
+        })}
+        <p className="pt-1 text-xs text-gray-400">
+          ¿Cierras después de medianoche? Pon, por ejemplo, abre{" "}
+          <strong>18:00</strong> y cierra <strong>02:00</strong>.
+        </p>
+      </div>
+    </div>
   );
 }
 

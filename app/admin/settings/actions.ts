@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { parsePriceToCents } from "@/lib/utils";
+import { parseStoreHours, serializeStoreHours } from "@/lib/store-hours";
 
 export type SettingsState = { error?: string; ok?: boolean } | undefined;
 
@@ -63,6 +64,11 @@ export async function updateStoreAction(
   const freeShippingOverCents =
     parsePriceToCents(parsed.data.freeShippingOver || "0") ?? 0;
 
+  // Horario de atención: se re-serializa canónico (vacío si es inválido).
+  const hoursJson = serializeStoreHours(
+    parseStoreHours(String(formData.get("hoursJson") ?? "")),
+  );
+
   // La URL (slug) y la moneda (COP) no las cambia el admin.
   await prisma.store.update({
     where: { id: store.id },
@@ -77,6 +83,7 @@ export async function updateStoreAction(
       notifyWhatsapp: formData.get("notifyWhatsapp") === "on",
       shippingCents,
       freeShippingOverCents,
+      hoursJson,
       ...(parsed.data.themeColor
         ? { themeColor: parsed.data.themeColor }
         : {}),

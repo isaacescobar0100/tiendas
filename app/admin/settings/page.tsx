@@ -29,6 +29,7 @@ export default async function SettingsPage() {
           themeColor: store.themeColor,
           shippingCents: store.shippingCents,
           freeShippingOverCents: store.freeShippingOverCents,
+          hoursJson: store.hoursJson,
         }}
       />
 

@@ -11,6 +11,7 @@ import {
 } from "@/lib/wompi";
 import { computeShipping } from "@/lib/shipping";
 import { effectivePriceCents } from "@/lib/pricing";
+import { getStoreOpenState } from "@/lib/store-hours";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 // `checkoutUrl` presente = hay que redirigir al cliente a pagar en Wompi.
@@ -101,6 +102,14 @@ export async function placeOrderAction(
     },
   });
   if (!store) return { error: "Tienda no encontrada." };
+
+  // Fuera del horario de atención no se aceptan pedidos.
+  const openState = getStoreOpenState(store.hoursJson);
+  if (openState.enforced && !openState.isOpen) {
+    return {
+      error: `La tienda está cerrada ahora.${openState.message ? ` ${openState.message}.` : ""}`,
+    };
+  }
 
   // Si la tienda tiene sedes, el cliente debe elegir una válida.
   let locationName: string | null = null;

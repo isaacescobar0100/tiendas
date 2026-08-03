@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { Store } from "lucide-react";
+import { Store, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getStoreOpenState } from "@/lib/store-hours";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartButton } from "@/components/cart/cart-button";
 import { CartDrawer } from "@/components/cart/cart-drawer";
@@ -33,6 +34,7 @@ export default async function StoreLayout({
       whatsapp: true,
       shippingCents: true,
       freeShippingOverCents: true,
+      hoursJson: true,
     },
   });
   if (!store) {
@@ -62,6 +64,7 @@ export default async function StoreLayout({
   }
 
   const customer = await getCurrentCustomer(store.id);
+  const openState = getStoreOpenState(store.hoursJson);
 
   return (
     <FavoritesProvider storeSlug={store.slug} customerId={customer?.id ?? null}>
@@ -109,6 +112,18 @@ export default async function StoreLayout({
             </div>
           </div>
         </header>
+
+        {openState.enforced && !openState.isOpen && (
+          <div className="border-b border-amber-200 bg-amber-50">
+            <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-4 py-2 text-center text-sm font-medium text-amber-800">
+              <Clock className="h-4 w-4 shrink-0" />
+              <span>
+                Cerrado ahora
+                {openState.message ? ` · ${openState.message}` : ""}
+              </span>
+            </div>
+          </div>
+        )}
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
           {children}

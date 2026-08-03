@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { isWompiConfigured, resolveWompiKeys } from "@/lib/wompi";
+import { getStoreOpenState } from "@/lib/store-hours";
 import CheckoutForm from "./checkout-form";
 
 // Server component: decide qué métodos de pago ofrecer según los ajustes de la
@@ -23,9 +24,13 @@ export default async function CheckoutPage({
       wompiPrivateKey: true,
       wompiIntegritySecret: true,
       wompiEventsSecret: true,
+      hoursJson: true,
     },
   });
   if (!store) notFound();
+
+  const openState = getStoreOpenState(store.hoursJson);
+  const closed = openState.enforced && !openState.isOpen;
 
   const locations = await prisma.storeLocation.findMany({
     where: { storeId: store.id },
@@ -43,6 +48,8 @@ export default async function CheckoutPage({
       onlineEnabled={onlineEnabled}
       codEnabled={codEnabled}
       locations={locations}
+      closed={closed}
+      closedMessage={closed ? openState.message : null}
       shipping={{
         shippingCents: store.shippingCents,
         freeShippingOverCents: store.freeShippingOverCents,

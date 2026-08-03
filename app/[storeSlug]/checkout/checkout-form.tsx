@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CreditCard, Truck } from "lucide-react";
+import { ArrowLeft, CreditCard, Truck, Clock } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { computeShipping } from "@/lib/shipping";
@@ -15,11 +15,15 @@ export default function CheckoutForm({
   onlineEnabled,
   codEnabled,
   locations = [],
+  closed = false,
+  closedMessage = null,
   shipping,
 }: {
   onlineEnabled: boolean;
   codEnabled: boolean;
   locations?: { name: string; address: string | null }[];
+  closed?: boolean;
+  closedMessage?: string | null;
   shipping: { shippingCents: number; freeShippingOverCents: number };
 }) {
   const { items, totalCents, currency, storeSlug, clear, ready } = useCart();
@@ -229,6 +233,18 @@ export default function CheckoutForm({
             )}
           </div>
 
+          {closed && (
+            <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                Estamos cerrados en este momento
+                {closedMessage ? `. ${closedMessage}` : ""}. No podemos recibir
+                pedidos ahora, pero puedes dejar tu carrito listo y volver
+                cuando abramos.
+              </span>
+            </div>
+          )}
+
           {state?.error && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
               {state.error}
@@ -237,16 +253,18 @@ export default function CheckoutForm({
 
           <button
             type="submit"
-            disabled={pending || noMethod}
+            disabled={pending || noMethod || closed}
             className="w-full rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
           >
-            {pending
-              ? method === "online"
-                ? "Redirigiendo al pago…"
-                : "Realizando pedido…"
-              : method === "online"
-                ? "Ir a pagar"
-                : "Confirmar pedido"}
+            {closed
+              ? "Cerrado ahora"
+              : pending
+                ? method === "online"
+                  ? "Redirigiendo al pago…"
+                  : "Realizando pedido…"
+                : method === "online"
+                  ? "Ir a pagar"
+                  : "Confirmar pedido"}
           </button>
           {!noMethod && (
             <p className="text-center text-xs text-gray-400">
