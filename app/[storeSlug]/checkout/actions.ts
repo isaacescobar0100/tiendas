@@ -12,6 +12,7 @@ import {
 import { computeShipping } from "@/lib/shipping";
 import { effectivePriceCents } from "@/lib/pricing";
 import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
+import { parseModifiers, resolveSelection } from "@/lib/modifiers";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 // `checkoutUrl` presente = hay que redirigir al cliente a pagar en Wompi.
@@ -44,6 +45,7 @@ const itemsSchema = z.array(
     productId: z.string().min(1),
     variantId: z.string().nullable().optional(),
     quantity: z.number().int().positive(),
+    modifierOptionIds: z.array(z.string()).optional(),
   }),
 );
 
@@ -86,6 +88,7 @@ export async function placeOrderAction(
     productId: string;
     variantId?: string | null;
     quantity: number;
+    modifierOptionIds?: string[];
   }[];
   try {
     items = itemsSchema.parse(JSON.parse(String(formData.get("items") ?? "[]")));
@@ -146,6 +149,7 @@ export async function placeOrderAction(
     name: string;
     color: string | null;
     size: string | null;
+    modifiers: string | null;
     imageUrl: string | null;
     priceCents: number;
     quantity: number;
@@ -162,8 +166,15 @@ export async function placeOrderAction(
       };
     }
 
-    // Precio a cobrar: el de oferta si es válido, si no el normal.
-    const unitCents = effectivePriceCents(product);
+    // Adiciones/opciones: se validan y se recalcula el precio en el servidor
+    // (no confiamos en el cliente).
+    const groups = parseModifiers(product.modifiersJson);
+    const sel = resolveSelection(groups, item.modifierOptionIds ?? []);
+    if (!sel.ok) return { error: `${product.name}: ${sel.error}` };
+    const modifiersLabel = sel.label || null;
+
+    // Precio a cobrar: el de oferta si es válido (si no, el normal) + adiciones.
+    const unitCents = effectivePriceCents(product) + sel.addedCents;
 
     if (product.variants.length > 0) {
       // El producto tiene variantes: se exige elegir una válida con stock
@@ -185,6 +196,7 @@ export async function placeOrderAction(
         name: product.name,
         color: variant.color || null,
         size: variant.size || null,
+        modifiers: modifiersLabel,
         imageUrl: product.imageUrl,
         priceCents: unitCents,
         quantity: item.quantity,
@@ -201,6 +213,7 @@ export async function placeOrderAction(
         name: product.name,
         color: null,
         size: null,
+        modifiers: modifiersLabel,
         imageUrl: product.imageUrl,
         priceCents: unitCents,
         quantity: item.quantity,
@@ -264,6 +277,7 @@ export async function placeOrderAction(
               name: l.name,
               color: l.color,
               size: l.size,
+              modifiers: l.modifiers,
               imageUrl: l.imageUrl,
               priceCents: l.priceCents,
               quantity: l.quantity,
@@ -314,6 +328,7 @@ export async function placeOrderAction(
         priceCents: l.priceCents,
         color: l.color,
         size: l.size,
+        modifiers: l.modifiers,
       })),
     });
 

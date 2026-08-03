@@ -95,6 +95,7 @@ export default function CheckoutForm({
       productId: i.productId,
       variantId: i.variantId ?? null,
       quantity: i.quantity,
+      modifierOptionIds: (i.modifiers ?? []).map((m) => m.optionId),
     })),
   );
 
@@ -303,6 +304,11 @@ export default function CheckoutForm({
                     </span>
                   )}{" "}
                   <span className="text-gray-400">×{i.quantity}</span>
+                  {i.modifiers && i.modifiers.length > 0 && (
+                    <span className="block text-xs text-gray-400">
+                      {i.modifiers.map((m) => m.optionName).join(" · ")}
+                    </span>
+                  )}
                 </span>
                 <span className="text-gray-900">
                   {formatPrice(i.priceCents * i.quantity, currency)}

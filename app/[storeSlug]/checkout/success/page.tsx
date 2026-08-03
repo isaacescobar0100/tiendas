@@ -123,7 +123,8 @@ export default async function OrderSuccessPage({
       const lines = order.items
         .map((i) => {
           const v = variantLabel(i.color, i.size);
-          return `• ${i.name}${v ? ` (${v})` : ""} x${i.quantity}`;
+          const mods = i.modifiers ? `\n   (${i.modifiers})` : "";
+          return `• ${i.name}${v ? ` (${v})` : ""} x${i.quantity}${mods}`;
         })
         .join("\n");
       const msg =
@@ -196,6 +197,11 @@ export default async function OrderSuccessPage({
                   </span>
                 )}{" "}
                 <span className="text-gray-400">×{i.quantity}</span>
+                {i.modifiers && (
+                  <span className="block text-xs text-gray-400">
+                    {i.modifiers}
+                  </span>
+                )}
               </span>
               <span className="text-gray-900">
                 {formatPrice(i.priceCents * i.quantity, order.currency)}

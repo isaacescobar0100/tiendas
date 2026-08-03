@@ -212,6 +212,9 @@ model Product {
   // Galería con encuadre por imagen: JSON [{url, position, zoom}]
   galleryData   String    @default("[]")
   active      Boolean   @default(true)
+  // Adiciones / opciones (para comida). JSON: grupos de opciones con precio.
+  // Ej. "Término" (elegir uno), "Adiciones" (+queso), "Quitar" (sin cebolla).
+  modifiersJson String  @default("[]")
   store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
   storeId     String
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -285,8 +288,10 @@ model OrderItem {
   name       String
   color      String?
   size       String?
+  // Adiciones elegidas (texto legible: "Bien asado · +Queso · Sin cebolla").
+  modifiers  String?
   imageUrl   String?
-  priceCents Int
+  priceCents Int // precio unitario YA con las adiciones incluidas
   quantity   Int
 
   @@index([orderId])

@@ -50,7 +50,8 @@ export async function GET() {
     const productos = o.items
       .map((i) => {
         const v = variantLabel(i.color, i.size);
-        return `${i.name}${v ? ` (${v})` : ""} x${i.quantity}`;
+        const m = i.modifiers ? ` [${i.modifiers}]` : "";
+        return `${i.name}${v ? ` (${v})` : ""}${m} x${i.quantity}`;
       })
       .join(" | ");
     return [

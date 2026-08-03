@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { isMerchProduct } from "@/lib/store-hours";
+import { parseModifiers } from "@/lib/modifiers";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { AddToCart } from "@/components/cart/add-to-cart";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
@@ -208,6 +209,7 @@ export default async function ProductPage({
 
           <AddToCart
             storeSlug={store.slug}
+            currency={store.currency}
             disabled={product.stock === 0}
             variants={product.variants.map((v) => ({
               id: v.id,
@@ -215,6 +217,7 @@ export default async function ProductPage({
               size: v.size,
               stock: v.stock,
             }))}
+            modifierGroups={parseModifiers(product.modifiersJson)}
             product={{
               productId: product.id,
               slug: product.slug,
@@ -253,6 +256,7 @@ export default async function ProductPage({
                   imageZoom: p.imageZoom,
                   stock: p.stock,
                   alwaysAvailable: isMerchProduct(p.categoryId, store.merchCategoryIds),
+                  hasModifiers: parseModifiers(p.modifiersJson).length > 0,
                   variants: p.variants,
                 }}
               />

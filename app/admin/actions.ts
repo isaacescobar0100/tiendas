@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { slugify, parsePriceToCents } from "@/lib/utils";
+import { parseModifiers, serializeModifiers } from "@/lib/modifiers";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -54,6 +55,13 @@ function readProductForm(formData: FormData) {
     categoryId: formData.get("categoryId") ?? "",
     active: formData.get("active") ?? "",
   });
+}
+
+/** Lee y normaliza las adiciones/opciones (JSON) del formulario. */
+function readModifiersJson(formData: FormData): string {
+  return serializeModifiers(
+    parseModifiers(String(formData.get("modifiersJson") ?? "")),
+  );
 }
 
 /** Lee la galería (JSON [{url, position, zoom}]) del formulario. */
@@ -182,6 +190,7 @@ export async function createProductAction(
       galleryData: gallery.galleryData,
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",
+      modifiersJson: readModifiersJson(formData),
     },
   });
   await syncVariants(product.id, readVariants(formData));
@@ -231,6 +240,7 @@ export async function updateProductAction(
       galleryData: gallery.galleryData,
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",
+      modifiersJson: readModifiersJson(formData),
     },
   });
   await syncVariants(id, readVariants(formData));

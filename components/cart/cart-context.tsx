@@ -8,25 +8,33 @@ import {
   useMemo,
   useState,
 } from "react";
+import { modifierSignature, type SelectedMod } from "@/lib/modifiers";
 
 export type CartItem = {
-  key: string; // identifica la línea: producto + variante
+  key: string; // identifica la línea: producto + variante + adiciones
   productId: string;
   variantId?: string | null;
   color?: string | null;
   size?: string | null;
   slug: string;
   name: string;
+  // priceCents = precio unitario YA con las adiciones incluidas.
   priceCents: number;
   imageUrl?: string | null;
   // Merch: se puede pedir aunque la tienda esté cerrada (ignora el horario).
   alwaysAvailable?: boolean;
+  // Adiciones/opciones elegidas (para comida).
+  modifiers?: SelectedMod[];
   quantity: number;
 };
 
-/** Clave única de una línea del carrito (producto + variante). */
-export function lineKey(productId: string, variantId?: string | null): string {
-  return `${productId}::${variantId ?? ""}`;
+/** Clave única de una línea del carrito (producto + variante + adiciones). */
+export function lineKey(
+  productId: string,
+  variantId?: string | null,
+  modifiers?: { optionId: string }[] | null,
+): string {
+  return `${productId}::${variantId ?? ""}::${modifierSignature(modifiers)}`;
 }
 
 type CartContextValue = {
@@ -93,7 +101,7 @@ export function CartProvider({
 
   const add = useCallback(
     (item: Omit<CartItem, "quantity" | "key">, quantity = 1) => {
-      const key = lineKey(item.productId, item.variantId);
+      const key = lineKey(item.productId, item.variantId, item.modifiers);
       setItems((prev) => {
         const existing = prev.find((i) => i.key === key);
         if (existing) {

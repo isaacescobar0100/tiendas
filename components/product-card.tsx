@@ -22,6 +22,7 @@ export type CardProduct = {
   imageZoom?: number | null;
   stock: number;
   alwaysAvailable?: boolean;
+  hasModifiers?: boolean;
   variants: Variant[];
 };
 
@@ -260,6 +261,14 @@ export function ProductCard({
           >
             Cerrado
           </button>
+        ) : product.hasModifiers ? (
+          // Con adiciones/opciones: hay que elegir en la ficha del producto.
+          <Link
+            href={`/${storeSlug}/${product.slug}`}
+            className="block w-full rounded-lg bg-[var(--brand)] px-3 py-2 text-center text-xs font-medium text-white transition hover:brightness-110"
+          >
+            Elegir opciones
+          </Link>
         ) : (
           <button
             onClick={() => {

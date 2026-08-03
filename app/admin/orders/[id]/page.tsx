@@ -113,6 +113,9 @@ export default async function OrderDetailPage({
                   />
                   <div className="min-w-0 flex-1">
                     <div className="font-medium text-gray-900">{i.name}</div>
+                    {i.modifiers && (
+                      <div className="text-xs text-gray-600">{i.modifiers}</div>
+                    )}
                     <div className="text-xs text-gray-500">
                       {[
                         i.color && `Color: ${i.color}`,

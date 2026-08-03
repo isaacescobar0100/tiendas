@@ -86,6 +86,11 @@ export default async function SedeOrders() {
                         </span>
                       )}{" "}
                       <span className="text-gray-400">×{i.quantity}</span>
+                      {i.modifiers && (
+                        <span className="block text-xs text-gray-400">
+                          {i.modifiers}
+                        </span>
+                      )}
                     </span>
                     <span className="text-gray-900">
                       {formatPrice(i.priceCents * i.quantity, o.currency)}

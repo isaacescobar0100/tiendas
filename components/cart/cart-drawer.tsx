@@ -88,6 +88,11 @@ export function CartDrawer() {
                         {variantLabel(item.color, item.size)}
                       </p>
                     )}
+                    {item.modifiers && item.modifiers.length > 0 && (
+                      <p className="text-xs text-gray-400">
+                        {item.modifiers.map((m) => m.optionName).join(" · ")}
+                      </p>
+                    )}
                     <p className="text-sm text-gray-500">
                       {formatPrice(item.priceCents, currency)}
                     </p>

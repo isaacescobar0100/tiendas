@@ -14,6 +14,7 @@ export type OrderEmailItem = {
   priceCents: number;
   color?: string | null;
   size?: string | null;
+  modifiers?: string | null;
 };
 
 export type OrderEmailData = {
@@ -48,7 +49,10 @@ function itemsTable(data: OrderEmailData): string {
     .map((i) => {
       const v = variantLabel(i.color ?? "", i.size ?? "");
       const label = `${esc(i.name)}${v ? ` (${esc(v)})` : ""} × ${i.quantity}`;
-      return `<tr><td style="padding:6px 0">${label}</td><td style="padding:6px 0;text-align:right">${formatPrice(
+      const mods = i.modifiers
+        ? `<div style="color:#888;font-size:12px">${esc(i.modifiers)}</div>`
+        : "";
+      return `<tr><td style="padding:6px 0">${label}${mods}</td><td style="padding:6px 0;text-align:right;vertical-align:top">${formatPrice(
         i.priceCents * i.quantity,
         data.currency,
       )}</td></tr>`;

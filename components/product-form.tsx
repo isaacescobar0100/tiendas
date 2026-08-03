@@ -9,6 +9,7 @@ import {
   MultiImageUpload,
   type GalleryItem,
 } from "@/components/multi-image-upload";
+import { ModifiersEditor } from "@/components/modifiers-editor";
 import { variantLabel } from "@/lib/utils";
 
 type Category = { id: string; name: string };
@@ -29,6 +30,7 @@ type ProductDefaults = {
   active?: boolean;
   images?: string[];
   galleryData?: string;
+  modifiersJson?: string;
   variants?: { color: string; size: string; stock: number }[];
 };
 
@@ -320,6 +322,8 @@ export function ProductForm({
           </div>
         )}
       </div>
+
+      <ModifiersEditor initialJson={defaults?.modifiersJson} />
 
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">
