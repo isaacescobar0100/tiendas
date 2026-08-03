@@ -69,6 +69,22 @@ export async function updateStoreAction(
     parseStoreHours(String(formData.get("hoursJson") ?? "")),
   );
 
+  // Merch: categorías marcadas, validadas contra las categorías de la tienda.
+  const requestedMerch = formData
+    .getAll("merchCategoryIds")
+    .map((v) => String(v));
+  const validCategoryIds = new Set(
+    (
+      await prisma.category.findMany({
+        where: { storeId: store.id },
+        select: { id: true },
+      })
+    ).map((c) => c.id),
+  );
+  const merchCategoryIds = [...new Set(requestedMerch)].filter((id) =>
+    validCategoryIds.has(id),
+  );
+
   // La URL (slug) y la moneda (COP) no las cambia el admin.
   await prisma.store.update({
     where: { id: store.id },
@@ -84,6 +100,7 @@ export async function updateStoreAction(
       shippingCents,
       freeShippingOverCents,
       hoursJson,
+      merchCategoryIds,
       ...(parsed.data.themeColor
         ? { themeColor: parsed.data.themeColor }
         : {}),

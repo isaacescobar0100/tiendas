@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { isMerchProduct } from "@/lib/store-hours";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { AddToCart } from "@/components/cart/add-to-cart";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
@@ -220,7 +221,10 @@ export default async function ProductPage({
               name: product.name,
               priceCents: effectiveCents,
               imageUrl: product.imageUrl,
-              alwaysAvailable: product.alwaysAvailable,
+              alwaysAvailable: isMerchProduct(
+                product.categoryId,
+                store.merchCategoryIds,
+              ),
             }}
           />
         </div>
@@ -248,7 +252,7 @@ export default async function ProductPage({
                   imagePosition: p.imagePosition,
                   imageZoom: p.imageZoom,
                   stock: p.stock,
-                  alwaysAvailable: p.alwaysAvailable,
+                  alwaysAvailable: isMerchProduct(p.categoryId, store.merchCategoryIds),
                   variants: p.variants,
                 }}
               />

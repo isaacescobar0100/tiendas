@@ -43,9 +43,18 @@ type StoreData = {
   shippingCents: number;
   freeShippingOverCents: number;
   hoursJson: string;
+  merchCategoryIds: string[];
 };
 
-export function StoreForm({ store }: { store: StoreData }) {
+type Category = { id: string; name: string };
+
+export function StoreForm({
+  store,
+  categories,
+}: {
+  store: StoreData;
+  categories: Category[];
+}) {
   const [state, formAction, pending] = useActionState<SettingsState, FormData>(
     updateStoreAction,
     undefined,
@@ -258,6 +267,14 @@ export function StoreForm({ store }: { store: StoreData }) {
         <HoursEditor initialJson={store.hoursJson} />
       </div>
 
+      {/* Merch: categorías que se pueden pedir aunque esté cerrado */}
+      <div className="border-t border-gray-100 pt-5">
+        <MerchCategories
+          categories={categories}
+          initial={store.merchCategoryIds}
+        />
+      </div>
+
       {state?.error && <Alert type="error">{state.error}</Alert>}
       {state?.ok && <Alert type="ok">Cambios guardados</Alert>}
 
@@ -269,6 +286,55 @@ export function StoreForm({ store }: { store: StoreData }) {
         {pending ? "Guardando…" : "Guardar cambios"}
       </button>
     </form>
+  );
+}
+
+// Selección de categorías "merch": se pueden pedir aunque la tienda esté
+// cerrada. Emite un checkbox por categoría (name="merchCategoryIds").
+function MerchCategories({
+  categories,
+  initial,
+}: {
+  categories: Category[];
+  initial: string[];
+}) {
+  const set = new Set(initial);
+  return (
+    <div>
+      <h2 className="mb-1 text-sm font-semibold text-gray-900">
+        Merch (se puede pedir aunque esté cerrado)
+      </h2>
+      <p className="mb-3 text-xs text-gray-400">
+        Marca las categorías que se despachan y no dependen del horario (ropa,
+        gorras, souvenirs…). Cuando la tienda esté cerrada, solo se podrán pedir
+        los productos de estas categorías. La comida déjala sin marcar.
+      </p>
+
+      {categories.length === 0 ? (
+        <p className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
+          Aún no tienes categorías. Crea una categoría de merch en la sección
+          Categorías y vuelve aquí para marcarla.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {categories.map((c) => (
+            <label
+              key={c.id}
+              className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700"
+            >
+              <input
+                type="checkbox"
+                name="merchCategoryIds"
+                value={c.id}
+                defaultChecked={set.has(c.id)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              {c.name}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

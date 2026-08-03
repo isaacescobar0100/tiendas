@@ -1,10 +1,16 @@
 import { requireAdminStore } from "@/lib/guards";
+import { prisma } from "@/lib/prisma";
 import { StoreForm, PasswordForm } from "./settings-forms";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const { store } = await requireAdminStore();
+  const categories = await prisma.category.findMany({
+    where: { storeId: store.id },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -30,7 +36,9 @@ export default async function SettingsPage() {
           shippingCents: store.shippingCents,
           freeShippingOverCents: store.freeShippingOverCents,
           hoursJson: store.hoursJson,
+          merchCategoryIds: store.merchCategoryIds,
         }}
+        categories={categories}
       />
 
       <PasswordForm />

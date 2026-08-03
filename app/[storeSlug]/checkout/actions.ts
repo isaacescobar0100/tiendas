@@ -11,7 +11,7 @@ import {
 } from "@/lib/wompi";
 import { computeShipping } from "@/lib/shipping";
 import { effectivePriceCents } from "@/lib/pricing";
-import { getStoreOpenState } from "@/lib/store-hours";
+import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 // `checkoutUrl` presente = hay que redirigir al cliente a pagar en Wompi.
@@ -155,8 +155,8 @@ export async function placeOrderAction(
     const product = byId.get(item.productId);
     if (!product) return { error: `Un producto ya no está disponible.` };
 
-    // Fuera de horario, solo el merch (alwaysAvailable) se puede pedir.
-    if (storeClosed && !product.alwaysAvailable) {
+    // Fuera de horario, solo el merch (por categoría) se puede pedir.
+    if (storeClosed && !isMerchProduct(product.categoryId, store.merchCategoryIds)) {
       return {
         error: `"${product.name}" solo se puede pedir en horario de atención.${openState.message ? ` ${openState.message}.` : ""}`,
       };

@@ -31,6 +31,17 @@ export const DAY_ORDER: { idx: number; label: string }[] = [
   { idx: 0, label: "Domingo" },
 ];
 
+// ¿El producto es "merch"? (su categoría está marcada como merch en Ajustes).
+// El merch se puede pedir aunque la tienda esté cerrada.
+export function isMerchProduct(
+  categoryId: string | null | undefined,
+  merchCategoryIds: string[] | null | undefined,
+): boolean {
+  if (!categoryId || !merchCategoryIds || merchCategoryIds.length === 0)
+    return false;
+  return merchCategoryIds.includes(categoryId);
+}
+
 const TZ = "America/Bogota";
 const WEEK = 7 * 1440;
 

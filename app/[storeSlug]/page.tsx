@@ -9,6 +9,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { isMerchProduct } from "@/lib/store-hours";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 import { VideoHero } from "@/components/video-hero";
@@ -310,7 +311,7 @@ export default async function StorefrontPage({
                 imagePosition: p.imagePosition,
                 imageZoom: p.imageZoom,
                 stock: p.stock,
-                alwaysAvailable: p.alwaysAvailable,
+                alwaysAvailable: isMerchProduct(p.categoryId, store.merchCategoryIds),
                 variants: p.variants,
               }}
             />

@@ -65,6 +65,9 @@ model Store {
   // Horario de atención (JSON: {enabled, days[7]}). Vacío = siempre abierto.
   // Si está activo, no deja hacer pedidos fuera de horario (hora de Colombia).
   hoursJson   String     @default("")
+  // Categorías "merch": se pueden pedir aunque la tienda esté cerrada
+  // (se despachan, no son comida). El admin las elige en Ajustes.
+  merchCategoryIds String[] @default([])
   // Canales para avisar al cliente del estado del pedido (los elige el admin)
   notifyEmail    Boolean @default(true)
   notifyWhatsapp Boolean @default(false)
@@ -209,9 +212,6 @@ model Product {
   // Galería con encuadre por imagen: JSON [{url, position, zoom}]
   galleryData   String    @default("[]")
   active      Boolean   @default(true)
-  // Merch: se puede pedir aunque la tienda esté cerrada (ignora el horario).
-  // Ideal para productos que se despachan (camisetas, gorras…), no comida.
-  alwaysAvailable Boolean @default(false)
   store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
   storeId     String
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
