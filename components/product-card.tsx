@@ -21,6 +21,7 @@ export type CardProduct = {
   imagePosition?: string | null;
   imageZoom?: number | null;
   stock: number;
+  alwaysAvailable?: boolean;
   variants: Variant[];
 };
 
@@ -39,7 +40,7 @@ export function ProductCard({
   // en diferido (lazy) para aligerar la primera vista.
   priority?: boolean;
 }) {
-  const { add } = useCart();
+  const { add, storeClosed } = useCart();
   const [added, setAdded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const [open, setOpen] = useState(false);
@@ -70,8 +71,12 @@ export function ProductCard({
     // Guardamos el precio efectivo (con oferta) para carrito y favoritos.
     priceCents: effectiveCents,
     imageUrl: product.imageUrl,
+    alwaysAvailable: product.alwaysAvailable ?? false,
     hasVariants,
   };
+
+  // Fuera de horario solo se puede pedir el merch (alwaysAvailable).
+  const blockedByHours = storeClosed && !product.alwaysAvailable;
 
   const selected = list.find(
     (v) =>
@@ -246,6 +251,14 @@ export function ProductCard({
             className="w-full cursor-not-allowed rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-400"
           >
             Agotado
+          </button>
+        ) : blockedByHours ? (
+          <button
+            disabled
+            title="Disponible solo en horario de atención"
+            className="w-full cursor-not-allowed rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-400"
+          >
+            Cerrado
           </button>
         ) : (
           <button

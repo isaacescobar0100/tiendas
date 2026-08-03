@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Clock } from "lucide-react";
 import { useCart, type CartItem } from "./cart-context";
 import { flyToCart } from "@/lib/fly-to-cart";
 
@@ -22,7 +22,7 @@ export function AddToCart({
   variants?: Variant[];
   disabled?: boolean;
 }) {
-  const { add } = useCart();
+  const { add, storeClosed } = useCart();
   const router = useRouter();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -59,6 +59,20 @@ export function AddToCart({
       >
         Agotado
       </button>
+    );
+  }
+
+  // Fuera de horario solo se puede pedir el merch (alwaysAvailable).
+  const blockedByHours = storeClosed && !product.alwaysAvailable;
+  if (blockedByHours) {
+    return (
+      <div className="mt-8 flex items-start gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>
+          Estamos cerrados por ahora. Este producto solo se puede pedir en
+          nuestro horario de atención. ¡Vuelve cuando abramos!
+        </span>
+      </div>
     );
   }
 

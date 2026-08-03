@@ -19,6 +19,8 @@ export type CartItem = {
   name: string;
   priceCents: number;
   imageUrl?: string | null;
+  // Merch: se puede pedir aunque la tienda esté cerrada (ignora el horario).
+  alwaysAvailable?: boolean;
   quantity: number;
 };
 
@@ -35,6 +37,7 @@ type CartContextValue = {
   storeSlug: string;
   shippingCents: number; // costo de envío fijo de la tienda (0 = gratis)
   freeShippingOverCents: number; // umbral de envío gratis (0 = desactivado)
+  storeClosed: boolean; // la tienda está fuera de su horario de atención
   add: (item: Omit<CartItem, "quantity" | "key">, quantity?: number) => void;
   setQuantity: (key: string, quantity: number) => void;
   remove: (key: string) => void;
@@ -53,6 +56,7 @@ export function CartProvider({
   currency = "COP",
   shippingCents = 0,
   freeShippingOverCents = 0,
+  storeClosed = false,
   children,
 }: {
   storeSlug: string;
@@ -60,6 +64,7 @@ export function CartProvider({
   currency?: string;
   shippingCents?: number;
   freeShippingOverCents?: number;
+  storeClosed?: boolean;
   children: React.ReactNode;
 }) {
   // Clave por tienda y por cliente: cada cuenta tiene su propio carrito
@@ -129,6 +134,7 @@ export function CartProvider({
       storeSlug,
       shippingCents,
       freeShippingOverCents,
+      storeClosed,
       add,
       setQuantity,
       remove,
@@ -144,6 +150,7 @@ export function CartProvider({
     storeSlug,
     shippingCents,
     freeShippingOverCents,
+    storeClosed,
     add,
     setQuantity,
     remove,

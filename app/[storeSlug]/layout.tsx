@@ -74,6 +74,7 @@ export default async function StoreLayout({
       currency={store.currency}
       shippingCents={store.shippingCents}
       freeShippingOverCents={store.freeShippingOverCents}
+      storeClosed={openState.enforced && !openState.isOpen}
     >
       {/* --brand: color de marca de la tienda, usado por botones y acentos */}
       <div

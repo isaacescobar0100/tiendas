@@ -220,6 +220,7 @@ export default async function ProductPage({
               name: product.name,
               priceCents: effectiveCents,
               imageUrl: product.imageUrl,
+              alwaysAvailable: product.alwaysAvailable,
             }}
           />
         </div>
@@ -247,6 +248,7 @@ export default async function ProductPage({
                   imagePosition: p.imagePosition,
                   imageZoom: p.imageZoom,
                   stock: p.stock,
+                  alwaysAvailable: p.alwaysAvailable,
                   variants: p.variants,
                 }}
               />

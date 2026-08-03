@@ -27,6 +27,7 @@ type ProductDefaults = {
   imageZoom?: number;
   categoryId?: string | null;
   active?: boolean;
+  alwaysAvailable?: boolean;
   images?: string[];
   galleryData?: string;
   variants?: { color: string; size: string; stock: number }[];
@@ -361,6 +362,25 @@ export function ProductForm({
         />
         Publicado (visible en la tienda)
       </label>
+
+      <div className="rounded-lg border border-gray-200 p-3">
+        <label className="flex items-start gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            name="alwaysAvailable"
+            defaultChecked={defaults?.alwaysAvailable ?? false}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300"
+          />
+          <span>
+            Merch: se puede pedir aunque la tienda esté cerrada
+            <span className="mt-0.5 block text-xs font-normal text-gray-400">
+              Actívalo para productos que se despachan (camisetas, gorras…).
+              Déjalo apagado para comida u otros artículos que solo se pueden
+              pedir en horario de atención.
+            </span>
+          </span>
+        </label>
+      </div>
 
       {state?.error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">

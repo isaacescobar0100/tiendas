@@ -20,6 +20,7 @@ const productSchema = z.object({
   imageZoom: z.coerce.number().min(1).max(3).optional(),
   categoryId: z.string().optional(),
   active: z.string().optional(),
+  alwaysAvailable: z.string().optional(),
 });
 
 /** Genera un slug de producto único dentro de la tienda. */
@@ -53,6 +54,7 @@ function readProductForm(formData: FormData) {
     imageZoom: formData.get("imageZoom") ?? "1",
     categoryId: formData.get("categoryId") ?? "",
     active: formData.get("active") ?? "",
+    alwaysAvailable: formData.get("alwaysAvailable") ?? "",
   });
 }
 
@@ -182,6 +184,7 @@ export async function createProductAction(
       galleryData: gallery.galleryData,
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",
+      alwaysAvailable: parsed.data.alwaysAvailable === "on",
     },
   });
   await syncVariants(product.id, readVariants(formData));
@@ -231,6 +234,7 @@ export async function updateProductAction(
       galleryData: gallery.galleryData,
       categoryId: parsed.data.categoryId || null,
       active: parsed.data.active === "on",
+      alwaysAvailable: parsed.data.alwaysAvailable === "on",
     },
   });
   await syncVariants(id, readVariants(formData));

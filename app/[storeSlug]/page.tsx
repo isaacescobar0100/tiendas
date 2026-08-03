@@ -310,6 +310,7 @@ export default async function StorefrontPage({
                 imagePosition: p.imagePosition,
                 imageZoom: p.imageZoom,
                 stock: p.stock,
+                alwaysAvailable: p.alwaysAvailable,
                 variants: p.variants,
               }}
             />

@@ -209,6 +209,9 @@ model Product {
   // Galería con encuadre por imagen: JSON [{url, position, zoom}]
   galleryData   String    @default("[]")
   active      Boolean   @default(true)
+  // Merch: se puede pedir aunque la tienda esté cerrada (ignora el horario).
+  // Ideal para productos que se despachan (camisetas, gorras…), no comida.
+  alwaysAvailable Boolean @default(false)
   store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
   storeId     String
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)

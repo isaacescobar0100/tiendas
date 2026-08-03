@@ -103,13 +103,10 @@ export async function placeOrderAction(
   });
   if (!store) return { error: "Tienda no encontrada." };
 
-  // Fuera del horario de atención no se aceptan pedidos.
+  // Fuera del horario de atención solo se aceptan pedidos de merch
+  // (productos con alwaysAvailable). La validación por producto va más abajo.
   const openState = getStoreOpenState(store.hoursJson);
-  if (openState.enforced && !openState.isOpen) {
-    return {
-      error: `La tienda está cerrada ahora.${openState.message ? ` ${openState.message}.` : ""}`,
-    };
-  }
+  const storeClosed = openState.enforced && !openState.isOpen;
 
   // Si la tienda tiene sedes, el cliente debe elegir una válida.
   let locationName: string | null = null;
@@ -157,6 +154,13 @@ export async function placeOrderAction(
   for (const item of items) {
     const product = byId.get(item.productId);
     if (!product) return { error: `Un producto ya no está disponible.` };
+
+    // Fuera de horario, solo el merch (alwaysAvailable) se puede pedir.
+    if (storeClosed && !product.alwaysAvailable) {
+      return {
+        error: `"${product.name}" solo se puede pedir en horario de atención.${openState.message ? ` ${openState.message}.` : ""}`,
+      };
+    }
 
     // Precio a cobrar: el de oferta si es válido, si no el normal.
     const unitCents = effectivePriceCents(product);

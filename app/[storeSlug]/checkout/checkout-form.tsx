@@ -38,6 +38,11 @@ export default function CheckoutForm({
 
   const bothEnabled = onlineEnabled && codEnabled;
   const noMethod = !onlineEnabled && !codEnabled;
+
+  // Fuera de horario solo se puede pedir el merch: si el carrito tiene algún
+  // producto que NO es merch, no se puede completar el pedido ahora.
+  const blockedItems = closed ? items.filter((i) => !i.alwaysAvailable) : [];
+  const hoursBlocked = blockedItems.length > 0;
   // Método seleccionado (por defecto: en línea si está disponible).
   const [method, setMethod] = useState<Method>(
     onlineEnabled ? "online" : "cod",
@@ -233,15 +238,21 @@ export default function CheckoutForm({
             )}
           </div>
 
-          {closed && (
-            <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              <Clock className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>
-                Estamos cerrados en este momento
-                {closedMessage ? `. ${closedMessage}` : ""}. No podemos recibir
-                pedidos ahora, pero puedes dejar tu carrito listo y volver
-                cuando abramos.
-              </span>
+          {hoursBlocked && (
+            <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <div className="flex items-start gap-2">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  Estamos cerrados en este momento
+                  {closedMessage ? `. ${closedMessage}` : ""}. Solo el merch se
+                  puede pedir ahora. Quita del carrito para continuar:
+                </span>
+              </div>
+              <ul className="mt-1.5 list-disc pl-9">
+                {blockedItems.map((i) => (
+                  <li key={i.key}>{i.name}</li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -253,10 +264,10 @@ export default function CheckoutForm({
 
           <button
             type="submit"
-            disabled={pending || noMethod || closed}
+            disabled={pending || noMethod || hoursBlocked}
             className="w-full rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
           >
-            {closed
+            {hoursBlocked
               ? "Cerrado ahora"
               : pending
                 ? method === "online"
