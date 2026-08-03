@@ -6,11 +6,15 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { isMerchProduct } from "@/lib/store-hours";
 import { parseModifiers } from "@/lib/modifiers";
+import { getStoreRatings } from "@/lib/reviews";
+import { getCurrentCustomer } from "@/lib/customer-auth";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { AddToCart } from "@/components/cart/add-to-cart";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductCard } from "@/components/product-card";
+import { StarRating } from "@/components/star-rating";
+import { ReviewForm } from "@/components/review-form";
 
 export const dynamic = "force-dynamic";
 
@@ -129,6 +133,26 @@ export default async function ProductPage({
     )
     .slice(0, 4);
 
+  // Reseñas del producto + estrellas de los productos relacionados.
+  const [reviews, ratings, customer] = await Promise.all([
+    prisma.review.findMany({
+      where: { productId: product.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    getStoreRatings(store.id),
+    getCurrentCustomer(store.id),
+  ]);
+  const reviewCount = reviews.length;
+  const reviewAvg =
+    reviewCount > 0
+      ? reviews.reduce((n, r) => n + r.rating, 0) / reviewCount
+      : 0;
+  const myReview = customer
+    ? reviews.find((r) => r.customerId === customer.id) ?? null
+    : null;
+  const reviewDateFmt = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
+
   return (
     <div>
       <Link
@@ -167,6 +191,14 @@ export default async function ProductPage({
           <h1 className="mt-2 text-3xl font-bold text-gray-900">
             {product.name}
           </h1>
+          {reviewCount > 0 && (
+            <a
+              href="#resenas"
+              className="mt-2 inline-flex items-center gap-1.5 hover:opacity-80"
+            >
+              <StarRating value={reviewAvg} count={reviewCount} size="md" />
+            </a>
+          )}
           <div className="mt-3 flex flex-wrap items-baseline gap-3">
             <p className="text-2xl font-semibold text-gray-900">
               {formatPrice(effectiveCents, store.currency)}
@@ -233,6 +265,62 @@ export default async function ProductPage({
         </div>
       </div>
 
+      <section id="resenas" className="mt-16">
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <h2 className="text-lg font-bold text-gray-900">Reseñas</h2>
+          {reviewCount > 0 && (
+            <StarRating value={reviewAvg} count={reviewCount} size="md" />
+          )}
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-[1fr_360px]">
+          <div className="space-y-5">
+            {reviews.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
+                Aún no hay reseñas. ¡Sé el primero en opinar!
+              </p>
+            ) : (
+              reviews.map((r) => (
+                <div
+                  key={r.id}
+                  className="border-b border-gray-100 pb-5 last:border-0"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-gray-900">
+                      {r.customerName}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {reviewDateFmt.format(r.createdAt)}
+                    </span>
+                  </div>
+                  <div className="mt-1">
+                    <StarRating value={r.rating} showCount={false} />
+                  </div>
+                  {r.comment && (
+                    <p className="mt-2 whitespace-pre-line text-sm text-gray-600">
+                      {r.comment}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="h-fit">
+            <ReviewForm
+              storeSlug={store.slug}
+              productId={product.id}
+              loggedIn={!!customer}
+              existing={
+                myReview
+                  ? { rating: myReview.rating, comment: myReview.comment }
+                  : null
+              }
+            />
+          </div>
+        </div>
+      </section>
+
       {related.length > 0 && (
         <section className="mt-16">
           <h2 className="mb-6 text-lg font-bold text-gray-900">
@@ -245,6 +333,7 @@ export default async function ProductPage({
                 storeSlug={store.slug}
                 currency={store.currency}
                 freeShipping={store.shippingCents === 0}
+                rating={ratings.get(p.id)}
                 product={{
                   id: p.id,
                   slug: p.slug,

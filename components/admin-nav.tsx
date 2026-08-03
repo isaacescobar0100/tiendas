@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/admin", label: "Inicio" },
   { href: "/admin/products", label: "Productos" },
   { href: "/admin/orders", label: "Pedidos" },
+  { href: "/admin/reviews", label: "Reseñas" },
   { href: "/admin/categories", label: "Categorías" },
   { href: "/admin/promotions", label: "Promociones" },
   { href: "/admin/sedes", label: "Sedes" },

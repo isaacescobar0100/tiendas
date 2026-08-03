@@ -11,6 +11,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { isMerchProduct } from "@/lib/store-hours";
 import { parseModifiers } from "@/lib/modifiers";
+import { getStoreRatings } from "@/lib/reviews";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 import { VideoHero } from "@/components/video-hero";
@@ -190,6 +191,9 @@ export default async function StorefrontPage({
     select: { id: true, name: true, address: true },
   });
 
+  // Estrellas (promedio de reseñas) por producto para las tarjetas.
+  const ratings = await getStoreRatings(store.id);
+
   return (
     <div>
       {store.bannerVideoUrl ? (
@@ -302,6 +306,7 @@ export default async function StorefrontPage({
               currency={store.currency}
               freeShipping={store.shippingCents === 0}
               priority={i < 4}
+              rating={ratings.get(p.id)}
               product={{
                 id: p.id,
                 slug: p.slug,

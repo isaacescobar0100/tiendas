@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
+import { StarRating } from "@/components/star-rating";
 import { formatPrice } from "@/lib/utils";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { flyToCart } from "@/lib/fly-to-cart";
@@ -32,6 +33,7 @@ export function ProductCard({
   product,
   freeShipping = false,
   priority = false,
+  rating,
 }: {
   storeSlug: string;
   currency: string;
@@ -40,6 +42,7 @@ export function ProductCard({
   // Imágenes visibles de entrada: cargan con prioridad (mejor LCP). El resto,
   // en diferido (lazy) para aligerar la primera vista.
   priority?: boolean;
+  rating?: { avg: number; count: number };
 }) {
   const { add, storeClosed } = useCart();
   const [added, setAdded] = useState(false);
@@ -172,6 +175,11 @@ export function ProductCard({
               </p>
             )}
           </div>
+          {rating && rating.count > 0 && (
+            <div className="mt-1">
+              <StarRating value={rating.avg} count={rating.count} />
+            </div>
+          )}
           {freeShipping && (
             <span className="mt-1 inline-block rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
               Envío gratis

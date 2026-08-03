@@ -100,6 +100,7 @@ model Store {
   promotions  Promotion[]
   slugAliases StoreSlugAlias[]
   locations   StoreLocation[]
+  reviews     Review[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
@@ -167,9 +168,30 @@ model Customer {
   // Anti fuerza bruta: intentos fallidos y bloqueo temporal de la cuenta.
   failedAttempts Int      @default(0)
   lockedUntil    DateTime?
+  reviews      Review[]
   createdAt    DateTime @default(now())
 
   @@unique([storeId, email])
+}
+
+// Reseña de un producto dejada por un cliente con cuenta (1 por producto).
+model Review {
+  id           String    @id @default(cuid())
+  store        Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId      String
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId    String
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerId   String?
+  customerName String    // nombre mostrado (copia, por si se borra la cuenta)
+  rating       Int       // 1..5 estrellas
+  comment      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([productId, customerId])
+  @@index([productId])
+  @@index([storeId])
 }
 
 // Token para restablecer contraseña (admin o cliente). Se guarda solo el hash.
@@ -221,6 +243,7 @@ model Product {
   categoryId  String?
   variants    ProductVariant[]
   orderItems  OrderItem[]
+  reviews     Review[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
