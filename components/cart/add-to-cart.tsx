@@ -54,8 +54,11 @@ export function AddToCart({
         if (next.has(optionId)) next.delete(optionId);
         else next.add(optionId);
       } else {
+        // "Elegir una": clic en la ya elegida la desmarca (por si fue error);
+        // clic en otra, cambia la selección.
+        const already = next.has(optionId);
         for (const o of group.options) next.delete(o.id);
-        next.add(optionId);
+        if (!already) next.add(optionId);
       }
       return next;
     });
