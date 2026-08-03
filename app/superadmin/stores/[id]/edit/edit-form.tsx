@@ -3,11 +3,14 @@
 import { useActionState } from "react";
 import { Check } from "lucide-react";
 import { updateStoreConfigAction, type ActionState } from "../../../actions";
+import { STORE_TYPE_OPTIONS } from "@/lib/store-type";
+import type { StoreType } from "@prisma/client";
 
 type StoreCfg = {
   id: string;
   name: string;
   slug: string;
+  type: StoreType;
   customDomain: string | null;
   plan: "SALE" | "RENT";
   paidUntil: string; // YYYY-MM-DD o ""
@@ -51,6 +54,20 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
           />
           <p className="mt-1 text-xs text-gray-400">
             Lo edita solo el superadmin (el admin no puede cambiarlo).
+          </p>
+        </div>
+        <div>
+          <label className={labelCls}>Tipo de tienda</label>
+          <select name="type" defaultValue={store.type} className={inputCls}>
+            {STORE_TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-400">
+            {STORE_TYPE_OPTIONS.find((o) => o.value === store.type)?.hint}{" "}
+            Cambia qué se muestra: tallas, stock, adiciones y aviso +18.
           </p>
         </div>
         <div>

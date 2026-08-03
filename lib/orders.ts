@@ -3,6 +3,7 @@
 // una vez aunque ambos lleguen (idempotente).
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
+import { tracksStock } from "@/lib/store-type";
 
 /**
  * Marca el pedido como PAGADO y envía los emails de confirmación, pero solo si
@@ -30,7 +31,8 @@ export async function markOrderPaid(orderId: string): Promise<boolean> {
   // Ahora que el pago está confirmado, descontamos el stock (una sola vez,
   // porque la transición PENDING→PAID de arriba solo la gana una llamada).
   // Si algo se agotó entre tanto, dejamos el stock en 0 (nunca negativo); el
-  // dueño verá el pedido y lo gestiona.
+  // dueño verá el pedido y lo gestiona. La comida no controla stock.
+  if (tracksStock(order.store.type))
   await prisma.$transaction(async (tx) => {
     for (const item of order.items) {
       const qty = item.quantity;

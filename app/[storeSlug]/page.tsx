@@ -11,6 +11,7 @@ import {
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isMerchProduct } from "@/lib/store-hours";
+import { tracksStock } from "@/lib/store-type";
 import { parseModifiers } from "@/lib/modifiers";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
@@ -314,6 +315,7 @@ export default async function StorefrontPage({
               freeShipping={store.shippingCents === 0}
               priority={i < 4}
               rating={{ avg: p.ratingAvg, count: p.ratingCount }}
+              tracksStock={tracksStock(store.type)}
               product={{
                 id: p.id,
                 slug: p.slug,

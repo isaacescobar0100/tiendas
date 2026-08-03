@@ -27,6 +27,7 @@ export default async function NewProductPage() {
       <ProductForm
         action={createProductAction}
         categories={categories}
+        storeType={store.type}
         submitLabel="Crear producto"
       />
     </div>

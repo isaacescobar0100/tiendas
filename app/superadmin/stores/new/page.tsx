@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createStoreAction, type ActionState } from "../../actions";
+import { STORE_TYPE_OPTIONS } from "@/lib/store-type";
 
 export default function NewStorePage() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
@@ -38,6 +39,26 @@ export default function NewStorePage() {
             placeholder="Zapatería Central"
             required
           />
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Tipo de tienda
+            </label>
+            <select
+              name="type"
+              defaultValue="FASHION"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+            >
+              {STORE_TYPE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label} — {o.hint}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-400">
+              Define qué se muestra: tallas y stock (moda), adiciones y horario
+              (comida), o stock y +18 (licores).
+            </p>
+          </div>
           <Field
             label="Moneda (ISO 3 letras)"
             name="currency"

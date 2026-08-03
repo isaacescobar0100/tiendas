@@ -34,6 +34,7 @@ export function ProductCard({
   freeShipping = false,
   priority = false,
   rating,
+  tracksStock = true,
 }: {
   storeSlug: string;
   currency: string;
@@ -43,6 +44,8 @@ export function ProductCard({
   // en diferido (lazy) para aligerar la primera vista.
   priority?: boolean;
   rating?: { avg: number; count: number };
+  // Comida (a la carta): no se cuenta stock → siempre disponible.
+  tracksStock?: boolean;
 }) {
   const { add, storeClosed } = useCart();
   const [added, setAdded] = useState(false);
@@ -54,9 +57,11 @@ export function ProductCard({
 
   const list = product.variants;
   const hasVariants = list.length > 0;
-  const available = hasVariants
-    ? list.some((v) => v.stock > 0)
-    : product.stock > 0;
+  const available = !tracksStock
+    ? true
+    : hasVariants
+      ? list.some((v) => v.stock > 0)
+      : product.stock > 0;
 
   const uniq = (arr: string[]) => [...new Set(arr)];
   const colors = uniq(list.map((v) => v.color).filter(Boolean));

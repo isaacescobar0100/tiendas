@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { isMerchProduct } from "@/lib/store-hours";
+import { tracksStock } from "@/lib/store-type";
 import { parseModifiers } from "@/lib/modifiers";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
@@ -213,23 +214,26 @@ export default async function ProductPage({
             )}
           </div>
 
-          {(() => {
-            const hasVariants = product.variants.length > 0;
-            const totalStock = hasVariants
-              ? product.variants.reduce((n, v) => n + v.stock, 0)
-              : product.stock;
-            return (
-              <div className="mt-4">
-                {totalStock > 0 ? (
-                  <span className="text-sm text-green-600">
-                    {hasVariants ? "Disponible" : `En stock (${totalStock} disponibles)`}
-                  </span>
-                ) : (
-                  <span className="text-sm text-red-500">Agotado</span>
-                )}
-              </div>
-            );
-          })()}
+          {tracksStock(store.type) &&
+            (() => {
+              const hasVariants = product.variants.length > 0;
+              const totalStock = hasVariants
+                ? product.variants.reduce((n, v) => n + v.stock, 0)
+                : product.stock;
+              return (
+                <div className="mt-4">
+                  {totalStock > 0 ? (
+                    <span className="text-sm text-green-600">
+                      {hasVariants
+                        ? "Disponible"
+                        : `En stock (${totalStock} disponibles)`}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-red-500">Agotado</span>
+                  )}
+                </div>
+              );
+            })()}
 
           {product.description && (
             <p className="mt-6 whitespace-pre-line text-gray-600">
@@ -240,7 +244,7 @@ export default async function ProductPage({
           <AddToCart
             storeSlug={store.slug}
             currency={store.currency}
-            disabled={product.stock === 0}
+            disabled={tracksStock(store.type) && product.stock === 0}
             variants={product.variants.map((v) => ({
               id: v.id,
               color: v.color,
@@ -332,6 +336,7 @@ export default async function ProductPage({
                 currency={store.currency}
                 freeShipping={store.shippingCents === 0}
                 rating={{ avg: p.ratingAvg, count: p.ratingCount }}
+                tracksStock={tracksStock(store.type)}
                 product={{
                   id: p.id,
                   slug: p.slug,

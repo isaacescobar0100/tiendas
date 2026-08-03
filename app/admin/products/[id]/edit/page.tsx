@@ -42,6 +42,7 @@ export default async function EditProductPage({
       <ProductForm
         action={updateProductAction}
         categories={categories}
+        storeType={store.type}
         defaults={{
           ...product,
           images: product.images,

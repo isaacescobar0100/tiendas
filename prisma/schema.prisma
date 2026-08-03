@@ -21,6 +21,13 @@ enum StorePlan {
   RENT
 }
 
+// Tipo de negocio: decide qué se muestra/oculta (tallas, stock, adiciones, +18).
+enum StoreType {
+  FASHION // Moda/Ropa: tallas y colores, con stock
+  FOOD    // Comida: adiciones, horario y sedes; sin tallas ni stock (a la carta)
+  LIQUOR  // Licores: con stock y aviso +18; sin tallas
+}
+
 // Estado de PAGO del pedido (SHIPPED queda en desuso; el envío va aparte).
 enum OrderStatus {
   PENDING
@@ -55,6 +62,7 @@ model Store {
   id          String     @id @default(cuid())
   name        String
   slug        String     @unique
+  type        StoreType  @default(FASHION) // tipo de negocio (lo fija el superadmin)
   customDomain String?   @unique // dominio propio (ej. yoswill.com) → mapea a esta tienda
   description String?
   logoUrl     String?

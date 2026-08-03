@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { Store, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getStoreOpenState } from "@/lib/store-hours";
+import { isAgeRestricted } from "@/lib/store-type";
+import { AgeGate } from "@/components/age-gate";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartButton } from "@/components/cart/cart-button";
 import { CartDrawer } from "@/components/cart/cart-drawer";
@@ -26,6 +28,7 @@ export default async function StoreLayout({
       id: true,
       name: true,
       slug: true,
+      type: true,
       active: true,
       currency: true,
       logoUrl: true,
@@ -165,6 +168,9 @@ export default async function StoreLayout({
         </footer>
       </div>
       <CartDrawer />
+      {isAgeRestricted(store.type) && (
+        <AgeGate storeSlug={store.slug} storeName={store.name} />
+      )}
       </div>
     </CartProvider>
     </FavoritesProvider>

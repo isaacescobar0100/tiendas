@@ -12,6 +12,7 @@ import {
 import { computeShipping } from "@/lib/shipping";
 import { effectivePriceCents } from "@/lib/pricing";
 import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
+import { tracksStock } from "@/lib/store-type";
 import { parseModifiers, resolveSelection } from "@/lib/modifiers";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
@@ -110,6 +111,8 @@ export async function placeOrderAction(
   // (productos con alwaysAvailable). La validación por producto va más abajo.
   const openState = getStoreOpenState(store.hoursJson);
   const storeClosed = openState.enforced && !openState.isOpen;
+  // Comida (a la carta): no se controla stock.
+  const tracks = tracksStock(store.type);
 
   // Si la tienda tiene sedes, el cliente debe elegir una válida.
   let locationName: string | null = null;
@@ -202,8 +205,8 @@ export async function placeOrderAction(
         quantity: item.quantity,
       });
     } else {
-      // Producto sin variantes: stock a nivel de producto
-      if (product.stock < item.quantity) {
+      // Producto sin variantes: stock a nivel de producto (salvo comida).
+      if (tracks && product.stock < item.quantity) {
         return { error: `Sin stock suficiente de "${product.name}".` };
       }
       totalCents += unitCents * item.quantity;
@@ -235,7 +238,7 @@ export async function placeOrderAction(
       // Contraentrega: el pedido queda comprometido, así que descontamos el
       // stock ya. Pago en línea: NO se descuenta aquí; se descuenta cuando el
       // pago se confirma (markOrderPaid), para no perder stock si el pago falla.
-      if (!useOnline) {
+      if (!useOnline && tracks) {
         // La condición `gte` evita quedar en negativo.
         for (const line of lineItems) {
           if (line.variantId) {

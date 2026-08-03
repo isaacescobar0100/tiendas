@@ -11,6 +11,8 @@ import {
 } from "@/components/multi-image-upload";
 import { ModifiersEditor } from "@/components/modifiers-editor";
 import { variantLabel } from "@/lib/utils";
+import { usesVariants, usesModifiers, tracksStock } from "@/lib/store-type";
+import type { StoreType } from "@prisma/client";
 
 type Category = { id: string; name: string };
 
@@ -63,12 +65,17 @@ export function ProductForm({
   categories,
   defaults,
   submitLabel,
+  storeType,
 }: {
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   categories: Category[];
   defaults?: ProductDefaults;
   submitLabel: string;
+  storeType: StoreType;
 }) {
+  const showVariants = usesVariants(storeType); // tallas/colores (moda)
+  const showModifiers = usesModifiers(storeType); // adiciones (comida)
+  const showStock = tracksStock(storeType); // stock (todo menos comida)
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     action,
     undefined,
@@ -174,7 +181,7 @@ export function ProductForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className={showStock ? "grid grid-cols-2 gap-4" : ""}>
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
             Precio
@@ -192,34 +199,36 @@ export function ProductForm({
             className={inputCls}
           />
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            {hasVariants ? "Stock total" : "Stock"}
-          </label>
-          {hasVariants ? (
-            // Con variantes: el general es la suma (solo lectura), pero sí se envía.
-            <input
-              name="stock"
-              type="text"
-              readOnly
-              value={totalStock}
-              className={`${inputCls} bg-gray-100 text-gray-500`}
-            />
-          ) : (
-            <input
-              name="stock"
-              type="number"
-              min={0}
-              defaultValue={defaults?.stock ?? 0}
-              className={inputCls}
-            />
-          )}
-          {hasVariants && (
-            <p className="mt-1 text-xs text-gray-400">
-              Suma automática del stock de cada variante.
-            </p>
-          )}
-        </div>
+        {showStock && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {hasVariants ? "Stock total" : "Stock"}
+            </label>
+            {hasVariants ? (
+              // Con variantes: el general es la suma (solo lectura), pero sí se envía.
+              <input
+                name="stock"
+                type="text"
+                readOnly
+                value={totalStock}
+                className={`${inputCls} bg-gray-100 text-gray-500`}
+              />
+            ) : (
+              <input
+                name="stock"
+                type="number"
+                min={0}
+                defaultValue={defaults?.stock ?? 0}
+                className={inputCls}
+              />
+            )}
+            {hasVariants && (
+              <p className="mt-1 text-xs text-gray-400">
+                Suma automática del stock de cada variante.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div>
@@ -244,7 +253,8 @@ export function ProductForm({
         </p>
       </div>
 
-      {/* Variantes: se definen colores y tallas por separado y se combinan */}
+      {/* Variantes (solo moda): colores y tallas que se combinan */}
+      {showVariants && (
       <div className="space-y-4 rounded-lg border border-gray-200 p-4">
         <input
           type="hidden"
@@ -322,8 +332,11 @@ export function ProductForm({
           </div>
         )}
       </div>
+      )}
 
-      <ModifiersEditor initialJson={defaults?.modifiersJson} />
+      {showModifiers && (
+        <ModifiersEditor initialJson={defaults?.modifiersJson} />
+      )}
 
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">

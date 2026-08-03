@@ -40,6 +40,7 @@ export default async function EditStorePage({
           id: store.id,
           name: store.name,
           slug: store.slug,
+          type: store.type,
           customDomain: store.customDomain,
           plan: store.plan,
           paidUntil: store.paidUntil

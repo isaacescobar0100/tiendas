@@ -13,6 +13,7 @@ import { sendRentEmail } from "@/lib/email";
 
 const createStoreSchema = z.object({
   storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
+  type: z.enum(["FASHION", "FOOD", "LIQUOR"]).default("FASHION"),
   currency: z.string().min(3).max(3).default("COP"),
   adminName: z.string().min(2, "El nombre del admin es muy corto."),
   adminEmail: z.string().email("Email inválido."),
@@ -40,6 +41,7 @@ export async function createStoreAction(
 
   const parsed = createStoreSchema.safeParse({
     storeName: formData.get("storeName"),
+    type: (formData.get("type") as string) || "FASHION",
     currency: (formData.get("currency") as string)?.toUpperCase() || "COP",
     adminName: formData.get("adminName"),
     adminEmail: formData.get("adminEmail"),
@@ -70,6 +72,7 @@ export async function createStoreAction(
         create: {
           name: data.storeName,
           slug,
+          type: data.type,
           currency: data.currency,
         },
       },
@@ -94,6 +97,7 @@ const configSchema = z.object({
   storeId: z.string().min(1),
   storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
   slug: z.string().min(2, "El slug es muy corto."),
+  type: z.enum(["FASHION", "FOOD", "LIQUOR"]).optional(),
   customDomain: z.string().optional(),
   plan: z.enum(["SALE", "RENT"]).optional(),
   paidUntil: z.string().optional(),
@@ -114,6 +118,7 @@ export async function updateStoreConfigAction(
     storeId: formData.get("storeId"),
     storeName: formData.get("storeName"),
     slug: formData.get("slug"),
+    type: (formData.get("type") as string) || undefined,
     customDomain: formData.get("customDomain") ?? "",
     plan: (formData.get("plan") as string) || "SALE",
     paidUntil: formData.get("paidUntil") ?? "",
@@ -179,6 +184,7 @@ export async function updateStoreConfigAction(
     data: {
       name: d.storeName.trim(),
       slug,
+      ...(d.type ? { type: d.type } : {}),
       customDomain,
       plan,
       paidUntil,
