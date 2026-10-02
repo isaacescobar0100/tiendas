@@ -48,6 +48,7 @@ export default async function EditStorePage({
             : "",
           onlinePaymentEnabled: store.onlinePaymentEnabled,
           codEnabled: store.codEnabled,
+          transferEnabled: store.transferEnabled,
           wompiPublicKey: store.wompiPublicKey,
           wompiPrivateKey: store.wompiPrivateKey,
           wompiIntegritySecret: store.wompiIntegritySecret,

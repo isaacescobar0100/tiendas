@@ -1,19 +1,36 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, Clock, X, Search } from "lucide-react";
+import {
+  Check,
+  Clock,
+  X,
+  Search,
+  QrCode,
+  ExternalLink,
+  MessageCircle,
+  Camera,
+  Paperclip,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { normalizeWhatsapp } from "@/lib/whatsapp";
 import { getTransaction, resolveWompiKeys } from "@/lib/wompi";
 import { markOrderPaid } from "@/lib/orders";
 import { getCurrentCustomer } from "@/lib/customer-auth";
+import {
+  parseTransferAccounts,
+  paymentMethodLabel,
+  TRANSFER_KIND_LABEL,
+} from "@/lib/payment-methods";
 import ClearCart from "./clear-cart";
+import CopyButton from "./copy-button";
 import { PostOrderAccount } from "../post-order-account";
 
 export const dynamic = "force-dynamic";
 
 // Estado de pago que mostramos al cliente al volver del checkout.
-type Payment = "approved" | "pending" | "failed" | "registered";
+// "awaiting" = pedido por transferencia aún sin pagar.
+type Payment = "approved" | "pending" | "failed" | "registered" | "awaiting";
 
 export default async function OrderSuccessPage({
   params,
@@ -36,6 +53,7 @@ export default async function OrderSuccessPage({
         select: {
           name: true,
           whatsapp: true,
+          transferAccountsJson: true,
           wompiPublicKey: true,
           wompiPrivateKey: true,
           wompiIntegritySecret: true,
@@ -61,10 +79,19 @@ export default async function OrderSuccessPage({
       // No pudimos verificar: si el webhook ya lo marcó pagado, respétalo.
       payment = order.status === "PAID" ? "approved" : "pending";
     }
+  } else if (order.paymentMethod === "TRANSFER" && order.status === "PENDING") {
+    // Transferencia: el pedido existe pero falta que el cliente pague.
+    payment = "awaiting";
   } else {
     // Sin transacción (contraentrega / pago manual) o ya confirmado por webhook.
     payment = order.status === "PAID" ? "approved" : "registered";
   }
+
+  // Cuentas/QR de la tienda para pagar por transferencia.
+  const transferAccounts =
+    payment === "awaiting"
+      ? parseTransferAccounts(order.store.transferAccountsJson)
+      : [];
 
   const ui = {
     approved: {
@@ -72,6 +99,13 @@ export default async function OrderSuccessPage({
       color: "bg-green-100 text-green-600",
       title: "¡Pago confirmado!",
       subtitle: "Hemos recibido tu pago. Prepararemos tu pedido enseguida.",
+    },
+    awaiting: {
+      icon: <QrCode className="h-8 w-8" strokeWidth={2.5} />,
+      color: "bg-amber-100 text-amber-600",
+      title: "¡Pedido recibido! Falta el pago",
+      subtitle:
+        "paga con alguna de las opciones de abajo y envíanos el comprobante.",
     },
     registered: {
       icon: <Check className="h-8 w-8" strokeWidth={3} />,
@@ -111,14 +145,20 @@ export default async function OrderSuccessPage({
   const accountCta: "create" | "login" | null =
     payment === "failed" || loggedIn ? null : accountExists ? "login" : "create";
 
-  // Envío del pedido por WhatsApp a la sede (para que lo preparen).
+  // Envío del pedido por WhatsApp (el negocio atiende por ahí: el pedido es
+  // oficial cuando les llega). Va a la sede elegida o, si no tiene número, al
+  // WhatsApp de la tienda. En transferencia es también donde va el comprobante.
   let sedeWaHref: string | null = null;
-  if (payment !== "failed" && order.locationName) {
-    const sede = await prisma.storeLocation.findFirst({
-      where: { storeId: order.storeId, name: order.locationName },
-      select: { whatsapp: true },
-    });
-    const number = normalizeWhatsapp(sede?.whatsapp);
+  const awaiting = payment === "awaiting";
+  if (payment !== "failed") {
+    const sede = order.locationName
+      ? await prisma.storeLocation.findFirst({
+          where: { storeId: order.storeId, name: order.locationName },
+          select: { whatsapp: true },
+        })
+      : null;
+    const number = normalizeWhatsapp(sede?.whatsapp || order.store.whatsapp);
+    const greeting = order.locationName ?? order.store.name;
     if (number.length >= 10) {
       const lines = order.items
         .map((i) => {
@@ -128,11 +168,15 @@ export default async function OrderSuccessPage({
         })
         .join("\n");
       const msg =
-        `Hola ${order.locationName}, este es mi pedido #${order.id.slice(-8)}:\n${lines}\n\n` +
+        `Hola ${greeting}, este es mi pedido #${order.id.slice(-8)}:\n${lines}\n\n` +
         `Total: ${formatPrice(order.totalCents, order.currency)}\n` +
+        (order.paymentMethod
+          ? `Pago: ${paymentMethodLabel(order.paymentMethod)}\n`
+          : "") +
         `Nombre: ${order.customerName}\n` +
         `Tel: ${order.customerPhone ?? ""}\n` +
-        `Envío a: ${order.address}`;
+        `Envío a: ${order.address}` +
+        (awaiting ? `\n\nTe adjunto la captura del comprobante de pago.` : "");
       sedeWaHref = `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
     }
   }
@@ -154,23 +198,114 @@ export default async function OrderSuccessPage({
         Nº de pedido: <span className="font-mono">{order.id.slice(-8)}</span>
       </p>
 
+      {awaiting && (
+        <div className="mt-6 rounded-2xl border border-gray-200 p-5 text-left">
+          <p className="text-sm font-semibold text-gray-900">
+            1. Paga {formatPrice(order.totalCents, order.currency)}
+          </p>
+          <p className="mt-1 text-xs text-gray-500">
+            Desde la app de tu banco o billetera. Usa la opción que prefieras:
+          </p>
+          {transferAccounts.length === 0 ? (
+            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+              La tienda te enviará los datos de pago por WhatsApp.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-3">
+              {transferAccounts.map((a) => (
+                <li
+                  key={a.id}
+                  className="rounded-xl border border-gray-200 bg-gray-50 p-3"
+                >
+                  <p className="text-sm font-medium text-gray-900">
+                    {TRANSFER_KIND_LABEL[a.kind]}
+                    {a.holder && (
+                      <span className="font-normal text-gray-500">
+                        {" "}
+                        · {a.holder}
+                      </span>
+                    )}
+                  </p>
+                  {a.qrUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={a.qrUrl}
+                      alt={`QR de pago ${TRANSFER_KIND_LABEL[a.kind]}`}
+                      className="mx-auto mt-2 w-full max-w-[220px] rounded-lg border border-gray-200 bg-white"
+                    />
+                  )}
+                  {a.value && a.kind === "LINK" ? (
+                    <a
+                      href={a.value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110"
+                    >
+                      <ExternalLink className="h-4 w-4" /> Abrir link de pago
+                    </a>
+                  ) : a.value ? (
+                    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                      <span className="break-all font-mono text-sm text-gray-900">
+                        {a.value}
+                      </span>
+                      <CopyButton text={a.value} />
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {sedeWaHref && (
         <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-5">
-          <p className="text-sm font-semibold text-gray-900">
-            Un último paso 👇
+          <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-gray-900">
+            <MessageCircle className="h-4 w-4 text-green-600" />
+            {awaiting ? "2. Envía el comprobante" : "Un último paso"}
           </p>
           <p className="mt-1 text-sm text-gray-600">
-            Envía tu pedido a <strong>{order.locationName}</strong> por WhatsApp
-            para que empiecen a prepararlo.
+            Tu pedido es <strong>oficial</strong> cuando lo envías a{" "}
+            <strong>{order.locationName ?? order.store.name}</strong> por
+            WhatsApp.
           </p>
+          {awaiting && (
+            <ol className="mx-auto mt-3 max-w-xs space-y-2 text-left text-sm text-gray-700">
+              <li className="flex items-start gap-2">
+                <Camera className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                <span>
+                  Toma una <strong>captura</strong> del pago en la app de tu
+                  banco.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                <span>Toca el botón verde: se abre el chat con tu pedido escrito.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Paperclip className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                <span>
+                  <strong>Adjunta la captura</strong> y envía.
+                </span>
+              </li>
+            </ol>
+          )}
           <a
             href={sedeWaHref}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-6 py-3 text-sm font-semibold text-white hover:brightness-105"
           >
-            Enviar mi pedido por WhatsApp
+            <MessageCircle className="h-4 w-4" />
+            {awaiting
+              ? "Enviar pedido y comprobante"
+              : "Enviar mi pedido por WhatsApp"}
           </a>
+          {awaiting && (
+            <p className="mt-2 text-xs text-gray-500">
+              Preparamos tu pedido en cuanto confirmemos el pago.
+            </p>
+          )}
         </div>
       )}
 

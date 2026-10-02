@@ -270,6 +270,12 @@ export default async function SuperadminHome({
                         label="Contraentrega"
                         enabled={store.codEnabled}
                       />
+                      <PayToggle
+                        storeId={store.id}
+                        method="transfer"
+                        label="Transferencia"
+                        enabled={store.transferEnabled}
+                      />
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -378,7 +384,7 @@ function PayToggle({
   enabled,
 }: {
   storeId: string;
-  method: "online" | "cod";
+  method: "online" | "cod" | "transfer";
   label: string;
   enabled: boolean;
 }) {

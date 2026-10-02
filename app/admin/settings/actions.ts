@@ -7,6 +7,11 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { parsePriceToCents } from "@/lib/utils";
 import { parseStoreHours, serializeStoreHours } from "@/lib/store-hours";
+import { isWompiConfigured, resolveWompiKeys } from "@/lib/wompi";
+import {
+  parseTransferAccounts,
+  serializeTransferAccounts,
+} from "@/lib/payment-methods";
 
 export type SettingsState = { error?: string; ok?: boolean } | undefined;
 
@@ -109,6 +114,53 @@ export async function updateStoreAction(
 
   revalidatePath("/admin/settings");
   revalidatePath("/admin");
+  revalidatePath(`/${store.slug}`);
+  return { ok: true };
+}
+
+/**
+ * Métodos de pago que la tienda ofrece en el checkout, y sus cuentas/QR para
+ * transferencia directa. Wompi solo se puede activar si el superadmin ya
+ * configuró las llaves.
+ */
+export async function updatePaymentsAction(
+  _prev: SettingsState,
+  formData: FormData,
+): Promise<SettingsState> {
+  const { store } = await requireAdminStore();
+
+  const wompiReady = isWompiConfigured(resolveWompiKeys(store));
+  // Sin llaves el checkbox va deshabilitado (no llega): se conserva lo que había.
+  const onlinePaymentEnabled = wompiReady
+    ? formData.get("onlinePayment") === "on"
+    : store.onlinePaymentEnabled;
+  const codEnabled = formData.get("codPayment") === "on";
+  const transferEnabled = formData.get("transferPayment") === "on";
+
+  const accounts = parseTransferAccounts(
+    String(formData.get("transferAccountsJson") ?? ""),
+  );
+  if (transferEnabled && accounts.length === 0) {
+    return {
+      error: "Para cobrar por transferencia agrega al menos una llave, número o QR.",
+    };
+  }
+  if (!(onlinePaymentEnabled && wompiReady) && !codEnabled && !transferEnabled) {
+    return { error: "Debe quedar al menos un método de pago activo." };
+  }
+
+  await prisma.store.update({
+    where: { id: store.id },
+    data: {
+      onlinePaymentEnabled,
+      codEnabled,
+      transferEnabled,
+      transferAccountsJson: serializeTransferAccounts(accounts),
+    },
+  });
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/superadmin");
   revalidatePath(`/${store.slug}`);
   return { ok: true };
 }

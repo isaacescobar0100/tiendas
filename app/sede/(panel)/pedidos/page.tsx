@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { paymentMethodLabel } from "@/lib/payment-methods";
 import { PackageSearch } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
@@ -57,6 +58,9 @@ export default async function SedeOrders() {
                   <p className="text-xs text-gray-400">
                     {dateFmt.format(o.createdAt)}
                     {o.customerPhone ? ` · ${o.customerPhone}` : ""}
+                    {o.paymentMethod
+                      ? ` · ${paymentMethodLabel(o.paymentMethod)}`
+                      : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">

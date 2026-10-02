@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { paymentMethodLabel } from "@/lib/payment-methods";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Truck, PackageCheck, MessageCircle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -170,6 +171,12 @@ export default async function OrderDetailPage({
               )}
               {order.locationName && (
                 <Row label="Sede" value={order.locationName} />
+              )}
+              {order.paymentMethod && (
+                <Row
+                  label="Método de pago"
+                  value={paymentMethodLabel(order.paymentMethod)}
+                />
               )}
             </dl>
           </div>

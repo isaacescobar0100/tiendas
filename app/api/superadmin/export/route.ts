@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { variantLabel } from "@/lib/utils";
 import { PAYMENT_LABEL, FULFILLMENT_LABEL } from "@/lib/order-status";
+import { paymentMethodLabel } from "@/lib/payment-methods";
 
 function esc(v: string | number | null | undefined): string {
   return `"${String(v ?? "").replace(/"/g, '""')}"`;
@@ -43,6 +44,7 @@ export async function GET(request: Request) {
     "Email",
     "Telefono",
     "Ciudad",
+    "Método pago",
     "Estado pago",
     "Estado envio",
     "Productos",
@@ -67,6 +69,7 @@ export async function GET(request: Request) {
       o.customerEmail,
       o.customerPhone ?? "",
       o.city,
+      paymentMethodLabel(o.paymentMethod),
       PAYMENT_LABEL[o.status],
       FULFILLMENT_LABEL[o.fulfillment],
       productos,

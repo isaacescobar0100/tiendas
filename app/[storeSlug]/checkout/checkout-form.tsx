@@ -3,17 +3,18 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CreditCard, Truck, Clock } from "lucide-react";
+import { ArrowLeft, CreditCard, Truck, Clock, QrCode } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { computeShipping } from "@/lib/shipping";
 import { placeOrderAction, type CheckoutState } from "./actions";
 
-type Method = "online" | "cod";
+type Method = "online" | "cod" | "transfer";
 
 export default function CheckoutForm({
   onlineEnabled,
   codEnabled,
+  transferEnabled = false,
   locations = [],
   closed = false,
   closedMessage = null,
@@ -21,6 +22,7 @@ export default function CheckoutForm({
 }: {
   onlineEnabled: boolean;
   codEnabled: boolean;
+  transferEnabled?: boolean;
   locations?: { name: string; address: string | null }[];
   closed?: boolean;
   closedMessage?: string | null;
@@ -36,17 +38,23 @@ export default function CheckoutForm({
     undefined,
   );
 
-  const bothEnabled = onlineEnabled && codEnabled;
-  const noMethod = !onlineEnabled && !codEnabled;
+  // Métodos disponibles, en el orden en que se muestran. Primero la
+  // transferencia (sin comisión para la tienda).
+  const methods = (
+    [
+      transferEnabled && "transfer",
+      onlineEnabled && "online",
+      codEnabled && "cod",
+    ] as const
+  ).filter((m): m is Method => !!m);
+  const noMethod = methods.length === 0;
 
   // Fuera de horario solo se puede pedir el merch: si el carrito tiene algún
   // producto que NO es merch, no se puede completar el pedido ahora.
   const blockedItems = closed ? items.filter((i) => !i.alwaysAvailable) : [];
   const hoursBlocked = blockedItems.length > 0;
-  // Método seleccionado (por defecto: en línea si está disponible).
-  const [method, setMethod] = useState<Method>(
-    onlineEnabled ? "online" : "cod",
-  );
+  // Método seleccionado (por defecto: el primero disponible).
+  const [method, setMethod] = useState<Method>(methods[0] ?? "cod");
 
   // Resultado del pedido:
   // - checkoutUrl → hay pasarela: redirige a pagar (el carrito se vacía al volver ya pagado)
@@ -213,28 +221,22 @@ export default function CheckoutForm({
                 El pago no está disponible en este momento. Vuelve a intentarlo
                 más tarde.
               </p>
-            ) : bothEnabled ? (
+            ) : methods.length > 1 ? (
               <div className="space-y-2">
-                <MethodOption
-                  icon={<CreditCard className="h-5 w-5" />}
-                  title="Pagar en línea"
-                  desc="Tarjeta, PSE, Nequi… Pago seguro con Wompi."
-                  checked={method === "online"}
-                  onSelect={() => setMethod("online")}
-                />
-                <MethodOption
-                  icon={<Truck className="h-5 w-5" />}
-                  title="Pago contra entrega"
-                  desc="Pagas en efectivo al recibir tu pedido."
-                  checked={method === "cod"}
-                  onSelect={() => setMethod("cod")}
-                />
+                {methods.map((m) => (
+                  <MethodOption
+                    key={m}
+                    icon={METHOD_INFO[m].icon}
+                    title={METHOD_INFO[m].title}
+                    desc={METHOD_INFO[m].desc}
+                    checked={method === m}
+                    onSelect={() => setMethod(m)}
+                  />
+                ))}
               </div>
             ) : (
               <p className="text-sm text-gray-500">
-                {onlineEnabled
-                  ? "Pago en línea seguro con Wompi (tarjeta, PSE, Nequi…)."
-                  : "Pago contra entrega: pagas en efectivo al recibir tu pedido."}
+                {METHOD_INFO[method].title}: {METHOD_INFO[method].desc}
               </p>
             )}
           </div>
@@ -280,9 +282,7 @@ export default function CheckoutForm({
           </button>
           {!noMethod && (
             <p className="text-center text-xs text-gray-400">
-              {method === "online"
-                ? "Te llevamos a Wompi para completar el pago de forma segura."
-                : "Pagarás en efectivo cuando recibas tu pedido."}
+              {METHOD_INFO[method].hint}
             </p>
           )}
         </form>
@@ -343,6 +343,30 @@ export default function CheckoutForm({
     </div>
   );
 }
+
+const METHOD_INFO: Record<
+  Method,
+  { icon: React.ReactNode; title: string; desc: string; hint: string }
+> = {
+  transfer: {
+    icon: <QrCode className="h-5 w-5" />,
+    title: "Transferencia / QR",
+    desc: "Bre-B, Nequi, Daviplata o link de pago. Te mostramos cómo pagar al confirmar.",
+    hint: "Al confirmar verás el QR y los datos para transferir.",
+  },
+  online: {
+    icon: <CreditCard className="h-5 w-5" />,
+    title: "Pagar en línea",
+    desc: "Tarjeta, PSE, Nequi… Pago seguro con Wompi.",
+    hint: "Te llevamos a Wompi para completar el pago de forma segura.",
+  },
+  cod: {
+    icon: <Truck className="h-5 w-5" />,
+    title: "Pago contra entrega",
+    desc: "Pagas en efectivo al recibir tu pedido.",
+    hint: "Pagarás en efectivo cuando recibas tu pedido.",
+  },
+};
 
 // Tarjeta seleccionable de método de pago.
 function MethodOption({

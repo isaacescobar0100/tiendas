@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { variantLabel } from "@/lib/utils";
 import { PAYMENT_LABEL, FULFILLMENT_LABEL } from "@/lib/order-status";
+import { paymentMethodLabel } from "@/lib/payment-methods";
 import { getCurrentSede } from "@/lib/sede-auth";
 
 function esc(v: string | number | null | undefined): string {
@@ -38,6 +39,7 @@ export async function GET() {
     "Telefono",
     "Ciudad",
     "Direccion",
+    "Método pago",
     "Estado pago",
     "Estado envio",
     "Productos",
@@ -62,6 +64,7 @@ export async function GET() {
       o.customerPhone ?? "",
       o.city,
       o.address,
+      paymentMethodLabel(o.paymentMethod),
       PAYMENT_LABEL[o.status],
       FULFILLMENT_LABEL[o.fulfillment],
       productos,

@@ -22,6 +22,8 @@ export function ImageUpload({
   defaultPosition = "50% 50%",
   zoomName = "imageZoom",
   defaultZoom = 1,
+  // Aviso opcional al padre cuando cambia la URL (subida o quitar).
+  onChange,
 }: {
   name?: string;
   defaultUrl?: string | null;
@@ -32,6 +34,7 @@ export function ImageUpload({
   defaultPosition?: string;
   zoomName?: string;
   defaultZoom?: number;
+  onChange?: (url: string) => void;
 }) {
   const [url, setUrl] = useState(defaultUrl ?? "");
   const [position, setPosition] = useState(defaultPosition || "50% 50%");
@@ -60,6 +63,7 @@ export function ImageUpload({
         throw new Error(data.error ?? `Error al subir (${res.status}).`);
       }
       setUrl(data.url);
+      onChange?.(data.url);
       setPosition("50% 50%"); // nueva foto: centrada y sin zoom
       setZoom(1);
     } catch (e) {
@@ -191,7 +195,10 @@ export function ImageUpload({
           {url && !uploading && (
             <button
               type="button"
-              onClick={() => setUrl("")}
+              onClick={() => {
+                setUrl("");
+                onChange?.("");
+              }}
               className="ml-2 text-sm text-gray-400 hover:text-red-500"
             >
               Quitar

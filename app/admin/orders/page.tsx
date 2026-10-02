@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { paymentMethodLabel } from "@/lib/payment-methods";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
@@ -89,6 +90,11 @@ export default async function OrdersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <PaymentSelect orderId={o.id} value={o.status} />
+                    {o.paymentMethod && (
+                      <p className="mt-1 text-xs text-gray-400">
+                        {paymentMethodLabel(o.paymentMethod)}
+                      </p>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <FulfillmentSelect orderId={o.id} value={o.fulfillment} />

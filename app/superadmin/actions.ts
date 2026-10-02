@@ -175,7 +175,8 @@ export async function updateStoreConfigAction(
   // Métodos de pago (checkboxes). Debe quedar al menos uno activo.
   const onlinePaymentEnabled = formData.get("onlinePayment") === "on";
   const codEnabled = formData.get("codPayment") === "on";
-  if (!onlinePaymentEnabled && !codEnabled) {
+  const transferEnabled = formData.get("transferPayment") === "on";
+  if (!onlinePaymentEnabled && !codEnabled && !transferEnabled) {
     return { error: "Debe quedar al menos un método de pago activo." };
   }
 
@@ -190,6 +191,7 @@ export async function updateStoreConfigAction(
       paidUntil,
       onlinePaymentEnabled,
       codEnabled,
+      transferEnabled,
       ...(paidChanged ? { rentNotice: null } : {}),
       wompiPublicKey: s(d.wompiPublicKey),
       wompiPrivateKey: s(d.wompiPrivateKey),
@@ -273,8 +275,8 @@ export async function toggleStoreActiveAction(formData: FormData) {
 export async function toggleStorePaymentAction(formData: FormData) {
   await requireSuperadmin();
   const storeId = String(formData.get("storeId"));
-  const method = String(formData.get("method")); // "online" | "cod"
-  if (method !== "online" && method !== "cod") return;
+  const method = String(formData.get("method")); // "online" | "cod" | "transfer"
+  if (method !== "online" && method !== "cod" && method !== "transfer") return;
 
   const store = await prisma.store.findUnique({ where: { id: storeId } });
   if (!store) return;
@@ -282,12 +284,14 @@ export async function toggleStorePaymentAction(formData: FormData) {
   const next = {
     onlinePaymentEnabled: store.onlinePaymentEnabled,
     codEnabled: store.codEnabled,
+    transferEnabled: store.transferEnabled,
   };
   if (method === "online") next.onlinePaymentEnabled = !next.onlinePaymentEnabled;
-  else next.codEnabled = !next.codEnabled;
+  else if (method === "cod") next.codEnabled = !next.codEnabled;
+  else next.transferEnabled = !next.transferEnabled;
 
-  // No permitir desactivar los dos a la vez.
-  if (!next.onlinePaymentEnabled && !next.codEnabled) return;
+  // No permitir dejar la tienda sin ningún método.
+  if (!next.onlinePaymentEnabled && !next.codEnabled && !next.transferEnabled) return;
 
   await prisma.store.update({ where: { id: storeId }, data: next });
   revalidatePath("/superadmin");

@@ -15,6 +15,8 @@ import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
 import { tracksStock } from "@/lib/store-type";
 import { parseModifiers, resolveSelection } from "@/lib/modifiers";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { parseTransferAccounts } from "@/lib/payment-methods";
+import type { PaymentMethod } from "@prisma/client";
 
 // `checkoutUrl` presente = hay que redirigir al cliente a pagar en Wompi.
 export type CheckoutState =
@@ -127,13 +129,26 @@ export async function placeOrderAction(
   const wompiKeys = resolveWompiKeys(store);
   const onlineAvailable = store.onlinePaymentEnabled && isWompiConfigured(wompiKeys);
   const codAvailable = store.codEnabled;
-  const requested = String(formData.get("paymentMethod") ?? "");
-  let useOnline: boolean;
-  if (requested === "online" && onlineAvailable) useOnline = true;
-  else if (requested === "cod" && codAvailable) useOnline = false;
-  else if (onlineAvailable && !codAvailable) useOnline = true;
-  else if (codAvailable && !onlineAvailable) useOnline = false;
-  else return { error: "Método de pago no disponible." };
+  const transferAvailable =
+    store.transferEnabled &&
+    parseTransferAccounts(store.transferAccountsJson).length > 0;
+  const available: PaymentMethod[] = [
+    ...(onlineAvailable ? (["ONLINE"] as const) : []),
+    ...(codAvailable ? (["COD"] as const) : []),
+    ...(transferAvailable ? (["TRANSFER"] as const) : []),
+  ];
+  const requested = (
+    { online: "ONLINE", cod: "COD", transfer: "TRANSFER" } as const
+  )[String(formData.get("paymentMethod") ?? "") as "online" | "cod" | "transfer"];
+  // Lo pedido si está disponible; si no, el único disponible (si solo hay uno).
+  const paymentMethod: PaymentMethod | undefined =
+    requested && available.includes(requested)
+      ? requested
+      : available.length === 1
+        ? available[0]
+        : undefined;
+  if (!paymentMethod) return { error: "Método de pago no disponible." };
+  const useOnline = paymentMethod === "ONLINE";
 
   // Carga los productos (con sus tallas) y valida contra la BD
   const products = await prisma.product.findMany({
@@ -263,6 +278,7 @@ export async function placeOrderAction(
           customerEmail: d.customerEmail,
           customerPhone: d.customerPhone ?? null,
           locationName,
+          paymentMethod,
           street: d.street,
           neighborhood: d.neighborhood,
           city: d.city,
@@ -309,8 +325,9 @@ export async function placeOrderAction(
       return { orderId: order.id, checkoutUrl };
     }
 
-    // Contraentrega: el pedido queda registrado y se pagará al recibir.
-    // Emails de confirmación (no bloquea si Resend no está configurado o falla)
+    // Contraentrega / transferencia: el pedido queda registrado y se paga al
+    // recibir o por transferencia (la tienda lo marca pagado al verificarlo).
+    // Emails de confirmación (no bloquea si el envío no está configurado o falla)
     await sendOrderEmails({
       orderId: order.id,
       storeName: store.name,
@@ -321,7 +338,10 @@ export async function placeOrderAction(
       locationName,
       address,
       reference: d.reference ?? null,
-      paymentLabel: "Contra entrega (pago al recibir)",
+      paymentLabel:
+        paymentMethod === "TRANSFER"
+          ? "Transferencia / QR (pendiente de verificar)"
+          : "Contra entrega (pago al recibir)",
       adminEmail: store.owner?.email,
       totalCents: grandTotalCents,
       shippingCents,

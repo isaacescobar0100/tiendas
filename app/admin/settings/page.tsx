@@ -1,6 +1,9 @@
 import { requireAdminStore } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
+import { isWompiConfigured, resolveWompiKeys } from "@/lib/wompi";
+import { parseTransferAccounts } from "@/lib/payment-methods";
 import { StoreForm, PasswordForm } from "./settings-forms";
+import { PaymentsForm } from "./payments-form";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +42,16 @@ export default async function SettingsPage() {
           merchCategoryIds: store.merchCategoryIds,
         }}
         categories={categories}
+      />
+
+      <PaymentsForm
+        data={{
+          wompiReady: isWompiConfigured(resolveWompiKeys(store)),
+          onlinePaymentEnabled: store.onlinePaymentEnabled,
+          codEnabled: store.codEnabled,
+          transferEnabled: store.transferEnabled,
+          transferAccounts: parseTransferAccounts(store.transferAccountsJson),
+        }}
       />
 
       <PasswordForm />

@@ -16,6 +16,7 @@ type StoreCfg = {
   paidUntil: string; // YYYY-MM-DD o ""
   onlinePaymentEnabled: boolean;
   codEnabled: boolean;
+  transferEnabled: boolean;
   wompiPublicKey: string | null;
   wompiPrivateKey: string | null;
   wompiIntegritySecret: string | null;
@@ -124,9 +125,18 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
           />
           Contra entrega / coordinado (sin pasarela)
         </label>
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            name="transferPayment"
+            defaultChecked={store.transferEnabled}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          Transferencia / QR (Bre-B, Nequi, Daviplata, link)
+        </label>
         <p className="text-xs text-gray-400">
-          Debe quedar al menos uno activo. Para negocios que cobran por
-          transferencia/WhatsApp, deja solo &ldquo;Contra entrega&rdquo;.
+          Debe quedar al menos uno activo. La tienda también los puede cambiar
+          desde sus Ajustes, donde sube sus QR y llaves para transferencia.
         </p>
       </fieldset>
 

@@ -2,10 +2,11 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { isWompiConfigured, resolveWompiKeys } from "@/lib/wompi";
 import { getStoreOpenState } from "@/lib/store-hours";
+import { parseTransferAccounts } from "@/lib/payment-methods";
 import CheckoutForm from "./checkout-form";
 
 // Server component: decide qué métodos de pago ofrecer según los ajustes de la
-// tienda (los controla el superadmin) y si Wompi está configurado.
+// tienda (los activa la tienda o el superadmin) y si Wompi está configurado.
 export default async function CheckoutPage({
   params,
 }: {
@@ -18,6 +19,8 @@ export default async function CheckoutPage({
       id: true,
       onlinePaymentEnabled: true,
       codEnabled: true,
+      transferEnabled: true,
+      transferAccountsJson: true,
       shippingCents: true,
       freeShippingOverCents: true,
       wompiPublicKey: true,
@@ -42,11 +45,16 @@ export default async function CheckoutPage({
   const onlineEnabled =
     store.onlinePaymentEnabled && isWompiConfigured(resolveWompiKeys(store));
   const codEnabled = store.codEnabled;
+  // Transferencia: solo si la tienda tiene al menos una cuenta o QR cargado.
+  const transferEnabled =
+    store.transferEnabled &&
+    parseTransferAccounts(store.transferAccountsJson).length > 0;
 
   return (
     <CheckoutForm
       onlineEnabled={onlineEnabled}
       codEnabled={codEnabled}
+      transferEnabled={transferEnabled}
       locations={locations}
       closed={closed}
       closedMessage={closed ? openState.message : null}

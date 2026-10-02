@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { variantLabel } from "@/lib/utils";
 import { PAYMENT_LABEL, FULFILLMENT_LABEL } from "@/lib/order-status";
+import { paymentMethodLabel } from "@/lib/payment-methods";
 import { rateLimit, clientIpFromRequest } from "@/lib/rate-limit";
 
 // Medianoche en Colombia (UTC−5, sin horario de verano) expresada en UTC.
@@ -85,6 +86,7 @@ export async function GET(request: Request) {
     "Telefono",
     "Ciudad",
     "Direccion",
+    "Método pago",
     "Estado pago",
     "Estado envio",
     "Productos",
@@ -121,6 +123,7 @@ export async function GET(request: Request) {
       o.customerPhone ?? "",
       o.city,
       o.address,
+      paymentMethodLabel(o.paymentMethod),
       PAYMENT_LABEL[o.status],
       FULFILLMENT_LABEL[o.fulfillment],
       productos,

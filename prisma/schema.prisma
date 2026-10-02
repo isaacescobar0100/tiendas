@@ -36,6 +36,13 @@ enum OrderStatus {
   CANCELLED
 }
 
+// Cómo pagó (o pagará) el cliente el pedido.
+enum PaymentMethod {
+  ONLINE   // pasarela (Wompi)
+  COD      // contra entrega
+  TRANSFER // transferencia directa: QR / llave Bre-B / Nequi / Daviplata / link
+}
+
 // Estado de ENVÍO del pedido (independiente del pago).
 enum Fulfillment {
   PENDING
@@ -85,6 +92,11 @@ model Store {
   // Métodos de pago que ofrece la tienda (los controla el superadmin)
   onlinePaymentEnabled Boolean @default(true) // "Ir a pagar en línea" (Wompi)
   codEnabled           Boolean @default(true) // contraentrega (pago al recibir)
+  // Transferencia directa (sin pasarela ni comisión): el cliente paga a la
+  // cuenta de la tienda y la sede/admin confirma el pago a mano.
+  transferEnabled      Boolean @default(false)
+  // Cuentas/QR para transferir (JSON: [{id, kind, value, holder, qrUrl}]).
+  transferAccountsJson String  @default("")
   // Envío: costo fijo por pedido y umbral opcional de envío gratis (0 = desactivado)
   shippingCents        Int     @default(0)
   freeShippingOverCents Int    @default(0)
@@ -288,6 +300,7 @@ model Order {
   customerEmail String
   customerPhone String?
   locationName  String? // sede elegida (para negocios con varias sedes)
+  paymentMethod PaymentMethod? // cómo paga; vacío en pedidos antiguos
   // Dirección desglosada (los pedidos antiguos solo tienen `address`)
   // `street` guarda la dirección completa (ej. "Cra 23D # 45-12, Apto 301").
   street        String?
