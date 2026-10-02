@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   });
   if (!store) return new Response("Sin tienda.", { status: 404 });
 
-  const rl = rateLimit(`export:${clientIpFromRequest(request)}`, 20, 60 * 1000);
+  const rl = await rateLimit(`export:${clientIpFromRequest(request)}`, 20, 60 * 1000);
   if (!rl.ok) {
     return new Response("Demasiadas descargas. Espera un momento.", {
       status: 429,

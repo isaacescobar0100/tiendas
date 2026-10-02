@@ -21,7 +21,7 @@ export async function requestAdminResetAction(
   _prev: ResetState,
   formData: FormData,
 ): Promise<ResetState> {
-  const rl = rateLimit(`reset-req:${await clientIp()}`, 5, 15 * 60 * 1000);
+  const rl = await rateLimit(`reset-req:${await clientIp()}`, 5, 15 * 60 * 1000);
   if (!rl.ok) {
     return { error: `Demasiadas solicitudes. Espera ${rl.retryAfter}s.` };
   }

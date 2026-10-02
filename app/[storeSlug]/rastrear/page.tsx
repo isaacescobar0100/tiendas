@@ -42,7 +42,7 @@ export default async function TrackOrderPage({
   const validNum = /^[a-z0-9]{8}$/.test(num);
   let limited = false;
   if (searched && validNum && mail) {
-    const rl = rateLimit(`track:${await clientIp()}`, 20, 10 * 60 * 1000);
+    const rl = await rateLimit(`track:${await clientIp()}`, 20, 10 * 60 * 1000);
     limited = !rl.ok;
   }
   const order =

@@ -42,7 +42,7 @@ export async function registerAction(
   _prev: AccountState,
   formData: FormData,
 ): Promise<AccountState> {
-  const rl = rateLimit(`register:${await clientIp()}`, 5, 10 * 60 * 1000);
+  const rl = await rateLimit(`register:${await clientIp()}`, 5, 10 * 60 * 1000);
   if (!rl.ok) {
     return { error: `Demasiados intentos. Espera ${rl.retryAfter}s.` };
   }
@@ -58,7 +58,7 @@ export async function registerAction(
 
   const email = parsed.data.email.toLowerCase();
   // Máx. 3 correos por dirección cada hora (no se puede usar para llenar un buzón).
-  const perEmail = rateLimit(`access-mail:${store.id}:${email}`, 3, 60 * 60 * 1000);
+  const perEmail = await rateLimit(`access-mail:${store.id}:${email}`, 3, 60 * 60 * 1000);
   if (perEmail.ok) {
     const customer =
       (await prisma.customer.findUnique({
@@ -77,7 +77,7 @@ export async function loginAction(
   _prev: AccountState,
   formData: FormData,
 ): Promise<AccountState> {
-  const rl = rateLimit(`login:${await clientIp()}`, 10, 5 * 60 * 1000);
+  const rl = await rateLimit(`login:${await clientIp()}`, 10, 5 * 60 * 1000);
   if (!rl.ok) {
     return { error: `Demasiados intentos. Espera ${rl.retryAfter}s.` };
   }
@@ -134,7 +134,7 @@ export async function sendVerifyLinkAction(
   if (!store) return { error: "Tienda no encontrada." };
   const customer = await getCurrentCustomer(store.id);
   if (!customer) return { error: "Inicia sesión de nuevo." };
-  const rl = rateLimit(`access-mail:${store.id}:${customer.email}`, 3, 60 * 60 * 1000);
+  const rl = await rateLimit(`access-mail:${store.id}:${customer.email}`, 3, 60 * 60 * 1000);
   if (!rl.ok) return { error: "Ya te enviamos varios correos. Revisa tu bandeja o espera un rato." };
   await sendAccessLink(store, customer, "welcome");
   return { ok: true };

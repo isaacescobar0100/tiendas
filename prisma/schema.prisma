@@ -227,6 +227,16 @@ model Review {
 }
 
 // Token para restablecer contraseña (admin o cliente). Se guarda solo el hash.
+// Límite de peticiones compartido entre todas las instancias del servidor
+// (ventana fija por clave). La clave es un hash: no guarda IPs ni emails.
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+
+  @@index([resetAt])
+}
+
 model PasswordResetToken {
   id         String    @id @default(cuid())
   tokenHash  String    @unique

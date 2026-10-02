@@ -70,7 +70,7 @@ export async function placeOrderAction(
   _prev: CheckoutState,
   formData: FormData,
 ): Promise<CheckoutState> {
-  const rl = rateLimit(`checkout:${await clientIp()}`, 15, 5 * 60 * 1000);
+  const rl = await rateLimit(`checkout:${await clientIp()}`, 15, 5 * 60 * 1000);
   if (!rl.ok) {
     return {
       error: `Demasiados intentos. Espera ${rl.retryAfter}s e inténtalo de nuevo.`,
@@ -345,10 +345,8 @@ export async function placeOrderAction(
     // El correo de confirmación va a un email que nadie verificó: máx. 5 por
     // dirección y hora, para que el checkout no sirva para mandar correos
     // masivos a terceros con la marca de la tienda.
-    const mailOk = rateLimit(
-      `order-mail:${d.customerEmail.toLowerCase()}`,
-      5,
-      60 * 60 * 1000,
+    const mailOk = (
+      await rateLimit(`order-mail:${d.customerEmail.toLowerCase()}`, 5, 60 * 60 * 1000)
     ).ok;
     await sendOrderEmails({
       orderId: order.id,

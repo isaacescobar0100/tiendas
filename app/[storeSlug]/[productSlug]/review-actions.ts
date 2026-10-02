@@ -18,7 +18,7 @@ export async function submitReviewAction(
   _prev: ReviewState,
   formData: FormData,
 ): Promise<ReviewState> {
-  const rl = rateLimit(`review:${await clientIp()}`, 10, 60 * 60 * 1000);
+  const rl = await rateLimit(`review:${await clientIp()}`, 10, 60 * 60 * 1000);
   if (!rl.ok) return { error: "Demasiadas reseñas. Inténtalo más tarde." };
 
   const storeSlug = String(formData.get("storeSlug") ?? "");

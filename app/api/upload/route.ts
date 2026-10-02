@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No autorizado." }, { status: 401 });
     }
 
-    const rl = rateLimit(`upload:${clientIpFromRequest(request)}`, 40, 60 * 1000);
+    const rl = await rateLimit(`upload:${clientIpFromRequest(request)}`, 40, 60 * 1000);
     if (!rl.ok) {
       return NextResponse.json(
         { error: "Demasiadas subidas. Espera un momento." },

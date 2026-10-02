@@ -34,7 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } catch {
           // sin IP: seguimos sin limitar
         }
-        const rl = rateLimit(`admin-login:${ip}`, 8, 5 * 60 * 1000);
+        const rl = await rateLimit(`admin-login:${ip}`, 8, 5 * 60 * 1000);
         if (!rl.ok) return null;
 
         const parsed = credentialsSchema.safeParse(raw);

@@ -22,6 +22,7 @@ import {
   paymentMethodLabel,
   TRANSFER_KIND_LABEL,
 } from "@/lib/payment-methods";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 import ClearCart from "./clear-cart";
 import CopyButton from "./copy-button";
 import { PostOrderAccount } from "../post-order-account";
@@ -67,7 +68,12 @@ export default async function OrderSuccessPage({
   // Determina el estado del pago.
   let payment: Payment;
   if (txId) {
-    const tx = await getTransaction(txId, resolveWompiKeys(order.store));
+    // Cada consulta usa la llave privada de la tienda contra Wompi: límite por
+    // IP para que no se pueda usar esta página para saturar ese servicio.
+    const rl = await rateLimit(`wompi-lookup:${await clientIp()}`, 30, 10 * 60 * 1000);
+    const tx = rl.ok
+      ? await getTransaction(txId, resolveWompiKeys(order.store))
+      : null;
     if (tx && tx.reference === order.id && tx.status === "APPROVED") {
       // markOrderPaid comprueba monto, moneda y método; solo decimos "pagado"
       // si el pedido quedó realmente PAGADO (por esta llamada o el webhook).

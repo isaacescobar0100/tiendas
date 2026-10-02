@@ -8,8 +8,14 @@ import type { NextRequest } from "next/server";
 import { verifyEvent, resolveWompiKeys, getTransaction } from "@/lib/wompi";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/lib/orders";
+import { rateLimit, clientIpFromRequest } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  // Límite por IP: los eventos firmados de Wompi son pocos; esto frena a quien
+  // envíe basura masiva para gastar consultas a la base o a Wompi.
+  const rl = await rateLimit(`wompi-webhook:${clientIpFromRequest(request)}`, 120, 60 * 1000);
+  if (!rl.ok) return Response.json({ error: "Demasiadas peticiones" }, { status: 429 });
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let event: any;
   try {

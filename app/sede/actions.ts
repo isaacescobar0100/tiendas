@@ -26,7 +26,7 @@ export async function sedeLoginAction(
   _prev: SedeLoginState,
   formData: FormData,
 ): Promise<SedeLoginState> {
-  const rl = rateLimit(`sede-login:${await clientIp()}`, 10, 5 * 60 * 1000);
+  const rl = await rateLimit(`sede-login:${await clientIp()}`, 10, 5 * 60 * 1000);
   if (!rl.ok) {
     return { error: `Demasiados intentos. Espera ${rl.retryAfter}s.` };
   }

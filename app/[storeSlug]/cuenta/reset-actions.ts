@@ -27,7 +27,7 @@ export async function requestCustomerResetAction(
   _prev: ResetState,
   formData: FormData,
 ): Promise<ResetState> {
-  const rl = rateLimit(`reset-req:${await clientIp()}`, 5, 15 * 60 * 1000);
+  const rl = await rateLimit(`reset-req:${await clientIp()}`, 5, 15 * 60 * 1000);
   if (!rl.ok) {
     return { error: `Demasiadas solicitudes. Espera ${rl.retryAfter}s.` };
   }
@@ -40,7 +40,7 @@ export async function requestCustomerResetAction(
     .toLowerCase();
   if (!email) return { error: "Indica tu email." };
 
-  const perEmail = rateLimit(`access-mail:${store.id}:${email}`, 3, 60 * 60 * 1000);
+  const perEmail = await rateLimit(`access-mail:${store.id}:${email}`, 3, 60 * 60 * 1000);
   const customer = perEmail.ok
     ? await prisma.customer.findUnique({
         where: { storeId_email: { storeId: store.id, email } },
