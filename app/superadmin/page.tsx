@@ -15,6 +15,7 @@ import {
 import type { StorePlan } from "@prisma/client";
 import { requireSuperadmin } from "@/lib/guards";
 import { readTempPasswordFlash } from "@/lib/flash";
+import { storePublicUrl } from "@/lib/site-url";
 
 const dateFmt = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
 const dayFmt = new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit" });
@@ -229,13 +230,15 @@ export default async function SuperadminHome() {
                     >
                       {store.name}
                     </Link>
-                    <Link
-                      href={`/${store.slug}`}
+                    <a
+                      href={storePublicUrl(store)}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
                     >
-                      /{store.slug} <ExternalLink className="h-3 w-3" />
-                    </Link>
+                      {storePublicUrl(store).replace(/^https?:\/\//, "")}{" "}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
                   </td>
                   <td className="px-4 py-3 text-gray-600">
                     {store.owner.email}

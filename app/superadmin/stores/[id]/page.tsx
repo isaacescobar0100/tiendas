@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/guards";
+import { storePublicUrl } from "@/lib/site-url";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { PAYMENT_BADGE, PAYMENT_LABEL } from "@/lib/order-status";
 import { SalesBars, Donut, HBars } from "@/components/charts";
@@ -123,13 +124,14 @@ export default async function SuperadminStoreDetail({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link
-            href={`/${store.slug}`}
+          <a
+            href={storePublicUrl(store)}
             target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
           >
             <ExternalLink className="h-4 w-4" /> Ver tienda
-          </Link>
+          </a>
           <a
             href={`/api/superadmin/export?store=${store.id}`}
             className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"

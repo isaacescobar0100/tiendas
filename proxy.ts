@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { NextResponse, type NextRequest } from "next/server";
 import { authConfig } from "@/auth.config";
+import { isReservedSlug } from "@/lib/utils";
 
 const { auth } = NextAuth(authConfig);
 
@@ -18,6 +19,12 @@ function isMainHost(host: string): boolean {
     host.startsWith("127.0.0.1") ||
     host.startsWith("0.0.0.0")
   );
+}
+
+/** El propio dominio raíz (o www): se comporta como el dominio principal. */
+function isRootHost(host: string): boolean {
+  const h = host.split(":")[0];
+  return !!ROOT_DOMAIN && (h === ROOT_DOMAIN || h === `www.${ROOT_DOMAIN}`);
 }
 
 async function resolveSlug(
@@ -41,20 +48,41 @@ async function resolveSlug(
   }
 }
 
-async function mapCustomDomain(req: NextRequest): Promise<NextResponse | null> {
-  const host = (req.headers.get("host") ?? "").toLowerCase();
-  if (isMainHost(host)) return null;
+// ─── Subdominio por tienda: surenos.<STORE_ROOT_DOMAIN> → /surenos ───────────
+// STORE_ROOT_DOMAIN es el dominio "puente" (p. ej. acordemusic.com, luego
+// idhetech.com). En Vercel se añade el comodín *.<dominio> al proyecto.
+const ROOT_DOMAIN = (process.env.STORE_ROOT_DOMAIN ?? "")
+  .trim()
+  .toLowerCase()
+  .replace(/^\.+/, "");
 
-  const { pathname } = req.nextUrl;
-  if (
-    /^\/(admin|superadmin|api|login|recuperar|restablecer|_next|favicon|sitemap|robots|\.well-known)/.test(
-      pathname,
-    )
-  ) {
+/** Slug de tienda si el host es <slug>.<dominio raíz>; si no, null. */
+function subdomainSlug(host: string): string | null {
+  if (!ROOT_DOMAIN) return null;
+  const h = host.split(":")[0];
+  if (h === ROOT_DOMAIN || !h.endsWith(`.${ROOT_DOMAIN}`)) return null;
+  const sub = h.slice(0, -(ROOT_DOMAIN.length + 1));
+  // Un solo nivel, formato de slug y nunca un nombre reservado (admin, api,
+  // sede…): así un subdominio no puede saltarse la protección de los paneles.
+  if (sub === "www" || !/^[a-z0-9-]+$/.test(sub) || isReservedSlug(sub)) {
     return null;
   }
+  return sub;
+}
 
-  const slug = await resolveSlug(host, req.nextUrl.origin);
+// Rutas de la plataforma que nunca se reescriben a una tienda.
+const PLATFORM_PATHS =
+  /^\/(admin|superadmin|api|login|recuperar|restablecer|sede|_next|favicon|sitemap|robots|\.well-known)(\/|$)/;
+
+async function mapCustomDomain(req: NextRequest): Promise<NextResponse | null> {
+  const host = (req.headers.get("host") ?? "").toLowerCase();
+  const fromSubdomain = subdomainSlug(host);
+  if (!fromSubdomain && (isMainHost(host) || isRootHost(host))) return null;
+
+  const { pathname } = req.nextUrl;
+  if (PLATFORM_PATHS.test(pathname)) return null;
+
+  const slug = fromSubdomain ?? (await resolveSlug(host, req.nextUrl.origin));
   if (!slug) return null;
   if (pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)) return null;
 
