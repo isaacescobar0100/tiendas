@@ -5,9 +5,11 @@ import { ArrowLeft, ArrowRight, ShoppingCart, X } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { FreeShippingNote } from "@/components/cart/free-shipping-note";
 import { formatPrice, variantLabel } from "@/lib/utils";
+import { useStoreHref } from "@/components/store-base";
 
 export default function CartPage() {
-  const { items, totalCents, currency, storeSlug, setQuantity, remove, ready } =
+  const sh = useStoreHref();
+  const { items, totalCents, currency, setQuantity, remove, ready } =
     useCart();
 
   if (!ready) {
@@ -20,7 +22,7 @@ export default function CartPage() {
         <ShoppingCart className="mx-auto h-10 w-10 text-gray-300" />
         <p className="mt-3 text-gray-500">Tu carrito está vacío.</p>
         <Link
-          href={`/${storeSlug}`}
+          href={sh()}
           className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
         >
           Ver productos
@@ -44,7 +46,7 @@ export default function CartPage() {
             />
             <div className="min-w-0 flex-1">
               <Link
-                href={`/${storeSlug}/${item.slug}`}
+                href={sh(`/${item.slug}`)}
                 className="truncate font-medium text-gray-900 hover:underline"
               >
                 {item.name}
@@ -109,13 +111,13 @@ export default function CartPage() {
 
       <div className="mt-6 flex items-center justify-between">
         <Link
-          href={`/${storeSlug}`}
+          href={sh()}
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
         >
           <ArrowLeft className="h-4 w-4" /> Seguir comprando
         </Link>
         <Link
-          href={`/${storeSlug}/checkout`}
+          href={sh(`/checkout`)}
           className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white hover:brightness-110"
         >
           Finalizar compra <ArrowRight className="h-4 w-4" />

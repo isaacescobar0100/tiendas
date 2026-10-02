@@ -16,6 +16,7 @@ import { parseModifiers } from "@/lib/modifiers";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 import { VideoHero } from "@/components/video-hero";
+import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,9 @@ export default async function StorefrontPage({
   }>;
 }) {
   const { storeSlug } = await params;
+  // Rutas de la tienda: sin el slug si se visita por su subdominio/dominio.
+  const storeBase = await storeBasePath(storeSlug);
+  const sh = (p = "") => joinStorePath(storeBase, p);
   const { cat, q, sort, page, offers } = await searchParams;
 
   const store = await getStore(storeSlug);
@@ -191,7 +195,7 @@ export default async function StorefrontPage({
     if (nextOffers) sp.set("offers", "1");
     if (over.page && over.page > 1) sp.set("page", String(over.page));
     const qs = sp.toString();
-    return `/${store.slug}${qs ? `?${qs}` : ""}`;
+    return sh(qs ? `?${qs}` : "");
   };
 
   // Sedes/ubicaciones (para negocios con varias sedes).

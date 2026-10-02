@@ -7,6 +7,7 @@ import {
   submitReviewAction,
   type ReviewState,
 } from "@/app/[storeSlug]/[productSlug]/review-actions";
+import { useStoreHref } from "@/components/store-base";
 
 export function ReviewForm({
   storeSlug,
@@ -19,6 +20,7 @@ export function ReviewForm({
   loggedIn: boolean;
   existing?: { rating: number; comment: string | null } | null;
 }) {
+  const sh = useStoreHref();
   const [state, formAction, pending] = useActionState<ReviewState, FormData>(
     submitReviewAction,
     undefined,
@@ -34,7 +36,7 @@ export function ReviewForm({
           Inicia sesión con tu cuenta para dejar tu reseña.
         </p>
         <Link
-          href={`/${storeSlug}/cuenta`}
+          href={sh(`/cuenta`)}
           className="mt-3 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
         >
           Iniciar sesión

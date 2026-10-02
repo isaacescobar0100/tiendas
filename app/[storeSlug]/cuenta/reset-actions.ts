@@ -12,13 +12,14 @@ import {
 import { setCustomerSession } from "@/lib/customer-auth";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { sendAccessLink } from "./access-link";
+import { storeHref } from "@/lib/store-path";
 
 export type ResetState = { error?: string; ok?: boolean } | undefined;
 
 async function storeBySlug(slug: string) {
   return prisma.store.findFirst({
     where: { slug, active: true },
-    select: { id: true, slug: true, name: true },
+    select: { id: true, slug: true, name: true, customDomain: true },
   });
 }
 
@@ -110,5 +111,5 @@ export async function resetCustomerPasswordAction(
     storeId: store.id,
     sv: updated.sessionVersion,
   });
-  redirect(`/${store.slug}/cuenta?reset=1`);
+  redirect(await storeHref(store.slug, "/cuenta?reset=1"));
 }

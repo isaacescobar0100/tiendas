@@ -7,11 +7,11 @@ import { useCart, type CartItem } from "./cart-context";
 import { flyToCart } from "@/lib/fly-to-cart";
 import { formatPrice } from "@/lib/utils";
 import { resolveSelection, type ModGroup } from "@/lib/modifiers";
+import { useStoreHref } from "@/components/store-base";
 
 type Variant = { id: string; color: string; size: string; stock: number };
 
 export function AddToCart({
-  storeSlug,
   product,
   variants,
   modifierGroups = [],
@@ -28,6 +28,7 @@ export function AddToCart({
   currency?: string;
   disabled?: boolean;
 }) {
+  const sh = useStoreHref();
   const { add, storeClosed } = useCart();
   const router = useRouter();
   const [qty, setQty] = useState(1);
@@ -327,7 +328,7 @@ export function AddToCart({
       <button
         type="button"
         onClick={() => {
-          if (doAdd()) router.push(`/${storeSlug}/cart`);
+          if (doAdd()) router.push(sh(`/cart`));
         }}
         className="inline-flex items-center gap-1 text-sm text-gray-500 underline hover:text-gray-900"
       >

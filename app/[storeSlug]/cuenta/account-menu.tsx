@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useFavorites } from "@/components/favorites/favorites-context";
 import { logoutAction } from "./actions";
+import { useStoreHref } from "@/components/store-base";
 
 // Menú del avatar en la cabecera de la tienda: agrupa cuenta/pedidos,
 // favoritos y rastreo en un solo desplegable.
@@ -21,6 +22,7 @@ export function AccountMenu({
   storeSlug: string;
   customerName: string | null;
 }) {
+  const sh = useStoreHref();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { count, ready } = useFavorites();
@@ -83,14 +85,14 @@ export function AccountMenu({
 
           <nav className="py-1 text-sm">
             <MenuLink
-              href={`/${storeSlug}/cuenta`}
+              href={sh(`/cuenta`)}
               onClick={close}
               icon={<ClipboardList className="h-4 w-4 text-gray-400" />}
             >
               {customerName ? "Mis pedidos" : "Iniciar sesión o crear cuenta"}
             </MenuLink>
             <MenuLink
-              href={`/${storeSlug}/favorites`}
+              href={sh(`/favorites`)}
               onClick={close}
               icon={<Heart className="h-4 w-4 text-gray-400" />}
             >
@@ -102,7 +104,7 @@ export function AccountMenu({
               )}
             </MenuLink>
             <MenuLink
-              href={`/${storeSlug}/rastrear`}
+              href={sh(`/rastrear`)}
               onClick={close}
               icon={<PackageSearch className="h-4 w-4 text-gray-400" />}
             >

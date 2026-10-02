@@ -13,6 +13,8 @@ import { FavoritesProvider } from "@/components/favorites/favorites-context";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { StoreUnavailable } from "@/components/store-unavailable";
 import { AccountMenu } from "./cuenta/account-menu";
+import { StoreBaseProvider } from "@/components/store-base";
+import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 export default async function StoreLayout({
   params,
@@ -22,6 +24,9 @@ export default async function StoreLayout({
   children: React.ReactNode;
 }) {
   const { storeSlug } = await params;
+  // Rutas de la tienda: sin el slug si se visita por su subdominio/dominio.
+  const storeBase = await storeBasePath(storeSlug);
+  const sh = (p = "") => joinStorePath(storeBase, p);
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug },
     select: {
@@ -70,6 +75,7 @@ export default async function StoreLayout({
   const openState = getStoreOpenState(store.hoursJson);
 
   return (
+    <StoreBaseProvider base={storeBase}>
     <FavoritesProvider storeSlug={store.slug} customerId={customer?.id ?? null}>
     <CartProvider
       storeSlug={store.slug}
@@ -89,7 +95,7 @@ export default async function StoreLayout({
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
             <div className="flex items-center gap-3">
               <Link
-                href={`/${store.slug}`}
+                href={sh()}
                 className="flex items-center gap-2 font-bold text-gray-900"
               >
                 {store.logoUrl ? (
@@ -136,19 +142,19 @@ export default async function StoreLayout({
         <footer className="border-t border-gray-200 py-6 text-center text-sm text-gray-400">
           <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
             <Link
-              href={`/${store.slug}/rastrear`}
+              href={sh(`/rastrear`)}
               className="font-medium text-gray-500 hover:text-gray-900"
             >
               Rastrear pedido
             </Link>
             <Link
-              href={`/${store.slug}/legal/terminos`}
+              href={sh(`/legal/terminos`)}
               className="text-gray-500 hover:text-gray-900"
             >
               Términos y condiciones
             </Link>
             <Link
-              href={`/${store.slug}/legal/privacidad`}
+              href={sh(`/legal/privacidad`)}
               className="text-gray-500 hover:text-gray-900"
             >
               Política de privacidad
@@ -174,5 +180,6 @@ export default async function StoreLayout({
       </div>
     </CartProvider>
     </FavoritesProvider>
+    </StoreBaseProvider>
   );
 }

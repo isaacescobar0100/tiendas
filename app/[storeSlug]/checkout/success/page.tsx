@@ -26,6 +26,7 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 import ClearCart from "./clear-cart";
 import CopyButton from "./copy-button";
 import { PostOrderAccount } from "../post-order-account";
+import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,9 @@ export default async function OrderSuccessPage({
   searchParams: Promise<{ order?: string; id?: string }>;
 }) {
   const { storeSlug } = await params;
+  // Rutas de la tienda: sin el slug si se visita por su subdominio/dominio.
+  const storeBase = await storeBasePath(storeSlug);
+  const sh = (p = "") => joinStorePath(storeBase, p);
   const { order: orderId, id: txId } = await searchParams;
 
   if (!orderId) notFound();
@@ -323,7 +327,7 @@ export default async function OrderSuccessPage({
 
       {payment !== "failed" && (
         <Link
-          href={`/${storeSlug}/rastrear?n=${order.id.slice(-8)}&email=${encodeURIComponent(order.customerEmail)}`}
+          href={sh(`/rastrear?n=${order.id.slice(-8)}&email=${encodeURIComponent(order.customerEmail)}`)}
           className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
         >
           <Search className="h-4 w-4" />
@@ -402,7 +406,7 @@ export default async function OrderSuccessPage({
             Inicia sesión para ver el estado de este y tus demás pedidos.
           </p>
           <Link
-            href={`/${storeSlug}/cuenta`}
+            href={sh(`/cuenta`)}
             className="mt-3 inline-block rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110"
           >
             Iniciar sesión
@@ -412,14 +416,14 @@ export default async function OrderSuccessPage({
 
       {payment === "failed" ? (
         <Link
-          href={`/${storeSlug}/checkout`}
+          href={sh(`/checkout`)}
           className="mt-8 inline-block rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white hover:brightness-110"
         >
           Intentar el pago de nuevo
         </Link>
       ) : (
         <Link
-          href={`/${storeSlug}`}
+          href={sh()}
           className="mt-8 inline-block rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white hover:brightness-110"
         >
           Seguir comprando

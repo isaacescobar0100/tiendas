@@ -13,6 +13,7 @@ import { getCurrentCustomer } from "@/lib/customer-auth";
 import { AccountForms } from "./account-forms";
 import { VerifyEmailNotice } from "./verify-email-notice";
 import { logoutAction } from "./actions";
+import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,9 @@ export default async function AccountPage({
   params: Promise<{ storeSlug: string }>;
 }) {
   const { storeSlug } = await params;
+  // Rutas de la tienda: sin el slug si se visita por su subdominio/dominio.
+  const storeBase = await storeBasePath(storeSlug);
+  const sh = (p = "") => joinStorePath(storeBase, p);
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
     select: { id: true, slug: true },
@@ -76,7 +80,7 @@ export default async function AccountPage({
           <PackageSearch className="mx-auto h-9 w-9 text-gray-300" />
           <p className="mt-3 text-gray-500">Todavía no tienes pedidos.</p>
           <Link
-            href={`/${store.slug}`}
+            href={sh()}
             className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
           >
             Ir a comprar

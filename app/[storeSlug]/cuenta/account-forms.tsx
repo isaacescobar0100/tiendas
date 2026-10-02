@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { loginAction, registerAction, type AccountState } from "./actions";
+import { useStoreHref } from "@/components/store-base";
 
 const inputCls =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
@@ -51,6 +52,7 @@ export function AccountForms({ storeSlug }: { storeSlug: string }) {
 }
 
 function LoginForm({ storeSlug }: { storeSlug: string }) {
+  const sh = useStoreHref();
   const [state, formAction, pending] = useActionState<AccountState, FormData>(
     loginAction,
     undefined,
@@ -78,7 +80,7 @@ function LoginForm({ storeSlug }: { storeSlug: string }) {
       </button>
       <p className="text-center text-sm">
         <a
-          href={`/${storeSlug}/cuenta/recuperar`}
+          href={sh(`/cuenta/recuperar`)}
           className="text-gray-500 hover:text-gray-900"
         >
           ¿Olvidaste tu contraseña?

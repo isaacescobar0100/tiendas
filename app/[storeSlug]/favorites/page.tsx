@@ -6,9 +6,11 @@ import { useCart } from "@/components/cart/cart-context";
 import { useFavorites } from "@/components/favorites/favorites-context";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { formatPrice } from "@/lib/utils";
+import { useStoreHref } from "@/components/store-base";
 
 export default function FavoritesPage() {
-  const { storeSlug, currency } = useCart();
+  const sh = useStoreHref();
+  const { currency } = useCart();
   const { items, ready } = useFavorites();
 
   if (!ready) {
@@ -21,7 +23,7 @@ export default function FavoritesPage() {
         <Heart className="mx-auto h-10 w-10 text-gray-300" />
         <p className="mt-3 text-gray-500">No tienes favoritos todavía.</p>
         <Link
-          href={`/${storeSlug}`}
+          href={sh()}
           className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
         >
           Explorar productos
@@ -42,7 +44,7 @@ export default function FavoritesPage() {
             <div className="absolute right-2 top-2 z-10">
               <FavoriteButton item={p} size="sm" />
             </div>
-            <Link href={`/${storeSlug}/${p.slug}`}>
+            <Link href={sh(`/${p.slug}`)}>
               <div className="aspect-square overflow-hidden bg-gray-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img

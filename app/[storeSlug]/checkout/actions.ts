@@ -1,6 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
@@ -15,6 +14,7 @@ import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
 import { tracksStock } from "@/lib/store-type";
 import { parseModifiers, resolveSelection } from "@/lib/modifiers";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { storeOrigin } from "@/lib/store-path";
 import { parseTransferAccounts } from "@/lib/payment-methods";
 import type { PaymentMethod } from "@prisma/client";
 
@@ -323,10 +323,9 @@ export async function placeOrderAction(
     // Pago en línea: no enviamos email todavía (el pedido aún no está pagado).
     // Redirigimos al cliente a pagar; el email sale al confirmarse.
     if (useOnline) {
-      const h = await headers();
-      const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
-      const proto = h.get("x-forwarded-proto") ?? "http";
-      const redirectUrl = `${proto}://${host}/${storeSlug}/checkout/success?order=${order.id}`;
+      // Retorno desde Wompi: dirección de la tienda (su subdominio/dominio solo
+      // si está comprobado que es suyo; si no, el dominio principal).
+      const redirectUrl = `${await storeOrigin(store)}/checkout/success?order=${order.id}`;
       const checkoutUrl = buildCheckoutUrl(
         {
           reference: order.id,

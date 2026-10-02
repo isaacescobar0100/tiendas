@@ -7,8 +7,10 @@ import {
   requestCustomerResetAction,
   type ResetState,
 } from "../reset-actions";
+import { useStoreHref } from "@/components/store-base";
 
 export default function CustomerRecoverPage() {
+  const sh = useStoreHref();
   const storeSlug = String(useParams().storeSlug ?? "");
   const [state, formAction, pending] = useActionState<ResetState, FormData>(
     requestCustomerResetAction,
@@ -61,7 +63,7 @@ export default function CustomerRecoverPage() {
 
       <p className="mt-4 text-sm">
         <Link
-          href={`/${storeSlug}/cuenta`}
+          href={sh(`/cuenta`)}
           className="text-gray-500 hover:text-gray-900"
         >
           Volver a iniciar sesión

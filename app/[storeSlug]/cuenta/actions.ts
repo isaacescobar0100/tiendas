@@ -17,6 +17,7 @@ import {
   DUMMY_HASH,
 } from "@/lib/lockout";
 import { sendAccessLink } from "./access-link";
+import { storeHref } from "@/lib/store-path";
 
 export type AccountState = { error?: string; ok?: boolean } | undefined;
 
@@ -28,7 +29,7 @@ const registerSchema = z.object({
 async function storeBySlug(slug: string) {
   return prisma.store.findFirst({
     where: { slug, active: true },
-    select: { id: true, slug: true, name: true },
+    select: { id: true, slug: true, name: true, customDomain: true },
   });
 }
 
@@ -122,7 +123,7 @@ export async function loginAction(
     storeId: store.id,
     sv: customer.sessionVersion,
   });
-  redirect(`/${store.slug}/cuenta`);
+  redirect(await storeHref(store.slug, "/cuenta"));
 }
 
 /** Cliente con sesión pero sin correo verificado: le reenviamos el enlace. */
@@ -144,5 +145,5 @@ export async function logoutAction(formData: FormData) {
   const slug = String(formData.get("storeSlug") ?? "");
   await clearCustomerSession();
   // Solo slugs válidos (evita redirecciones a otro sitio con "//…").
-  redirect(/^[a-z0-9-]+$/.test(slug) ? `/${slug}/cuenta` : "/");
+  redirect(/^[a-z0-9-]+$/.test(slug) ? await storeHref(slug, "/cuenta") : "/");
 }

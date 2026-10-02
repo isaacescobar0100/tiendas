@@ -1,13 +1,19 @@
 import NextAuth from "next-auth";
 import { NextResponse, type NextRequest } from "next/server";
 import { authConfig } from "@/auth.config";
-import { isReservedSlug } from "@/lib/utils";
+import {
+  subdomainSlug,
+  isRootHost,
+  cleanHost,
+  STORE_HOST_HEADER,
+} from "@/lib/store-host";
 
 const { auth } = NextAuth(authConfig);
 
-// ─── Dominios propios → tienda ───────────────────────────────────────────────
-// Mapea yoswill.com → /yoswill (URL limpia). Para el dominio principal
-// (*.vercel.app / localhost) no hace nada. Falla-abierto: nunca rompe.
+// ─── Host de una tienda → URL limpia ─────────────────────────────────────────
+// - Subdominio: surenos.<STORE_ROOT_DOMAIN>/cart → página /surenos/cart.
+// - Dominio propio (guardado en la tienda): yoswill.com/cart → /yoswill/cart.
+// En el dominio principal (*.vercel.app / localhost) no hace nada.
 
 const domainCache = new Map<string, { slug: string | null; exp: number }>();
 
@@ -19,12 +25,6 @@ function isMainHost(host: string): boolean {
     host.startsWith("127.0.0.1") ||
     host.startsWith("0.0.0.0")
   );
-}
-
-/** El propio dominio raíz (o www): se comporta como el dominio principal. */
-function isRootHost(host: string): boolean {
-  const h = host.split(":")[0];
-  return !!ROOT_DOMAIN && (h === ROOT_DOMAIN || h === `www.${ROOT_DOMAIN}`);
 }
 
 async function resolveSlug(
@@ -48,52 +48,51 @@ async function resolveSlug(
   }
 }
 
-// ─── Subdominio por tienda: surenos.<STORE_ROOT_DOMAIN> → /surenos ───────────
-// STORE_ROOT_DOMAIN es el dominio "puente" (p. ej. acordemusic.com, luego
-// idhetech.com). En Vercel se añade el comodín *.<dominio> al proyecto.
-const ROOT_DOMAIN = (process.env.STORE_ROOT_DOMAIN ?? "")
-  .trim()
-  .toLowerCase()
-  .replace(/^\.+/, "");
-
-/** Slug de tienda si el host es <slug>.<dominio raíz>; si no, null. */
-function subdomainSlug(host: string): string | null {
-  if (!ROOT_DOMAIN) return null;
-  const h = host.split(":")[0];
-  if (h === ROOT_DOMAIN || !h.endsWith(`.${ROOT_DOMAIN}`)) return null;
-  const sub = h.slice(0, -(ROOT_DOMAIN.length + 1));
-  // Un solo nivel, formato de slug y nunca un nombre reservado (admin, api,
-  // sede…): así un subdominio no puede saltarse la protección de los paneles.
-  if (sub === "www" || !/^[a-z0-9-]+$/.test(sub) || isReservedSlug(sub)) {
-    return null;
-  }
-  return sub;
-}
-
 // Rutas de la plataforma que nunca se reescriben a una tienda.
 const PLATFORM_PATHS =
   /^\/(admin|superadmin|api|login|recuperar|restablecer|sede|_next|favicon|sitemap|robots|\.well-known)(\/|$)/;
 
-async function mapCustomDomain(req: NextRequest): Promise<NextResponse | null> {
-  const host = (req.headers.get("host") ?? "").toLowerCase();
+/** Slug de la tienda dueña de este host (subdominio o dominio propio). */
+async function storeOfHost(req: NextRequest): Promise<string | null> {
+  const host = cleanHost(req.headers.get("host") ?? "");
   const fromSubdomain = subdomainSlug(host);
-  if (!fromSubdomain && (isMainHost(host) || isRootHost(host))) return null;
+  if (fromSubdomain) return fromSubdomain;
+  if (isMainHost(host) || isRootHost(host)) return null;
+  return resolveSlug(host, req.nextUrl.origin);
+}
 
-  const { pathname } = req.nextUrl;
+/** Cabeceras de la petición sin la marca interna (el navegador no la fija). */
+function cleanRequestHeaders(req: NextRequest): Headers {
+  const h = new Headers(req.headers);
+  h.delete(STORE_HOST_HEADER);
+  return h;
+}
+
+async function mapStoreHost(req: NextRequest): Promise<NextResponse | null> {
+  const { pathname, search } = req.nextUrl;
   if (PLATFORM_PATHS.test(pathname)) return null;
-
-  const slug = fromSubdomain ?? (await resolveSlug(host, req.nextUrl.origin));
+  const slug = await storeOfHost(req);
   if (!slug) return null;
-  if (pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)) return null;
+
+  // Direcciones viejas con el slug (/surenos/cart) → la limpia (/cart).
+  if (pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)) {
+    const url = req.nextUrl.clone();
+    url.pathname = pathname.slice(slug.length + 1) || "/";
+    url.search = search;
+    return NextResponse.redirect(url, 308);
+  }
 
   const url = req.nextUrl.clone();
   url.pathname = `/${slug}${pathname === "/" ? "" : pathname}`;
-  return NextResponse.rewrite(url);
+  const headers = cleanRequestHeaders(req);
+  headers.set(STORE_HOST_HEADER, slug);
+  headers.set("x-pathname", url.pathname);
+  return NextResponse.rewrite(url, { request: { headers } });
 }
 
 export default auth(async (req) => {
-  // 1) Dominio propio → reescribe a /slug (antes de la auth).
-  const rewrite = await mapCustomDomain(req);
+  // 1) Host de una tienda → reescribe a /slug (antes de la auth).
+  const rewrite = await mapStoreHost(req);
   if (rewrite) return rewrite;
 
   const { nextUrl } = req;
@@ -130,7 +129,7 @@ export default auth(async (req) => {
   // se encarga requireAdminStore (redirige a /superadmin si no lo está).
 
   // Expone la ruta a los server components (para redirigir slugs antiguos).
-  const reqHeaders = new Headers(req.headers);
+  const reqHeaders = cleanRequestHeaders(req);
   reqHeaders.set("x-pathname", nextUrl.pathname);
   return NextResponse.next({ request: { headers: reqHeaders } });
 });

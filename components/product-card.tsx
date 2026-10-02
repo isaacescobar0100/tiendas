@@ -9,6 +9,7 @@ import { StarRating } from "@/components/star-rating";
 import { formatPrice } from "@/lib/utils";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { flyToCart } from "@/lib/fly-to-cart";
+import { useStoreHref } from "@/components/store-base";
 
 type Variant = { id: string; color: string; size: string; stock: number };
 
@@ -28,7 +29,6 @@ export type CardProduct = {
 };
 
 export function ProductCard({
-  storeSlug,
   currency,
   product,
   freeShipping = false,
@@ -47,6 +47,7 @@ export function ProductCard({
   // Comida (a la carta): no se cuenta stock → siempre disponible.
   tracksStock?: boolean;
 }) {
+  const sh = useStoreHref();
   const { add, storeClosed } = useCart();
   const [added, setAdded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -149,7 +150,7 @@ export function ProductCard({
         </span>
       )}
 
-      <Link href={`/${storeSlug}/${product.slug}`} className="block">
+      <Link href={sh(`/${product.slug}`)} className="block">
         <div className="aspect-square overflow-hidden bg-gray-100">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -277,7 +278,7 @@ export function ProductCard({
         ) : product.hasModifiers ? (
           // Con adiciones/opciones: hay que elegir en la ficha del producto.
           <Link
-            href={`/${storeSlug}/${product.slug}`}
+            href={sh(`/${product.slug}`)}
             className="block w-full rounded-lg bg-[var(--brand)] px-3 py-2 text-center text-xs font-medium text-white transition hover:brightness-110"
           >
             Elegir opciones

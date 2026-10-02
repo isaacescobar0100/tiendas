@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 // Documentos legales genéricos por tienda. El dueño puede pedir ajustarlos.
 const DOCS = {
@@ -38,6 +39,9 @@ export default async function LegalPage({
   params: Promise<{ storeSlug: string; doc: string }>;
 }) {
   const { storeSlug, doc } = await params;
+  // Rutas de la tienda: sin el slug si se visita por su subdominio/dominio.
+  const storeBase = await storeBasePath(storeSlug);
+  const sh = (p = "") => joinStorePath(storeBase, p);
   if (!isDoc(doc)) notFound();
 
   const store = await getStore(storeSlug);
@@ -51,7 +55,7 @@ export default async function LegalPage({
   return (
     <div className="mx-auto max-w-2xl">
       <Link
-        href={`/${store.slug}`}
+        href={sh()}
         className="text-sm text-gray-500 hover:text-gray-900"
       >
         ← Volver a la tienda

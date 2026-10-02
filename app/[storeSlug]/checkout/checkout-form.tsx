@@ -8,6 +8,7 @@ import { useCart } from "@/components/cart/cart-context";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { computeShipping } from "@/lib/shipping";
 import { placeOrderAction, type CheckoutState } from "./actions";
+import { useStoreHref } from "@/components/store-base";
 
 type Method = "online" | "cod" | "transfer";
 
@@ -28,6 +29,7 @@ export default function CheckoutForm({
   closedMessage?: string | null;
   shipping: { shippingCents: number; freeShippingOverCents: number };
 }) {
+  const sh = useStoreHref();
   const { items, totalCents, currency, storeSlug, clear, ready } = useCart();
   // totalCents = subtotal (productos). Sumamos el envío para el total final.
   const shippingCents = computeShipping(totalCents, shipping);
@@ -66,9 +68,9 @@ export default function CheckoutForm({
     }
     if (state?.orderId) {
       clear();
-      router.replace(`/${storeSlug}/checkout/success?order=${state.orderId}`);
+      router.replace(sh(`/checkout/success?order=${state.orderId}`));
     }
-  }, [state?.checkoutUrl, state?.orderId, clear, router, storeSlug]);
+  }, [state?.checkoutUrl, state?.orderId, clear, router, sh]);
 
   if (state?.orderId || state?.checkoutUrl) {
     return (
@@ -89,7 +91,7 @@ export default function CheckoutForm({
       <div className="mx-auto max-w-md rounded-2xl border border-dashed border-gray-300 p-12 text-center">
         <p className="text-gray-500">Tu carrito está vacío.</p>
         <Link
-          href={`/${storeSlug}`}
+          href={sh()}
           className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
         >
           Ver productos
@@ -110,7 +112,7 @@ export default function CheckoutForm({
   return (
     <div className="mx-auto max-w-4xl">
       <Link
-        href={`/${storeSlug}/cart`}
+        href={sh(`/cart`)}
         className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
       >
         <ArrowLeft className="h-4 w-4" /> Volver al carrito

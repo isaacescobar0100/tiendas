@@ -6,13 +6,14 @@ import { ShoppingCart, X } from "lucide-react";
 import { useCart } from "./cart-context";
 import { FreeShippingNote } from "./free-shipping-note";
 import { formatPrice, variantLabel } from "@/lib/utils";
+import { useStoreHref } from "@/components/store-base";
 
 export function CartDrawer() {
+  const sh = useStoreHref();
   const {
     items,
     totalCents,
     currency,
-    storeSlug,
     setQuantity,
     remove,
     isOpen,
@@ -142,14 +143,14 @@ export function CartDrawer() {
                 </span>
               </div>
               <Link
-                href={`/${storeSlug}/checkout`}
+                href={sh(`/checkout`)}
                 onClick={closeCart}
                 className="block w-full rounded-lg bg-[var(--brand)] px-4 py-3 text-center text-sm font-medium text-white hover:brightness-110"
               >
                 Finalizar compra
               </Link>
               <Link
-                href={`/${storeSlug}/cart`}
+                href={sh(`/cart`)}
                 onClick={closeCart}
                 className="mt-2 block text-center text-sm text-gray-500 hover:text-gray-900"
               >

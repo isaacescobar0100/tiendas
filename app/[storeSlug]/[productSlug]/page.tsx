@@ -15,6 +15,7 @@ import { ProductGallery } from "@/components/product-gallery";
 import { ProductCard } from "@/components/product-card";
 import { StarRating } from "@/components/star-rating";
 import { ReviewForm } from "@/components/review-form";
+import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +95,9 @@ export default async function ProductPage({
   params: Promise<{ storeSlug: string; productSlug: string }>;
 }) {
   const { storeSlug, productSlug } = await params;
+  // Rutas de la tienda: sin el slug si se visita por su subdominio/dominio.
+  const storeBase = await storeBasePath(storeSlug);
+  const sh = (p = "") => joinStorePath(storeBase, p);
   const data = await getData(storeSlug, productSlug);
   if (!data) notFound();
   const { store, product } = data;
@@ -155,7 +159,7 @@ export default async function ProductPage({
   return (
     <div>
       <Link
-        href={`/${store.slug}`}
+        href={sh()}
         className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
       >
         <ArrowLeft className="h-4 w-4" /> Seguir comprando
@@ -181,7 +185,7 @@ export default async function ProductPage({
         <div>
           {product.category && (
             <Link
-              href={`/${store.slug}?cat=${product.category.slug}`}
+              href={sh(`?cat=${product.category.slug}`)}
               className="text-xs font-medium uppercase tracking-wide text-gray-400 hover:text-gray-600"
             >
               {product.category.name}
