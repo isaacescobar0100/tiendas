@@ -107,7 +107,7 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
             </span>
             <span className="block text-xs text-gray-400">
               El cliente paga directo a tu cuenta con tu QR, llave Bre-B, Nequi,
-              Daviplata o link de pago, y te envía el comprobante. Tú (o la
+              Daviplata o cuenta bancaria, y te envía el comprobante. Tú (o la
               sede) revisas que llegó el dinero y marcas el pedido como
               &ldquo;Pagado&rdquo;.
             </span>
@@ -122,8 +122,8 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
           </p>
           {accounts.length === 0 && (
             <p className="text-xs text-gray-500">
-              Agrega al menos una: tu llave Bre-B, Nequi, Daviplata, cuenta o
-              link de pago. Si tienes el QR, súbelo como imagen.
+              Agrega al menos una: tu llave Bre-B, Nequi, Daviplata o cuenta
+              bancaria. Si tienes el QR, súbelo como imagen.
             </p>
           )}
 
@@ -161,12 +161,12 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className={labelCls}>
-                      {a.kind === "LINK" ? "URL del link de pago" : "Llave / número"}
+                      Llave / número
                     </label>
                     <input
                       value={a.value}
                       onChange={(e) => update(a.id, { value: e.target.value })}
-                      inputMode={a.kind === "LINK" ? "url" : "text"}
+                      inputMode="text"
                       placeholder={kind?.placeholder}
                       className={inputCls}
                     />

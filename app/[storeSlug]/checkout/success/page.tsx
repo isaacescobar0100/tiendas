@@ -6,7 +6,6 @@ import {
   X,
   Search,
   QrCode,
-  ExternalLink,
   MessageCircle,
   Camera,
   Paperclip,
@@ -250,16 +249,7 @@ export default async function OrderSuccessPage({
                       className="mx-auto mt-2 w-full max-w-[220px] rounded-lg border border-gray-200 bg-white"
                     />
                   )}
-                  {a.value && a.kind === "LINK" ? (
-                    <a
-                      href={a.value}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110"
-                    >
-                      <ExternalLink className="h-4 w-4" /> Abrir link de pago
-                    </a>
-                  ) : a.value ? (
+                  {a.value ? (
                     <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
                       <span className="break-all font-mono text-sm text-gray-900">
                         {a.value}

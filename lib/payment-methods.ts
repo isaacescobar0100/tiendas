@@ -15,12 +15,13 @@ export function paymentMethodLabel(m: PaymentMethod | null | undefined): string 
 // ─── Cuentas para transferencia directa ──────────────────────────────────────
 // La tienda sube sus QR / llaves / números. Se guardan como JSON en
 // Store.transferAccountsJson y se muestran al cliente tras hacer el pedido.
-export type TransferKind = "BREB" | "NEQUI" | "DAVIPLATA" | "BANCO" | "LINK";
+// (El link de pago se quitó: las cuentas viejas con "LINK" se descartan al leer.)
+export type TransferKind = "BREB" | "NEQUI" | "DAVIPLATA" | "BANCO";
 
 export type TransferAccount = {
   id: string;
   kind: TransferKind;
-  value: string; // llave, número de celular/cuenta o URL del link de pago
+  value: string; // llave, número de celular o de cuenta
   holder: string; // titular (opcional), para que el cliente confirme a quién paga
   qrUrl: string; // imagen del QR (opcional)
 };
@@ -34,7 +35,6 @@ export const TRANSFER_KINDS: {
   { value: "NEQUI", label: "Nequi", placeholder: "300 123 4567" },
   { value: "DAVIPLATA", label: "Daviplata", placeholder: "300 123 4567" },
   { value: "BANCO", label: "Cuenta bancaria", placeholder: "Bancolombia ahorros 123-456789-00" },
-  { value: "LINK", label: "Link de pago", placeholder: "https://…" },
 ];
 
 export const TRANSFER_KIND_LABEL = Object.fromEntries(
@@ -72,8 +72,6 @@ export function parseTransferAccounts(json: string | null | undefined): Transfer
     const value = str(o.value, 300);
     const qrUrl = str(o.qrUrl, 500);
     const safeQr = isImageUrl(qrUrl) ? qrUrl : "";
-    // Un link de pago debe ser una URL válida.
-    if (kind === "LINK" && value && !isHttpUrl(value)) continue;
     if (!value && !safeQr) continue; // nada que mostrar
     out.push({
       id: str(o.id, 40) || Math.random().toString(36).slice(2, 10),

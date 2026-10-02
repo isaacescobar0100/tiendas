@@ -353,7 +353,7 @@ const METHOD_INFO: Record<
   transfer: {
     icon: <QrCode className="h-5 w-5" />,
     title: "Transferencia / QR",
-    desc: "Bre-B, Nequi, Daviplata o link de pago. Te mostramos cómo pagar al confirmar.",
+    desc: "Bre-B, Nequi, Daviplata o cuenta bancaria. Te mostramos cómo pagar al confirmar.",
     hint: "Al confirmar verás el QR y los datos para transferir.",
   },
   online: {
