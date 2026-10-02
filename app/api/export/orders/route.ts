@@ -1,4 +1,5 @@
-import { auth } from "@/auth";
+import { getSessionUser } from "@/lib/guards";
+import { csvCell as esc, csvResponse } from "@/lib/csv";
 import { prisma } from "@/lib/prisma";
 import { variantLabel } from "@/lib/utils";
 import { PAYMENT_LABEL, FULFILLMENT_LABEL } from "@/lib/order-status";
@@ -36,21 +37,15 @@ function computeRange(
   return null;
 }
 
-// Escapa un campo para CSV (delimitador ';', comillas dobladas).
-function esc(v: string | number | null | undefined): string {
-  const s = String(v ?? "");
-  return `"${s.replace(/"/g, '""')}"`;
-}
-
 const pesos = (cents: number) => Math.round(cents / 100);
 
 export async function GET(request: Request) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
+  const user = await getSessionUser();
+  if (!user || user.role !== "ADMIN") {
     return new Response("No autorizado.", { status: 401 });
   }
   const store = await prisma.store.findUnique({
-    where: { ownerId: session.user.id },
+    where: { ownerId: user.id },
   });
   if (!store) return new Response("Sin tienda.", { status: 404 });
 
@@ -135,14 +130,8 @@ export async function GET(request: Request) {
       .join(";");
   });
 
-  // BOM para que Excel muestre bien los acentos.
-  const csv = "﻿" + [headers.map(esc).join(";"), ...rows].join("\r\n");
-  const filename = `pedidos-${range.label}.csv`;
-
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
-  });
+  return csvResponse(
+    [headers.map(esc).join(";"), ...rows],
+    `pedidos-${range.label}.csv`,
+  );
 }

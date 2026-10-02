@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
+import { isSafeImageUrl, isSafeLinkUrl, safePosition } from "@/lib/utils";
 
 // Lee y normaliza los campos comunes de una promoción del formulario.
 function readForm(formData: FormData) {
@@ -10,14 +11,16 @@ function readForm(formData: FormData) {
     const v = String(formData.get(k) ?? "").trim();
     return v.length > 0 ? v : null;
   };
+  // URLs: solo imágenes http(s)//uploads y enlaces internos o http(s).
+  const imageUrl = str("imageUrl");
+  const linkUrl = str("linkUrl");
   return {
-    imageUrl: str("imageUrl"),
-    imagePosition:
-      String(formData.get("imagePosition") ?? "").trim() || "50% 50%",
+    imageUrl: imageUrl && isSafeImageUrl(imageUrl) ? imageUrl : null,
+    imagePosition: safePosition(String(formData.get("imagePosition") ?? "").trim()),
     imageZoom: Math.max(1, Math.min(3, Number(formData.get("imageZoom")) || 1)),
-    title: str("title"),
-    subtitle: str("subtitle"),
-    linkUrl: str("linkUrl"),
+    title: str("title")?.slice(0, 120) ?? null,
+    subtitle: str("subtitle")?.slice(0, 200) ?? null,
+    linkUrl: linkUrl && isSafeLinkUrl(linkUrl) ? linkUrl : null,
     active: formData.get("active") === "on",
     sortOrder: Math.floor(Number(formData.get("sortOrder")) || 0),
     // Destinos elegidos con casillas

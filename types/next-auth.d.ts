@@ -6,6 +6,7 @@ declare module "next-auth" {
     role: Role;
     storeId?: string | null;
     storeSlug?: string | null;
+    sessionVersion?: number;
   }
 
   interface Session {
@@ -14,6 +15,8 @@ declare module "next-auth" {
       role: Role;
       storeId: string | null;
       storeSlug: string | null;
+      // Versión de sesión del usuario al iniciar sesión (ver lib/guards).
+      sv: number;
     } & DefaultSession["user"];
   }
 }
@@ -23,5 +26,6 @@ declare module "next-auth/jwt" {
     role: Role;
     storeId: string | null;
     storeSlug: string | null;
+    sv?: number;
   }
 }

@@ -5,7 +5,7 @@
 // Configúralo en Wompi → Desarrolladores → URL de eventos:
 //   https://TU-DOMINIO/api/wompi/webhook
 import type { NextRequest } from "next/server";
-import { verifyEvent, resolveWompiKeys } from "@/lib/wompi";
+import { verifyEvent, resolveWompiKeys, getTransaction } from "@/lib/wompi";
 import { prisma } from "@/lib/prisma";
 import { markOrderPaid } from "@/lib/orders";
 
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     ? await prisma.order.findUnique({
         where: { id: reference },
         select: {
+          id: true,
           store: {
             select: {
               wompiPublicKey: true,
@@ -40,13 +41,21 @@ export async function POST(request: NextRequest) {
   const keys = resolveWompiKeys(order?.store ?? null);
 
   // Verifica la firma con el secreto de eventos de esa tienda.
-  const tx = verifyEvent(event, keys.eventsSecret);
-  if (!tx) {
+  const signed = verifyEvent(event, keys.eventsSecret);
+  if (!signed) {
     return Response.json({ error: "Firma inválida" }, { status: 401 });
   }
 
-  if (tx.status === "APPROVED") {
-    await markOrderPaid(tx.reference);
+  if (signed.status === "APPROVED" && order) {
+    // La firma de Wompi no siempre cubre la referencia: confirmamos la
+    // transacción consultándola a Wompi con la llave de la tienda y usamos esos
+    // datos (referencia, estado, monto y moneda) en vez de los del evento.
+    const tx = await getTransaction(String(signed.id ?? ""), keys);
+    if (!tx) {
+      // No se pudo consultar: respondemos error para que Wompi reintente.
+      return Response.json({ error: "No verificado" }, { status: 503 });
+    }
+    await markOrderPaid(order.id, tx);
   }
 
   // Wompi espera 200 para dar el evento por entregado.

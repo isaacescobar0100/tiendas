@@ -28,7 +28,7 @@ export function PostOrderAccount({
       </div>
       <p className="mt-1 text-sm text-gray-500">
         Con este mismo correo verás el estado de este y futuros pedidos cuando
-        quieras.
+        quieras. Te enviaremos un enlace para crear tu contraseña.
       </p>
 
       <form action={formAction} className="mt-4 space-y-3">
@@ -46,34 +46,25 @@ export function PostOrderAccount({
             className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-500"
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-gray-500">
-            Crea una contraseña
-          </label>
-          <input
-            name="password"
-            type="password"
-            required
-            minLength={6}
-            autoComplete="new-password"
-            placeholder="Mínimo 6 caracteres"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
-          />
-        </div>
-
         {state?.error && (
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
             {state.error}
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
-        >
-          {pending ? "Creando…" : "Crear cuenta"}
-        </button>
+        {state?.ok ? (
+          <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+            Te enviamos un correo con un enlace para crear tu contraseña.
+          </p>
+        ) : (
+          <button
+            type="submit"
+            disabled={pending}
+            className="w-full rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
+          >
+            {pending ? "Enviando…" : "Crear mi cuenta"}
+          </button>
+        )}
       </form>
     </div>
   );

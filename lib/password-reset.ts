@@ -38,9 +38,24 @@ export async function findValidToken(raw: string) {
   return rec;
 }
 
-export async function markTokenUsed(id: string): Promise<void> {
-  await prisma.passwordResetToken.update({
-    where: { id },
+/**
+ * Marca el token como usado de forma atómica. Devuelve true solo a la primera
+ * petición que lo consigue (dos envíos simultáneos no pueden usarlo dos veces).
+ */
+export async function consumeToken(id: string): Promise<boolean> {
+  const res = await prisma.passwordResetToken.updateMany({
+    where: { id, usedAt: null, expiresAt: { gt: new Date() } },
+    data: { usedAt: new Date() },
+  });
+  return res.count === 1;
+}
+
+/** Anula los demás enlaces pendientes de la misma cuenta. */
+export async function invalidateOtherTokens(
+  owner: { userId: string } | { customerId: string },
+): Promise<void> {
+  await prisma.passwordResetToken.updateMany({
+    where: { ...owner, usedAt: null },
     data: { usedAt: new Date() },
   });
 }

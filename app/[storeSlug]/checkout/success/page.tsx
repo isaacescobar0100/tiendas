@@ -69,8 +69,14 @@ export default async function OrderSuccessPage({
   if (txId) {
     const tx = await getTransaction(txId, resolveWompiKeys(order.store));
     if (tx && tx.reference === order.id && tx.status === "APPROVED") {
-      await markOrderPaid(order.id);
-      payment = "approved";
+      // markOrderPaid comprueba monto, moneda y método; solo decimos "pagado"
+      // si el pedido quedó realmente PAGADO (por esta llamada o el webhook).
+      await markOrderPaid(order.id, tx);
+      const fresh = await prisma.order.findUnique({
+        where: { id: order.id },
+        select: { status: true },
+      });
+      payment = fresh?.status === "PAID" ? "approved" : "failed";
     } else if (tx && tx.reference === order.id && tx.status === "PENDING") {
       payment = "pending";
     } else if (tx && tx.reference === order.id) {

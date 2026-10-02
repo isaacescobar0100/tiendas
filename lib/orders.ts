@@ -4,19 +4,37 @@
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { tracksStock } from "@/lib/store-type";
+import type { WompiTransaction } from "@/lib/wompi";
 
 /**
- * Marca el pedido como PAGADO y envía los emails de confirmación, pero solo si
- * estaba PENDIENTE. Si ya estaba pagado (u otro estado), no hace nada.
+ * Marca el pedido como PAGADO con una transacción de Wompi y envía los emails,
+ * solo si la transacción corresponde de verdad a este pedido:
+ *  - está APROBADA y su referencia es el id del pedido,
+ *  - el monto y la moneda son exactamente los del pedido,
+ *  - el pedido es de pago en línea (no contraentrega ni transferencia),
+ *  - el pedido estaba PENDIENTE y no se había pagado ya con otra transacción.
  * Devuelve true si esta llamada realizó la transición.
  */
-export async function markOrderPaid(orderId: string): Promise<boolean> {
-  // Transición atómica PENDING → PAID: solo una llamada gana la carrera.
+export async function markOrderPaid(
+  orderId: string,
+  tx: WompiTransaction,
+): Promise<boolean> {
+  if (tx.status !== "APPROVED" || tx.reference !== orderId) return false;
+  // Transición atómica PENDING → PAID con todas las condiciones en el WHERE:
+  // solo una llamada gana la carrera y nunca con un monto distinto.
   const res = await prisma.order.updateMany({
-    where: { id: orderId, status: "PENDING" },
-    data: { status: "PAID" },
+    where: {
+      id: orderId,
+      status: "PENDING",
+      totalCents: tx.amount_in_cents,
+      currency: tx.currency,
+      wompiTransactionId: null,
+      // Pedidos antiguos no tienen método guardado (null).
+      OR: [{ paymentMethod: "ONLINE" }, { paymentMethod: null }],
+    },
+    data: { status: "PAID", wompiTransactionId: tx.id },
   });
-  if (res.count === 0) return false; // ya procesado o no existe
+  if (res.count === 0) return false; // ya procesado, no existe o no coincide
 
   // Cargamos los datos para el email (después de la transición).
   const order = await prisma.order.findUnique({
@@ -85,5 +103,102 @@ export async function markOrderPaid(orderId: string): Promise<boolean> {
       modifiers: i.modifiers,
     })),
   });
+  return true;
+}
+
+type StockLine = { variantId: string | null; productId: string | null; quantity: number };
+
+/** Devuelve al inventario las unidades de un pedido (al cancelarlo). */
+async function restock(lines: StockLine[]) {
+  await prisma.$transaction(async (tx) => {
+    for (const l of lines) {
+      if (l.variantId) {
+        await tx.productVariant.updateMany({
+          where: { id: l.variantId },
+          data: { stock: { increment: l.quantity } },
+        });
+      } else if (l.productId) {
+        await tx.product.updateMany({
+          where: { id: l.productId },
+          data: { stock: { increment: l.quantity } },
+        });
+      }
+    }
+  });
+}
+
+/** Descuenta del inventario (al marcar pagado a mano un pedido en línea). */
+async function takeStock(lines: StockLine[]) {
+  await prisma.$transaction(async (tx) => {
+    for (const l of lines) {
+      if (l.variantId) {
+        const r = await tx.productVariant.updateMany({
+          where: { id: l.variantId, stock: { gte: l.quantity } },
+          data: { stock: { decrement: l.quantity } },
+        });
+        if (r.count === 0) {
+          await tx.productVariant.updateMany({ where: { id: l.variantId }, data: { stock: 0 } });
+        }
+      } else if (l.productId) {
+        const r = await tx.product.updateMany({
+          where: { id: l.productId, stock: { gte: l.quantity } },
+          data: { stock: { decrement: l.quantity } },
+        });
+        if (r.count === 0) {
+          await tx.product.updateMany({ where: { id: l.productId }, data: { stock: 0 } });
+        }
+      }
+    }
+  });
+}
+
+/**
+ * Cambio manual del estado de PAGO (admin o sede), con reglas:
+ *  - Un pedido CANCELADO no se reabre.
+ *  - Un pedido PAGADO no vuelve a PENDIENTE (evita que se "pague" dos veces).
+ *  - Al CANCELAR se devuelve el stock que el pedido había reservado
+ *    (contraentrega/transferencia lo reservan al crearse; en línea, al pagarse).
+ *  - Marcar PAGADO a mano un pedido en línea descuenta su stock.
+ * `scope` limita qué pedidos puede tocar quien llama (tienda, y sede si aplica).
+ * Devuelve true si cambió el estado.
+ */
+export async function setOrderPaymentStatus(
+  scope: { id: string; storeId: string; locationName?: string },
+  next: "PENDING" | "PAID" | "CANCELLED",
+): Promise<boolean> {
+  const order = await prisma.order.findFirst({
+    where: scope,
+    select: {
+      id: true,
+      status: true,
+      paymentMethod: true,
+      store: { select: { type: true } },
+      items: { select: { variantId: true, productId: true, quantity: true } },
+    },
+  });
+  if (!order) return false;
+  const current = order.status === "SHIPPED" ? "PAID" : order.status; // legado
+  if (current === next) return false;
+  if (current === "CANCELLED") return false;
+  if (current === "PAID" && next === "PENDING") return false;
+
+  // Transición atómica: solo si el estado sigue siendo el que leímos.
+  const res = await prisma.order.updateMany({
+    where: { id: order.id, status: order.status },
+    data: { status: next },
+  });
+  if (res.count === 0) return false;
+
+  if (!tracksStock(order.store.type)) return true;
+  const reservedAtCreation =
+    order.paymentMethod === "COD" || order.paymentMethod === "TRANSFER";
+  const isOnline = order.paymentMethod === "ONLINE";
+
+  if (next === "CANCELLED") {
+    const hadStock = reservedAtCreation || (isOnline && current === "PAID");
+    if (hadStock) await restock(order.items);
+  } else if (next === "PAID" && isOnline) {
+    await takeStock(order.items);
+  }
   return true;
 }

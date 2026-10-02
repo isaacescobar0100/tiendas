@@ -88,7 +88,7 @@ export default function NewStorePage() {
             label="Contraseña"
             name="adminPassword"
             type="password"
-            placeholder="mínimo 6 caracteres"
+            placeholder="mínimo 8 caracteres"
             required
           />
         </fieldset>

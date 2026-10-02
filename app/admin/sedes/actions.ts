@@ -18,6 +18,9 @@ function read(formData: FormData) {
   };
 }
 
+// Contraseña mínima de una sede (tiene acceso a datos de clientes y pagos).
+const SEDE_MIN_PASSWORD = 8;
+
 function readEmail(formData: FormData): string | null {
   const v = String(formData.get("email") ?? "")
     .trim()
@@ -36,7 +39,7 @@ export async function createLocationAction(formData: FormData) {
   }
   const password = String(formData.get("password") ?? "");
   const passwordHash =
-    password.length >= 4 ? await bcrypt.hash(password, 10) : null;
+    password.length >= SEDE_MIN_PASSWORD ? await bcrypt.hash(password, 10) : null;
 
   await prisma.storeLocation.create({
     data: {
@@ -66,6 +69,7 @@ export async function updateLocationAction(formData: FormData) {
     sortOrder: number;
     email?: string | null;
     passwordHash?: string;
+    sessionVersion?: { increment: number };
   } = {
     name: d.name,
     address: d.address,
@@ -84,9 +88,23 @@ export async function updateLocationAction(formData: FormData) {
     if (!dup) data.email = email;
   }
 
-  // Contraseña: solo se cambia si escriben una nueva (mín. 4).
+  // Contraseña: solo se cambia si escriben una nueva.
   const password = String(formData.get("password") ?? "");
-  if (password.length >= 4) data.passwordHash = await bcrypt.hash(password, 10);
+  if (password.length >= SEDE_MIN_PASSWORD) {
+    data.passwordHash = await bcrypt.hash(password, 10);
+  }
+
+  // Si cambia el acceso (correo o contraseña), se cierran las sesiones abiertas
+  // de esa sede.
+  const current = await prisma.storeLocation.findFirst({
+    where: { id, storeId: store.id },
+    select: { email: true },
+  });
+  if (!current) return;
+  const emailChanged = "email" in data && data.email !== current.email;
+  if (emailChanged || data.passwordHash) {
+    data.sessionVersion = { increment: 1 };
+  }
 
   await prisma.storeLocation.updateMany({
     where: { id, storeId: store.id },

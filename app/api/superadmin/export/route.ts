@@ -1,19 +1,17 @@
-import { auth } from "@/auth";
+import { getSessionUser } from "@/lib/guards";
+import { csvCell as esc, csvResponse } from "@/lib/csv";
 import { prisma } from "@/lib/prisma";
 import { variantLabel } from "@/lib/utils";
 import { PAYMENT_LABEL, FULFILLMENT_LABEL } from "@/lib/order-status";
 import { paymentMethodLabel } from "@/lib/payment-methods";
 
-function esc(v: string | number | null | undefined): string {
-  return `"${String(v ?? "").replace(/"/g, '""')}"`;
-}
 const pesos = (cents: number) => Math.round(cents / 100);
 
 // Exporta pedidos a CSV. store=<id> para una tienda, o store=all para todas.
 // Solo superadmin.
 export async function GET(request: Request) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "SUPERADMIN") {
+  const user = await getSessionUser();
+  if (!user || user.role !== "SUPERADMIN") {
     return new Response("No autorizado.", { status: 401 });
   }
   const storeParam =
@@ -81,16 +79,9 @@ export async function GET(request: Request) {
       .join(";");
   });
 
-  const csv = "﻿" + [headers.map(esc).join(";"), ...rows].join("\r\n");
   const filename =
     storeParam === "all"
       ? "pedidos-todas-las-tiendas.csv"
       : `pedidos-${storeParam.slice(-6)}.csv`;
-
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
-  });
+  return csvResponse([headers.map(esc).join(";"), ...rows], filename);
 }

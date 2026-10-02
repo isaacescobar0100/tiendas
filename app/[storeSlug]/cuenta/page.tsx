@@ -11,6 +11,7 @@ import {
 } from "@/lib/order-status";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { AccountForms } from "./account-forms";
+import { VerifyEmailNotice } from "./verify-email-notice";
 import { logoutAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -36,15 +37,20 @@ export default async function AccountPage({
     return <AccountForms storeSlug={store.slug} />;
   }
 
-  // Historial: pedidos hechos con el email de la cuenta en esta tienda.
-  const orders = await prisma.order.findMany({
-    where: {
-      storeId: store.id,
-      customerEmail: { equals: customer.email, mode: "insensitive" },
-    },
-    orderBy: { createdAt: "desc" },
-    include: { items: true },
-  });
+  // Historial: pedidos hechos con el email de la cuenta en esta tienda. Solo si
+  // el cliente probó que el correo es suyo (si no, cualquiera que se registre
+  // con un correo ajeno vería los pedidos de otra persona).
+  const verified = !!customer.emailVerifiedAt;
+  const orders = verified
+    ? await prisma.order.findMany({
+        where: {
+          storeId: store.id,
+          customerEmail: { equals: customer.email, mode: "insensitive" },
+        },
+        orderBy: { createdAt: "desc" },
+        include: { items: true },
+      })
+    : [];
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -63,7 +69,9 @@ export default async function AccountPage({
 
       <h2 className="mt-8 text-lg font-bold text-gray-900">Mis pedidos</h2>
 
-      {orders.length === 0 ? (
+      {!verified ? (
+        <VerifyEmailNotice storeSlug={store.slug} email={customer.email} />
+      ) : orders.length === 0 ? (
         <div className="mt-4 rounded-2xl border border-dashed border-gray-300 p-10 text-center">
           <PackageSearch className="mx-auto h-9 w-9 text-gray-300" />
           <p className="mt-3 text-gray-500">Todavía no tienes pedidos.</p>

@@ -39,6 +39,12 @@ function LoginForm() {
           <p className="mb-6 text-sm text-gray-500">
             Accede a tu panel de administración.
           </p>
+          {(params.get("changed") || params.get("reset")) && (
+            <p className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+              Contraseña actualizada. Por seguridad se cerraron las sesiones
+              abiertas: entra con tu nueva contraseña.
+            </p>
+          )}
 
           <form action={formAction} className="space-y-4">
             <input type="hidden" name="callbackUrl" value={callbackUrl} />

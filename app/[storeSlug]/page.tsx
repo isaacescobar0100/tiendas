@@ -198,7 +198,8 @@ export default async function StorefrontPage({
   const locations = await prisma.storeLocation.findMany({
     where: { storeId: store.id },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { id: true, name: true, address: true },
+    // Sin el id: es un dato interno y no debe salir en la página pública.
+    select: { name: true, address: true },
   });
 
 
@@ -383,9 +384,9 @@ export default async function StorefrontPage({
         <section className="mt-16">
           <h2 className="mb-6 text-lg font-bold text-gray-900">Ubicaciones</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {locations.map((l) => (
+            {locations.map((l, i) => (
               <div
-                key={l.id}
+                key={`${i}-${l.name}`}
                 className="flex items-start gap-2 rounded-2xl border border-gray-200 p-5"
               >
                 <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[var(--brand)]" />

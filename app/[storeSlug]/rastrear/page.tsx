@@ -8,6 +8,7 @@ import {
   FULFILLMENT_LABEL,
   FULFILLMENT_BADGE,
 } from "@/lib/order-status";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -32,15 +33,25 @@ export default async function TrackOrderPage({
   });
   if (!store) notFound();
 
-  // Busca el pedido por nº (últimos caracteres del id) + email (privacidad).
-  const searched = Boolean(n && email);
+  // Busca el pedido por nº (los 8 últimos caracteres del id) + email. Se exige
+  // el número completo: con uno vacío o corto bastaría el email para ver los
+  // pedidos de otra persona.
+  const num = (typeof n === "string" ? n : "").trim().toLowerCase();
+  const mail = (typeof email === "string" ? email : "").trim();
+  const searched = Boolean(n || email);
+  const validNum = /^[a-z0-9]{8}$/.test(num);
+  let limited = false;
+  if (searched && validNum && mail) {
+    const rl = rateLimit(`track:${await clientIp()}`, 20, 10 * 60 * 1000);
+    limited = !rl.ok;
+  }
   const order =
-    n && email
+    searched && validNum && mail && !limited
       ? await prisma.order.findFirst({
           where: {
             store: { slug: storeSlug },
-            customerEmail: { equals: email.trim(), mode: "insensitive" },
-            id: { endsWith: n.trim().toLowerCase() },
+            customerEmail: { equals: mail, mode: "insensitive" },
+            id: { endsWith: num },
           },
           include: { items: true },
         })
@@ -65,6 +76,8 @@ export default async function TrackOrderPage({
             name="n"
             defaultValue={n ?? ""}
             required
+            minLength={8}
+            maxLength={8}
             placeholder="Ej. a1b2c3d4"
             className={inputCls}
           />
@@ -92,8 +105,11 @@ export default async function TrackOrderPage({
 
       {searched && !order && (
         <p className="mt-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          No encontramos ningún pedido con ese número y ese email. Revisa que
-          estén correctos.
+          {limited
+            ? "Demasiadas búsquedas seguidas. Espera unos minutos e inténtalo de nuevo."
+            : !validNum
+              ? "El número de pedido tiene 8 caracteres (letras y números). Lo encuentras en el correo de confirmación."
+              : "No encontramos ningún pedido con ese número y ese email. Revisa que estén correctos."}
         </p>
       )}
 

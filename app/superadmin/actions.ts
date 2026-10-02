@@ -6,10 +6,12 @@ import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { slugify } from "@/lib/utils";
+import { slugify, isReservedSlug } from "@/lib/utils";
 import { requireSuperadmin } from "@/lib/guards";
 import { setImpersonation, clearImpersonation } from "@/lib/impersonation";
+import { setTempPasswordFlash, clearTempPasswordFlash } from "@/lib/flash";
 import { sendRentEmail } from "@/lib/email";
+import { signOut } from "@/auth";
 
 const createStoreSchema = z.object({
   storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
@@ -17,14 +19,15 @@ const createStoreSchema = z.object({
   currency: z.string().min(3).max(3).default("COP"),
   adminName: z.string().min(2, "El nombre del admin es muy corto."),
   adminEmail: z.string().email("Email inválido."),
-  adminPassword: z.string().min(6, "La contraseña debe tener 6+ caracteres."),
+  adminPassword: z.string().min(8, "La contraseña debe tener 8+ caracteres."),
 });
 
 export type ActionState = { error?: string; ok?: boolean } | undefined;
 
 /** Genera un slug único para la tienda a partir del nombre. */
 async function uniqueStoreSlug(name: string): Promise<string> {
-  const base = slugify(name) || "tienda";
+  let base = slugify(name) || "tienda";
+  if (isReservedSlug(base)) base = `${base}-tienda`;
   let slug = base;
   let n = 1;
   while (await prisma.store.findUnique({ where: { slug } })) {
@@ -135,6 +138,9 @@ export async function updateStoreConfigAction(
 
   const slug = slugify(d.slug);
   if (!slug) return { error: "Slug inválido." };
+  if (isReservedSlug(slug)) {
+    return { error: "Ese slug está reservado por el sistema. Elige otro." };
+  }
   if (await prisma.store.findFirst({ where: { slug, id: { not: store.id } } })) {
     return { error: "Ese slug ya está en uso por otra tienda." };
   }
@@ -239,11 +245,11 @@ export async function renewStoreAction(formData: FormData) {
 
 /** "Entrar a la tienda": abre el panel del admin de esa tienda. */
 export async function impersonateStoreAction(formData: FormData) {
-  await requireSuperadmin();
+  const user = await requireSuperadmin();
   const storeId = String(formData.get("storeId"));
   const store = await prisma.store.findUnique({ where: { id: storeId } });
   if (!store) return;
-  await setImpersonation(storeId);
+  await setImpersonation(storeId, user.id);
   redirect("/admin");
 }
 
@@ -311,12 +317,26 @@ export async function resetAdminPasswordAction(formData: FormData) {
   const passwordHash = await bcrypt.hash(tempPassword, 10);
   await prisma.user.update({
     where: { id: store.ownerId },
-    data: { passwordHash },
+    // Cierra las sesiones abiertas del admin y quita un bloqueo previo.
+    data: {
+      passwordHash,
+      sessionVersion: { increment: 1 },
+      failedAttempts: 0,
+      lockedUntil: null,
+    },
   });
 
-  redirect(
-    `/superadmin?resetEmail=${encodeURIComponent(store.owner.email)}&tempPass=${encodeURIComponent(tempPassword)}`,
-  );
+  // La clave temporal se muestra una vez vía una cookie firmada de 2 minutos,
+  // no en la URL (evita historial del navegador y logs).
+  await setTempPasswordFlash(store.owner.email, tempPassword);
+  redirect("/superadmin");
+}
+
+/** Oculta el aviso con la clave temporal. */
+export async function dismissTempPasswordAction() {
+  await requireSuperadmin();
+  await clearTempPasswordFlash();
+  redirect("/superadmin");
 }
 
 export async function deleteStoreAction(formData: FormData) {
@@ -370,8 +390,11 @@ export async function changeMyPasswordAction(
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
   await prisma.user.update({
     where: { id: user.id },
-    data: { passwordHash },
+    // Cierra todas las sesiones abiertas (incluida esta).
+    data: { passwordHash, sessionVersion: { increment: 1 } },
   });
 
+  await clearImpersonation();
+  await signOut({ redirectTo: "/login?changed=1" });
   return { ok: true };
 }

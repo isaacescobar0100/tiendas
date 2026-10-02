@@ -5,6 +5,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import {
+  isLocked,
+  registerFailure,
+  clearFailures,
+  DUMMY_HASH,
+} from "@/lib/lockout";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -39,32 +45,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email: email.toLowerCase() },
           include: { store: { select: { id: true, slug: true } } },
         });
-        if (!user) return null;
-
-        // Bloqueo por intentos fallidos (3 → bloqueo 15 min).
-        const now = Date.now();
-        if (user.lockedUntil && user.lockedUntil.getTime() > now) return null;
-
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) {
-          const attempts = (user.lockedUntil ? 0 : user.failedAttempts) + 1;
-          await prisma.user.update({
-            where: { id: user.id },
-            data:
-              attempts >= 3
-                ? { failedAttempts: 0, lockedUntil: new Date(now + 15 * 60000) }
-                : { failedAttempts: attempts, lockedUntil: null },
-          });
+        if (!user) {
+          // Misma espera que con un usuario real (no revela si existe).
+          await bcrypt.compare(password, DUMMY_HASH);
           return null;
         }
 
-        // Éxito: limpia el conteo.
-        if (user.failedAttempts !== 0 || user.lockedUntil) {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { failedAttempts: 0, lockedUntil: null },
-          });
+        // Bloqueo por intentos fallidos (3 → bloqueo 15 min), atómico.
+        if (await isLocked("user", user.id)) return null;
+
+        const valid = await bcrypt.compare(password, user.passwordHash);
+        if (!valid) {
+          await registerFailure("user", user.id);
+          return null;
         }
+        // Un bloqueo puesto por intentos simultáneos también frena este acierto.
+        if (await isLocked("user", user.id)) return null;
+        await clearFailures("user", user.id);
 
         return {
           id: user.id,
@@ -73,6 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role,
           storeId: user.store?.id ?? null,
           storeSlug: user.store?.slug ?? null,
+          sessionVersion: user.sessionVersion,
         };
       },
     }),

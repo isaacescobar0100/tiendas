@@ -1,6 +1,6 @@
 // Integración de pagos con Wompi (Colombia) — https://docs.wompi.co
 // Solo servidor: usa la llave privada y los secretos. Nunca importar en cliente.
-import { createHash } from "crypto";
+import { createHash, timingSafeEqual } from "crypto";
 
 // Wompi procesa en pesos colombianos. El "amount-in-cents" es pesos × 100,
 // que coincide con nuestra convención `priceCents`/`totalCents` cuando los
@@ -121,8 +121,11 @@ export async function getTransaction(
   id: string,
   keys: WompiKeys,
 ): Promise<WompiTransaction | null> {
+  // El id viene del navegador: solo aceptamos el formato de Wompi y lo
+  // codificamos (no puede apuntar a otra ruta del API con nuestra llave).
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(id)) return null;
   try {
-    const res = await fetch(`${apiBase(keys)}/transactions/${id}`, {
+    const res = await fetch(`${apiBase(keys)}/transactions/${encodeURIComponent(id)}`, {
       headers: { Authorization: `Bearer ${keys.privateKey}` },
       cache: "no-store",
     });
@@ -172,6 +175,8 @@ export function verifyEvent(
   const raw = `${concatenated}${timestamp}${eventsSecret}`;
   const expected = createHash("sha256").update(raw).digest("hex");
 
-  if (expected.toLowerCase() !== signature.checksum.toLowerCase()) return null;
+  const a = Buffer.from(expected.toLowerCase());
+  const b = Buffer.from(String(signature.checksum).toLowerCase());
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
   return data.transaction ?? null;
 }

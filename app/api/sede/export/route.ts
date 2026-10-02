@@ -3,10 +3,8 @@ import { variantLabel } from "@/lib/utils";
 import { PAYMENT_LABEL, FULFILLMENT_LABEL } from "@/lib/order-status";
 import { paymentMethodLabel } from "@/lib/payment-methods";
 import { getCurrentSede } from "@/lib/sede-auth";
+import { csvCell as esc, csvResponse } from "@/lib/csv";
 
-function esc(v: string | number | null | undefined): string {
-  return `"${String(v ?? "").replace(/"/g, '""')}"`;
-}
 const pesos = (cents: number) => Math.round(cents / 100);
 
 // Exporta a CSV solo los pedidos de la sede en sesión.
@@ -76,12 +74,6 @@ export async function GET() {
       .join(";");
   });
 
-  const csv = "﻿" + [headers.map(esc).join(";"), ...rows].join("\r\n");
   const safe = sede.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="pedidos-${safe}.csv"`,
-    },
-  });
+  return csvResponse([headers.map(esc).join(";"), ...rows], `pedidos-${safe}.csv`);
 }

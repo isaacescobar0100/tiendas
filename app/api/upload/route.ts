@@ -3,7 +3,8 @@ import { randomUUID } from "crypto";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { put } from "@vercel/blob";
-import { auth } from "@/auth";
+import { getSessionUser } from "@/lib/guards";
+import { prisma } from "@/lib/prisma";
 import { rateLimit, clientIpFromRequest } from "@/lib/rate-limit";
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -17,9 +18,17 @@ const EXT: Record<string, string> = {
 
 export async function POST(request: Request) {
   try {
-    // Solo usuarios autenticados (admin/superadmin) pueden subir
-    const session = await auth();
-    if (!session?.user) {
+    // Solo un admin con tienda o un superadmin, comprobado contra la BD
+    // (una cuenta borrada o con la clave cambiada ya no puede subir).
+    const user = await getSessionUser();
+    const allowed =
+      user?.role === "SUPERADMIN" ||
+      (user?.role === "ADMIN" &&
+        !!(await prisma.store.findUnique({
+          where: { ownerId: user.id },
+          select: { id: true },
+        })));
+    if (!allowed) {
       return NextResponse.json({ error: "No autorizado." }, { status: 401 });
     }
 

@@ -5,7 +5,9 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
-import { parsePriceToCents } from "@/lib/utils";
+import { signOut } from "@/auth";
+import { parsePriceToCents, isSafeImageUrl } from "@/lib/utils";
+import { isHttpUrl } from "@/lib/payment-methods";
 import { parseStoreHours, serializeStoreHours } from "@/lib/store-hours";
 import { isWompiConfigured, resolveWompiKeys } from "@/lib/wompi";
 import {
@@ -17,22 +19,23 @@ export type SettingsState = { error?: string; ok?: boolean } | undefined;
 
 const storeSchema = z.object({
   description: z.string().optional(),
-  logoUrl: z.string().url("URL de logo inválida.").optional().or(z.literal("")),
+  // Solo http(s) (o /uploads para imágenes): nunca javascript:, data:, etc.
+  logoUrl: z
+    .string()
+    .refine((v) => v === "" || isSafeImageUrl(v), "URL de logo inválida.")
+    .optional(),
   bannerUrl: z
     .string()
-    .url("URL de banner inválida.")
-    .optional()
-    .or(z.literal("")),
+    .refine((v) => v === "" || isSafeImageUrl(v), "URL de banner inválida.")
+    .optional(),
   bannerVideoUrl: z
     .string()
-    .url("URL de video inválida.")
-    .optional()
-    .or(z.literal("")),
+    .refine((v) => v === "" || isHttpUrl(v), "URL de video inválida.")
+    .optional(),
   surveyUrl: z
     .string()
-    .url("URL de encuesta inválida.")
-    .optional()
-    .or(z.literal("")),
+    .refine((v) => v === "" || isHttpUrl(v), "URL de encuesta inválida.")
+    .optional(),
   // Color de marca en formato hex (#rrggbb). La moneda es fija (COP).
   themeColor: z
     .string()
@@ -168,7 +171,7 @@ export async function updatePaymentsAction(
 const passwordSchema = z
   .object({
     currentPassword: z.string().min(1, "Indica tu contraseña actual."),
-    newPassword: z.string().min(6, "La nueva debe tener 6+ caracteres."),
+    newPassword: z.string().min(8, "La nueva debe tener 8+ caracteres."),
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
@@ -204,8 +207,10 @@ export async function changePasswordAction(
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
   await prisma.user.update({
     where: { id: user.id },
-    data: { passwordHash },
+    // Cierra todas las sesiones abiertas (incluida esta): hay que volver a entrar.
+    data: { passwordHash, sessionVersion: { increment: 1 } },
   });
 
+  await signOut({ redirectTo: "/login?changed=1" });
   return { ok: true };
 }

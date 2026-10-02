@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
 import { sendStatusEmail } from "@/lib/email";
+import { setOrderPaymentStatus } from "@/lib/orders";
 
 const paymentSchema = z.enum(["PENDING", "PAID", "CANCELLED"]);
 const fulfillmentSchema = z.enum(["PENDING", "SHIPPED", "DELIVERED"]);
@@ -49,11 +50,9 @@ export async function updateOrderStatusAction(formData: FormData) {
   const parsed = paymentSchema.safeParse(formData.get("status"));
   if (!parsed.success) return;
 
-  // updateMany con el storeId garantiza que el admin solo toca sus pedidos
-  await prisma.order.updateMany({
-    where: { id: orderId, storeId: store.id },
-    data: { status: parsed.data },
-  });
+  // El storeId garantiza que el admin solo toca sus pedidos. Las reglas (no
+  // reabrir cancelados, devolver stock al cancelar…) están en lib/orders.
+  await setOrderPaymentStatus({ id: orderId, storeId: store.id }, parsed.data);
 
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);

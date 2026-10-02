@@ -104,21 +104,23 @@ function RegisterForm({ storeSlug }: { storeSlug: string }) {
         <label className={labelCls}>Email</label>
         <input name="email" type="email" required autoComplete="email" className={inputCls} />
       </div>
-      <div>
-        <label className={labelCls}>Contraseña</label>
-        <input
-          name="password"
-          type="password"
-          required
-          autoComplete="new-password"
-          className={inputCls}
-        />
-        <p className="mt-1 text-xs text-gray-400">Mínimo 6 caracteres.</p>
-      </div>
       {state?.error && <Err>{state.error}</Err>}
-      <button type="submit" disabled={pending} className={btnCls}>
-        {pending ? "Creando…" : "Crear cuenta"}
-      </button>
+      {state?.ok ? (
+        <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+          Listo. Te enviamos un correo con un enlace para crear tu contraseña y
+          activar tu cuenta. Revisa también la carpeta de spam.
+        </p>
+      ) : (
+        <>
+          <p className="text-xs text-gray-400">
+            Te enviaremos un enlace a tu correo para crear tu contraseña. Así
+            confirmamos que el correo es tuyo.
+          </p>
+          <button type="submit" disabled={pending} className={btnCls}>
+            {pending ? "Enviando…" : "Crear cuenta"}
+          </button>
+        </>
+      )}
     </form>
   );
 }

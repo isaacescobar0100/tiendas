@@ -32,6 +32,8 @@ async function resolveSlug(
       { headers: { "x-mw": "1" } },
     );
     const data = (await res.json()) as { slug: string | null };
+    // Tope de tamaño: el Host lo envía el cliente y no debe crecer sin límite.
+    if (domainCache.size > 500) domainCache.clear();
     domainCache.set(host, { slug: data.slug, exp: Date.now() + 60_000 });
     return data.slug;
   } catch {

@@ -18,6 +18,7 @@ export const authConfig = {
         token.role = user.role;
         token.storeId = user.storeId ?? null;
         token.storeSlug = user.storeSlug ?? null;
+        token.sv = user.sessionVersion ?? 0;
       }
       return token;
     },
@@ -27,6 +28,7 @@ export const authConfig = {
         session.user.role = token.role as Role;
         session.user.storeId = (token.storeId as string | null) ?? null;
         session.user.storeSlug = (token.storeSlug as string | null) ?? null;
+        session.user.sv = (token.sv as number | undefined) ?? -1;
       }
       return session;
     },

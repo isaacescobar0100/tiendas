@@ -1,10 +1,22 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const pass = await bcrypt.hash("password123", 10);
+  // Seguridad: los datos de ejemplo solo se cargan en una base local, salvo que
+  // se pida explícitamente (ALLOW_REMOTE_SEED=1).
+  const dbUrl = process.env.DATABASE_URL ?? "";
+  const isLocal = /@(localhost|127\.0\.0\.1)(:|\/)/.test(dbUrl);
+  if (!isLocal && process.env.ALLOW_REMOTE_SEED !== "1") {
+    throw new Error(
+      "El seed solo se ejecuta contra una base local. Usa ALLOW_REMOTE_SEED=1 si de verdad quieres cargar datos de ejemplo en otra base.",
+    );
+  }
+  // Contraseña de las cuentas de ejemplo: la de SEED_PASSWORD o una aleatoria.
+  const plain = process.env.SEED_PASSWORD || randomBytes(9).toString("base64url");
+  const pass = await bcrypt.hash(plain, 10);
 
   // 1) Superadmin de la plataforma
   await prisma.user.upsert({
@@ -225,8 +237,9 @@ async function main() {
   }
 
   console.log("✅ Seed completado.");
-  console.log("   Superadmin:  super@mitienda.com / password123");
-  console.log("   Admin tienda: admin@modacentral.com / password123");
+  console.log(`   Superadmin:  super@mitienda.com / ${plain}`);
+  console.log(`   Admin tienda: admin@modacentral.com / ${plain}`);
+  console.log("   (Cuentas de ejemplo: no las uses en producción.)");
   console.log("   Tienda pública: /moda-central");
 }
 

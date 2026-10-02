@@ -59,6 +59,8 @@ model User {
   // Anti fuerza bruta: intentos fallidos y bloqueo temporal de la cuenta.
   failedAttempts Int      @default(0)
   lockedUntil    DateTime?
+  // Se incrementa al cambiar/recuperar la contraseña: invalida las sesiones abiertas.
+  sessionVersion Int      @default(0)
   // Un ADMIN es dueño de (como máximo) una tienda. SUPERADMIN no tiene tienda.
   store        Store?
   createdAt    DateTime @default(now())
@@ -136,6 +138,10 @@ model StoreLocation {
   // Acceso propio de la sede (el admin lo crea). Ve solo los pedidos de su sede.
   email        String? @unique
   passwordHash String?
+  // Anti fuerza bruta y revocación de sesiones de la sede.
+  failedAttempts Int      @default(0)
+  lockedUntil    DateTime?
+  sessionVersion Int      @default(0)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
@@ -184,10 +190,16 @@ model Customer {
   storeId      String
   email        String
   name         String
+  // Vacío hasta que el cliente crea su contraseña desde el enlace del correo.
   passwordHash String
+  // Se marca al usar el enlace del correo: prueba que el email es suyo.
+  // Sin esto no se muestra el historial de pedidos.
+  emailVerifiedAt DateTime?
   // Anti fuerza bruta: intentos fallidos y bloqueo temporal de la cuenta.
   failedAttempts Int      @default(0)
   lockedUntil    DateTime?
+  // Se incrementa al recuperar la contraseña: invalida las sesiones abiertas.
+  sessionVersion Int      @default(0)
   reviews      Review[]
   createdAt    DateTime @default(now())
 
@@ -301,6 +313,7 @@ model Order {
   customerPhone String?
   locationName  String? // sede elegida (para negocios con varias sedes)
   paymentMethod PaymentMethod? // cómo paga; vacío en pedidos antiguos
+  wompiTransactionId String? // transacción de Wompi que confirmó el pago
   // Dirección desglosada (los pedidos antiguos solo tienen `address`)
   // `street` guarda la dirección completa (ej. "Cra 23D # 45-12, Apto 301").
   street        String?

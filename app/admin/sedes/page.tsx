@@ -155,8 +155,9 @@ function LocationForm({
                 placeholder={
                   location?.passwordHash
                     ? "•••• (déjalo vacío para no cambiarla)"
-                    : "crea una clave (mín. 4)"
+                    : "crea una clave (mín. 8)"
                 }
+                minLength={8}
                 className={inputCls}
               />
             </div>
@@ -164,6 +165,8 @@ function LocationForm({
           <p className="mt-2 text-xs text-gray-400">
             Con esto, la sede entra en{" "}
             <span className="font-mono">/sede/login</span> y ve solo sus pedidos.
+            Si cambias el correo o la contraseña, se cierran las sesiones
+            abiertas de esa sede.
           </p>
         </div>
 

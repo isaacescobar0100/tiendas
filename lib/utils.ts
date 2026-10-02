@@ -11,6 +11,44 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+// Rutas propias de la app: una tienda no puede usar estos slugs (chocarían con
+// /admin, /api, /login…). También se rechazan los que empiezan por ellos,
+// porque el middleware de dominios propios los compara por prefijo.
+const RESERVED_SLUG_PREFIXES = [
+  "admin",
+  "superadmin",
+  "api",
+  "login",
+  "recuperar",
+  "restablecer",
+  "sede",
+  "sitemap",
+  "robots",
+  "favicon",
+  "_next",
+];
+
+/** URL de imagen aceptable: http(s) o un archivo subido a /uploads. */
+export function isSafeImageUrl(url: string): boolean {
+  return /^https?:\/\/\S+$/i.test(url) || /^\/uploads\/[\w.-]+$/.test(url);
+}
+
+/** URL de enlace aceptable: ruta interna ("/…", no "//…") o http(s). */
+export function isSafeLinkUrl(url: string): boolean {
+  return /^\/(?!\/)\S*$/.test(url) || /^https?:\/\/\S+$/i.test(url);
+}
+
+/** Encuadre de imagen "X% Y%"; cualquier otra cosa vuelve al centro. */
+export function safePosition(p: unknown): string {
+  return typeof p === "string" && /^\d{1,3}(\.\d+)?% \d{1,3}(\.\d+)?%$/.test(p)
+    ? p
+    : "50% 50%";
+}
+
+export function isReservedSlug(slug: string): boolean {
+  return RESERVED_SLUG_PREFIXES.some((p) => slug === p || slug.startsWith(p));
+}
+
 // Monedas sin decimales (el peso colombiano, entre otras): se muestran enteras.
 const ZERO_DECIMAL_CURRENCIES = new Set([
   "COP",

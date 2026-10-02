@@ -34,9 +34,15 @@ export type OrderEmailData = {
   items: OrderEmailItem[];
 };
 
-// Escapa texto para evitar romper el HTML del correo con datos del cliente.
+// Escapa texto para evitar romper el HTML del correo con datos del cliente
+// (también comillas, por si un valor acaba dentro de un atributo).
 function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 const wrap = (inner: string) =>
@@ -136,7 +142,11 @@ async function brevoSend(opts: {
  * ambos con el detalle completo del pedido. No lanza: si algo falla, lo
  * registra y sigue (no debe romper el checkout).
  */
-export async function sendOrderEmails(data: OrderEmailData): Promise<void> {
+export async function sendOrderEmails(
+  data: OrderEmailData,
+  // false = solo avisa a la tienda (p. ej. si ese email ya recibió muchos).
+  opts: { toCustomer?: boolean } = {},
+): Promise<void> {
   if (!BREVO_API_KEY || !SENDER_EMAIL) {
     console.log(
       `[email] Brevo no configurado (BREVO_API_KEY/BREVO_SENDER_EMAIL) — se omite el envío del pedido ${data.orderId}`,
@@ -148,7 +158,7 @@ export async function sendOrderEmails(data: OrderEmailData): Promise<void> {
 
   try {
     // 1) Confirmación al cliente (con todo el detalle de su pedido)
-    await brevoSend({
+    if (opts.toCustomer !== false) await brevoSend({
       to: data.customerEmail,
       senderName: data.storeName,
       subject: `Tu pedido en ${data.storeName} (#${shortId})`,
@@ -277,22 +287,25 @@ export async function sendPasswordResetEmail(opts: {
   name: string;
   resetUrl: string;
   brandName: string;
+  // "welcome": crear la cuenta (primer acceso). "reset": recuperar la clave.
+  purpose?: "reset" | "welcome";
 }): Promise<boolean> {
+  const welcome = opts.purpose === "welcome";
   if (!BREVO_API_KEY || !SENDER_EMAIL) {
     console.warn("[email] Brevo no configurado — no se envía el reseteo.");
     return false;
   }
-  const body = `<h2 style="margin:0 0 8px">Restablecer tu contraseña</h2>
-    <p>Hola ${esc(opts.name)}, recibimos una solicitud para restablecer la contraseña de tu cuenta en ${esc(opts.brandName)}.</p>
+  const body = `<h2 style="margin:0 0 8px">${welcome ? "Activa tu cuenta" : "Restablecer tu contraseña"}</h2>
+    <p>Hola ${esc(opts.name)}, ${welcome ? `para activar tu cuenta en ${esc(opts.brandName)} y ver tus pedidos, crea tu contraseña con este botón.` : `recibimos una solicitud para restablecer la contraseña de tu cuenta en ${esc(opts.brandName)}.`}</p>
     <p style="margin:20px 0">
-      <a href="${opts.resetUrl}" style="background:#111827;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Crear nueva contraseña</a>
+      <a href="${esc(opts.resetUrl)}" style="background:#111827;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">${welcome ? "Crear mi contraseña" : "Crear nueva contraseña"}</a>
     </p>
-    <p style="color:#555;font-size:13px">Este enlace caduca en 1 hora y solo puede usarse una vez. Si no fuiste tú, ignora este correo: tu contraseña no cambiará.</p>`;
+    <p style="color:#555;font-size:13px">Este enlace caduca en 1 hora y solo puede usarse una vez. Si no fuiste tú, ignora este correo: no se hará ningún cambio.</p>`;
   try {
     await brevoSend({
       to: opts.to,
       senderName: opts.brandName,
-      subject: "Restablecer tu contraseña",
+      subject: welcome ? `Activa tu cuenta en ${opts.brandName}` : "Restablecer tu contraseña",
       html: wrap(body),
     });
     return true;

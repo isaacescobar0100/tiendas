@@ -1,26 +1,19 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import {
-  createResetToken,
   findValidToken,
-  markTokenUsed,
+  consumeToken,
+  invalidateOtherTokens,
 } from "@/lib/password-reset";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { setCustomerSession } from "@/lib/customer-auth";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { sendAccessLink } from "./access-link";
 
 export type ResetState = { error?: string; ok?: boolean } | undefined;
-
-async function baseUrl(): Promise<string> {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  return `${proto}://${host}`;
-}
 
 async function storeBySlug(slug: string) {
   return prisma.store.findFirst({
@@ -47,29 +40,20 @@ export async function requestCustomerResetAction(
     .toLowerCase();
   if (!email) return { error: "Indica tu email." };
 
-  const customer = await prisma.customer.findUnique({
-    where: { storeId_email: { storeId: store.id, email } },
-  });
-  if (customer) {
-    const token = await createResetToken({
-      kind: "customer",
-      customerId: customer.id,
-    });
-    const url = `${await baseUrl()}/${store.slug}/cuenta/restablecer?token=${token}`;
-    await sendPasswordResetEmail({
-      to: customer.email,
-      name: customer.name,
-      resetUrl: url,
-      brandName: store.name,
-    });
-  }
+  const perEmail = rateLimit(`access-mail:${store.id}:${email}`, 3, 60 * 60 * 1000);
+  const customer = perEmail.ok
+    ? await prisma.customer.findUnique({
+        where: { storeId_email: { storeId: store.id, email } },
+      })
+    : null;
+  if (customer) await sendAccessLink(store, customer, "reset");
   // No revelamos si el email existe o no.
   return { ok: true };
 }
 
 const pwSchema = z
   .object({
-    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
+    password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres."),
     confirm: z.string(),
   })
   .refine((d) => d.password === d.confirm, {
@@ -77,7 +61,9 @@ const pwSchema = z
     path: ["confirm"],
   });
 
-// Guardar la nueva contraseña con un token válido (cliente).
+// Guardar la contraseña con un token válido (cliente). Sirve para recuperar la
+// contraseña y para activar una cuenta nueva: en ambos casos prueba que el
+// correo es suyo.
 export async function resetCustomerPasswordAction(
   _prev: ResetState,
   formData: FormData,
@@ -92,23 +78,37 @@ export async function resetCustomerPasswordAction(
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
+  const invalid = { error: "El enlace no es válido o ya caducó. Solicita uno nuevo." };
   const rec = await findValidToken(token);
-  if (!rec || rec.kind !== "customer" || !rec.customerId) {
-    return { error: "El enlace no es válido o ya caducó. Solicita uno nuevo." };
-  }
+  if (!rec || rec.kind !== "customer" || !rec.customerId) return invalid;
   // El token debe ser de un cliente de esta tienda.
   const customer = await prisma.customer.findFirst({
     where: { id: rec.customerId, storeId: store.id },
   });
-  if (!customer) {
-    return { error: "El enlace no es válido para esta tienda." };
-  }
+  if (!customer) return { error: "El enlace no es válido para esta tienda." };
+  // Consumo atómico: el mismo enlace no puede usarse dos veces a la vez.
+  if (!(await consumeToken(rec.id))) return invalid;
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  await prisma.customer.update({
+  const updated = await prisma.customer.update({
     where: { id: customer.id },
-    data: { passwordHash, failedAttempts: 0, lockedUntil: null },
+    data: {
+      passwordHash,
+      failedAttempts: 0,
+      lockedUntil: null,
+      emailVerifiedAt: customer.emailVerifiedAt ?? new Date(),
+      // Cierra las sesiones abiertas de esta cuenta.
+      sessionVersion: { increment: 1 },
+    },
+    select: { sessionVersion: true },
   });
-  await markTokenUsed(rec.id);
+  await invalidateOtherTokens({ customerId: customer.id });
+
+  // Ya probó que el correo es suyo: entra directamente.
+  await setCustomerSession({
+    customerId: customer.id,
+    storeId: store.id,
+    sv: updated.sessionVersion,
+  });
   redirect(`/${store.slug}/cuenta?reset=1`);
 }

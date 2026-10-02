@@ -24,33 +24,47 @@ export type CheckoutState =
   | undefined;
 
 const customerSchema = z.object({
-  customerName: z.string().min(2, "Indica tu nombre."),
-  customerEmail: z.string().email("Email inválido."),
+  customerName: z.string().trim().min(2, "Indica tu nombre.").max(80, "El nombre es muy largo."),
+  customerEmail: z.string().trim().email("Email inválido.").max(200),
   // Obligatorio y validado: móvil colombiano (10 dígitos), para poder avisar por WhatsApp.
   customerPhone: z
     .string()
     .min(1, "Indica tu número de WhatsApp.")
+    .max(30, "Número inválido.")
+    // Solo dígitos, espacios, +, guiones y paréntesis.
+    .refine((v) => /^[\d\s+()-]+$/.test(v), "Número inválido.")
     .refine((v) => {
       const d = v.replace(/\D/g, "");
       return d.length === 10 || (d.length === 12 && d.startsWith("57"));
     }, "Número inválido. Usa un móvil de 10 dígitos (ej. 300 123 4567)."),
   // `street` = dirección completa (calle/carrera, número, apto…)
-  street: z.string().min(3, "Indica la dirección completa."),
-  neighborhood: z.string().min(2, "Indica el barrio."),
-  city: z.string().min(2, "Indica la ciudad."),
-  reference: z.string().optional(),
-  postalCode: z.string().optional(),
-  country: z.string().min(2, "Indica el país."),
+  street: z.string().trim().min(3, "Indica la dirección completa.").max(200),
+  neighborhood: z.string().trim().min(2, "Indica el barrio.").max(100),
+  city: z.string().trim().min(2, "Indica la ciudad.").max(100),
+  reference: z.string().trim().max(300).optional(),
+  postalCode: z.string().trim().max(20).optional(),
+  country: z.string().trim().min(2, "Indica el país.").max(60),
 });
 
-const itemsSchema = z.array(
-  z.object({
-    productId: z.string().min(1),
-    variantId: z.string().nullable().optional(),
-    quantity: z.number().int().positive(),
-    modifierOptionIds: z.array(z.string()).optional(),
-  }),
-);
+// Límites por pedido: evitan que un solo pedido anónimo (contraentrega o
+// transferencia, que reservan stock al crearse) vacíe el inventario.
+const MAX_LINES = 30;
+const MAX_QTY_PER_LINE = 20;
+
+const itemsSchema = z
+  .array(
+    z.object({
+      productId: z.string().min(1),
+      variantId: z.string().nullable().optional(),
+      quantity: z
+        .number()
+        .int()
+        .positive()
+        .max(MAX_QTY_PER_LINE, `Máximo ${MAX_QTY_PER_LINE} unidades por producto.`),
+      modifierOptionIds: z.array(z.string()).max(50).optional(),
+    }),
+  )
+  .max(MAX_LINES, `Máximo ${MAX_LINES} productos por pedido.`);
 
 export async function placeOrderAction(
   _prev: CheckoutState,
@@ -328,6 +342,14 @@ export async function placeOrderAction(
     // Contraentrega / transferencia: el pedido queda registrado y se paga al
     // recibir o por transferencia (la tienda lo marca pagado al verificarlo).
     // Emails de confirmación (no bloquea si el envío no está configurado o falla)
+    // El correo de confirmación va a un email que nadie verificó: máx. 5 por
+    // dirección y hora, para que el checkout no sirva para mandar correos
+    // masivos a terceros con la marca de la tienda.
+    const mailOk = rateLimit(
+      `order-mail:${d.customerEmail.toLowerCase()}`,
+      5,
+      60 * 60 * 1000,
+    ).ok;
     await sendOrderEmails({
       orderId: order.id,
       storeName: store.name,
@@ -353,7 +375,7 @@ export async function placeOrderAction(
         size: l.size,
         modifiers: l.modifiers,
       })),
-    });
+    }, { toCustomer: mailOk });
 
     return { orderId: order.id };
   } catch {

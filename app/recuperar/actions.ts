@@ -1,26 +1,20 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import {
   createResetToken,
   findValidToken,
-  markTokenUsed,
+  consumeToken,
+  invalidateOtherTokens,
 } from "@/lib/password-reset";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { getBaseUrl } from "@/lib/site-url";
 
 export type ResetState = { error?: string; ok?: boolean } | undefined;
-
-async function baseUrl(): Promise<string> {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  return `${proto}://${host}`;
-}
 
 // Solicitar el enlace de reseteo (admin/superadmin).
 export async function requestAdminResetAction(
@@ -40,7 +34,9 @@ export async function requestAdminResetAction(
   const user = await prisma.user.findUnique({ where: { email } });
   if (user) {
     const token = await createResetToken({ kind: "admin", userId: user.id });
-    const url = `${await baseUrl()}/restablecer?token=${token}`;
+    // El enlace usa la URL configurada del sitio, nunca cabeceras de la
+    // petición (Host / X-Forwarded-Host las puede falsear quien la envía).
+    const url = `${getBaseUrl()}/restablecer?token=${encodeURIComponent(token)}`;
     await sendPasswordResetEmail({
       to: user.email,
       name: user.name ?? "",
@@ -54,7 +50,7 @@ export async function requestAdminResetAction(
 
 const pwSchema = z
   .object({
-    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
+    password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres."),
     confirm: z.string(),
   })
   .refine((d) => d.password === d.confirm, {
@@ -79,11 +75,21 @@ export async function resetAdminPasswordAction(
     return { error: "El enlace no es válido o ya caducó. Solicita uno nuevo." };
   }
 
+  // Consume el token de forma atómica (no se puede usar dos veces a la vez).
+  if (!(await consumeToken(rec.id))) {
+    return { error: "El enlace no es válido o ya caducó. Solicita uno nuevo." };
+  }
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   await prisma.user.update({
     where: { id: rec.userId },
-    data: { passwordHash, failedAttempts: 0, lockedUntil: null },
+    // Cierra todas las sesiones abiertas de la cuenta.
+    data: {
+      passwordHash,
+      failedAttempts: 0,
+      lockedUntil: null,
+      sessionVersion: { increment: 1 },
+    },
   });
-  await markTokenUsed(rec.id);
+  await invalidateOtherTokens({ userId: rec.userId });
   redirect("/login?reset=1");
 }

@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
-import { slugify, parsePriceToCents } from "@/lib/utils";
+import {
+  slugify,
+  parsePriceToCents,
+  isSafeImageUrl,
+  safePosition,
+} from "@/lib/utils";
 import { parseModifiers, serializeModifiers } from "@/lib/modifiers";
 
 export type ActionState = { error?: string } | undefined;
@@ -16,7 +21,10 @@ const productSchema = z.object({
   price: z.string().min(1, "Indica un precio."),
   salePrice: z.string().optional(),
   stock: z.string().optional(),
-  imageUrl: z.string().url("URL de imagen inválida.").optional().or(z.literal("")),
+  imageUrl: z
+    .string()
+    .refine((v) => v === "" || isSafeImageUrl(v), "URL de imagen inválida.")
+    .optional(),
   imagePosition: z.string().optional(),
   imageZoom: z.coerce.number().min(1).max(3).optional(),
   categoryId: z.string().optional(),
@@ -75,10 +83,12 @@ function readGallery(formData: FormData): {
       const items = raw
         .map((i) => ({
           url: String(i?.url ?? ""),
-          position: typeof i?.position === "string" ? i.position : "50% 50%",
+          position: safePosition(i?.position),
           zoom: Math.max(1, Math.min(3, Number(i?.zoom) || 1)),
         }))
-        .filter((i) => i.url.length > 0);
+        // Solo URLs de imagen válidas (http/https o /uploads).
+        .filter((i) => isSafeImageUrl(i.url))
+        .slice(0, 20);
       return {
         galleryData: JSON.stringify(items),
         images: items.map((i) => i.url),
@@ -88,6 +98,19 @@ function readGallery(formData: FormData): {
     // cae al valor vacío
   }
   return { galleryData: "[]", images: [] };
+}
+
+/** La categoría debe ser de la misma tienda; si no, se ignora. */
+async function ownCategoryId(
+  storeId: string,
+  categoryId: string | undefined,
+): Promise<string | null> {
+  if (!categoryId) return null;
+  const c = await prisma.category.findFirst({
+    where: { id: categoryId, storeId },
+    select: { id: true },
+  });
+  return c?.id ?? null;
 }
 
 type VariantInput = { color: string; size: string; stock: number };
@@ -184,11 +207,12 @@ export async function createProductAction(
       salePriceCents: sale.value,
       stock: Number(parsed.data.stock) || 0,
       imageUrl: parsed.data.imageUrl || null,
-      imagePosition: parsed.data.imagePosition || "50% 50%",
+      imagePosition: safePosition(parsed.data.imagePosition),
       imageZoom: parsed.data.imageZoom ?? 1,
       images: gallery.images,
       galleryData: gallery.galleryData,
-      categoryId: parsed.data.categoryId || null,
+      // Solo categorías de esta tienda (nunca de otra).
+      categoryId: await ownCategoryId(store.id, parsed.data.categoryId),
       active: parsed.data.active === "on",
       modifiersJson: readModifiersJson(formData),
     },
@@ -234,11 +258,12 @@ export async function updateProductAction(
       salePriceCents: sale.value,
       stock: Number(parsed.data.stock) || 0,
       imageUrl: parsed.data.imageUrl || null,
-      imagePosition: parsed.data.imagePosition || "50% 50%",
+      imagePosition: safePosition(parsed.data.imagePosition),
       imageZoom: parsed.data.imageZoom ?? 1,
       images: gallery.images,
       galleryData: gallery.galleryData,
-      categoryId: parsed.data.categoryId || null,
+      // Solo categorías de esta tienda (nunca de otra).
+      categoryId: await ownCategoryId(store.id, parsed.data.categoryId),
       active: parsed.data.active === "on",
       modifiersJson: readModifiersJson(formData),
     },

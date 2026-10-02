@@ -10,20 +10,23 @@ import {
   resetAdminPasswordAction,
   renewStoreAction,
   impersonateStoreAction,
+  dismissTempPasswordAction,
 } from "./actions";
 import type { StorePlan } from "@prisma/client";
+import { requireSuperadmin } from "@/lib/guards";
+import { readTempPasswordFlash } from "@/lib/flash";
 
 const dateFmt = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
 const dayFmt = new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit" });
 
 export const dynamic = "force-dynamic";
 
-export default async function SuperadminHome({
-  searchParams,
-}: {
-  searchParams: Promise<{ resetEmail?: string; tempPass?: string }>;
-}) {
-  const { resetEmail, tempPass } = await searchParams;
+export default async function SuperadminHome() {
+  // Guard propio (no depender solo del layout ni del middleware).
+  await requireSuperadmin();
+  const flash = await readTempPasswordFlash();
+  const resetEmail = flash?.email;
+  const tempPass = flash?.tempPassword;
   const [stores, totalOrders, paidAgg, revByStoreRaw] = await Promise.all([
     prisma.store.findMany({
       orderBy: { createdAt: "desc" },
@@ -113,13 +116,14 @@ export default async function SuperadminHome({
               — cópiala y compártela con el admin. No se volverá a mostrar.
             </p>
           </div>
-          <Link
-            href="/superadmin"
-            className="shrink-0 text-amber-700 hover:text-amber-900"
-            aria-label="Cerrar"
-          >
-            <X className="h-4 w-4" />
-          </Link>
+          <form action={dismissTempPasswordAction}>
+            <button
+              className="shrink-0 text-amber-700 hover:text-amber-900"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </form>
         </div>
       )}
 

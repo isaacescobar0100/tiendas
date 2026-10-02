@@ -1,12 +1,22 @@
+import { timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendRentEmail } from "@/lib/email";
+
+// Comparación en tiempo constante del header de autorización.
+function sameSecret(given: string, expected: string): boolean {
+  const a = Buffer.from(given);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 // Cron diario (Vercel): avisa por correo a las tiendas de renta cuyo plan
 // vence pronto (≤3 días) o ya venció. No repite el mismo aviso (rentNotice).
 export async function GET(request: Request) {
-  // Si hay CRON_SECRET, exige el header que Vercel añade a los crons.
+  // Exige el header que Vercel añade a los crons (Authorization: Bearer
+  // CRON_SECRET). Sin CRON_SECRET configurado, el endpoint queda cerrado.
   const secret = process.env.CRON_SECRET;
-  if (secret && request.headers.get("authorization") !== `Bearer ${secret}`) {
+  const given = request.headers.get("authorization") ?? "";
+  if (!secret || !sameSecret(given, `Bearer ${secret}`)) {
     return new Response("No autorizado", { status: 401 });
   }
 
@@ -32,6 +42,14 @@ export async function GET(request: Request) {
     const key = `${kind}:${store.paidUntil.toISOString().slice(0, 10)}`;
     if (store.rentNotice === key) continue; // ya avisado
 
+    // Reserva el aviso antes de enviarlo (atómico): dos ejecuciones a la vez
+    // no pueden mandar el mismo correo dos veces.
+    const claim = await prisma.store.updateMany({
+      where: { id: store.id, rentNotice: store.rentNotice },
+      data: { rentNotice: key },
+    });
+    if (claim.count === 0) continue;
+
     const ok = await sendRentEmail({
       to: store.owner.email,
       storeName: store.name,
@@ -39,13 +57,15 @@ export async function GET(request: Request) {
       paidUntil: store.paidUntil,
     });
     if (ok) {
-      await prisma.store.update({
-        where: { id: store.id },
-        data: { rentNotice: key },
-      });
       sent += 1;
+    } else {
+      // No se pudo enviar: libera la reserva para reintentarlo mañana.
+      await prisma.store.updateMany({
+        where: { id: store.id, rentNotice: key },
+        data: { rentNotice: store.rentNotice },
+      });
     }
   }
 
-  return Response.json({ checked: stores.length, sent });
+  return Response.json({ sent });
 }

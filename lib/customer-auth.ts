@@ -1,34 +1,29 @@
 // Sesión de cliente de la tienda (separada del login de admin/superadmin).
-// Cookie httpOnly firmada con HMAC-SHA256 usando AUTH_SECRET. Sin dependencias.
+// Cookie httpOnly firmada (ver lib/signed-cookie). Incluye la versión de sesión
+// del cliente: al recuperar la contraseña se incrementa y las cookies viejas dejan
+// de valer.
 import "server-only";
 import { cookies } from "next/headers";
-import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { signPayload, verifyPayload, cookieOptions } from "@/lib/signed-cookie";
 
-const SECRET = process.env.AUTH_SECRET || "dev-secret-change-me";
 const COOKIE = "customer_session";
+const PURPOSE = "customer";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 días
 
-function sign(payload: string): string {
-  return createHmac("sha256", SECRET).update(payload).digest("base64url");
-}
-
-export type CustomerSession = { customerId: string; storeId: string };
+export type CustomerSession = {
+  customerId: string;
+  storeId: string;
+  sv: number;
+};
 
 /** Crea la cookie de sesión del cliente. Llamar solo desde server actions. */
 export async function setCustomerSession(session: CustomerSession) {
-  const payload = Buffer.from(
-    JSON.stringify({ ...session, exp: Date.now() + MAX_AGE * 1000 }),
-  ).toString("base64url");
-  const token = `${payload}.${sign(payload)}`;
-  const c = await cookies();
-  c.set(COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: MAX_AGE,
-    path: "/",
+  const token = signPayload(PURPOSE, {
+    ...session,
+    exp: Date.now() + MAX_AGE * 1000,
   });
+  (await cookies()).set(COOKIE, token, cookieOptions(MAX_AGE));
 }
 
 export async function clearCustomerSession() {
@@ -37,24 +32,14 @@ export async function clearCustomerSession() {
 
 /** Lee y verifica la sesión desde la cookie. Devuelve null si no válida. */
 export async function getCustomerSession(): Promise<CustomerSession | null> {
-  const token = (await cookies()).get(COOKIE)?.value;
-  if (!token) return null;
-  const [payload, sig] = token.split(".");
-  if (!payload || !sig) return null;
-
-  const expected = sign(payload);
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-
-  try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString());
-    if (!data.exp || data.exp < Date.now()) return null;
-    if (!data.customerId || !data.storeId) return null;
-    return { customerId: data.customerId, storeId: data.storeId };
-  } catch {
+  const data = verifyPayload<CustomerSession & { exp: number }>(
+    PURPOSE,
+    (await cookies()).get(COOKIE)?.value,
+  );
+  if (!data?.customerId || !data.storeId || typeof data.sv !== "number") {
     return null;
   }
+  return { customerId: data.customerId, storeId: data.storeId, sv: data.sv };
 }
 
 /** Cliente actual si hay sesión válida para esta tienda; si no, null. */
@@ -63,8 +48,17 @@ export async function getCurrentCustomer(storeId: string) {
   if (!session || session.storeId !== storeId) return null;
   const customer = await prisma.customer.findUnique({
     where: { id: session.customerId },
-    select: { id: true, name: true, email: true, storeId: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      storeId: true,
+      emailVerifiedAt: true,
+      sessionVersion: true,
+    },
   });
   if (!customer || customer.storeId !== storeId) return null;
+  // Contraseña cambiada después de iniciar esta sesión → ya no vale.
+  if (customer.sessionVersion !== session.sv) return null;
   return customer;
 }
