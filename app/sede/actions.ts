@@ -11,7 +11,8 @@ import {
   getCurrentSede,
 } from "@/lib/sede-auth";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { setOrderPaymentStatus } from "@/lib/orders";
+import { setOrderPaymentStatus, advanceFulfillment } from "@/lib/orders";
+import { NOTICE_STATE } from "@/lib/order-messages";
 import {
   isLocked,
   registerFailure,
@@ -67,7 +68,7 @@ export async function sedeLogoutAction() {
   redirect("/sede/login");
 }
 
-const FULFILLMENTS: Fulfillment[] = ["PENDING", "SHIPPED", "DELIVERED"];
+const FULFILLMENTS: Fulfillment[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
 const PAYMENTS = ["PENDING", "PAID", "CANCELLED"] as const;
 
 /** La sede cambia el estado de ENVÍO, solo de SUS pedidos. */
@@ -99,6 +100,19 @@ export async function updateSedePaymentAction(formData: FormData) {
   await setOrderPaymentStatus(
     { id: orderId, storeId: sede.storeId, locationName: sede.name },
     value,
+  );
+  revalidatePath("/sede/pedidos");
+  revalidatePath("/sede");
+}
+
+/** La sede avisó por WhatsApp: su pedido avanza a "confirmado" / "en camino". */
+export async function sedeMarkNoticeSentAction(orderId: string, kind: string) {
+  const sede = await getCurrentSede();
+  if (!sede) redirect("/sede/login");
+  if (typeof orderId !== "string" || (kind !== "confirmed" && kind !== "shipped")) return;
+  await advanceFulfillment(
+    { id: orderId, storeId: sede.storeId, locationName: sede.name },
+    NOTICE_STATE[kind],
   );
   revalidatePath("/sede/pedidos");
   revalidatePath("/sede");

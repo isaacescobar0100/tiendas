@@ -4,43 +4,64 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
-import { formatPrice } from "@/lib/utils";
 import { sendStatusEmail } from "@/lib/email";
-import { setOrderPaymentStatus } from "@/lib/orders";
+import { setOrderPaymentStatus, advanceFulfillment } from "@/lib/orders";
+import { noticeText, NOTICE_STATE } from "@/lib/order-messages";
 
 const paymentSchema = z.enum(["PENDING", "PAID", "CANCELLED"]);
-const fulfillmentSchema = z.enum(["PENDING", "SHIPPED", "DELIVERED"]);
-const emailKindSchema = z.enum(["shipped", "delivered"]);
+const fulfillmentSchema = z.enum(["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"]);
+const noticeKindSchema = z.enum(["confirmed", "shipped"]);
 
 export type NotifyState = { ok?: boolean; error?: string } | undefined;
 
-/** Envía al cliente un correo de "va en camino" o "entregado". */
+function refresh(orderId: string) {
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/admin");
+}
+
+/** Envía al cliente el correo de "pedido confirmado" o "va en camino". */
 export async function notifyByEmailAction(
   _prev: NotifyState,
   formData: FormData,
 ): Promise<NotifyState> {
   const { store } = await requireAdminStore();
   const orderId = String(formData.get("orderId") ?? "");
-  const kind = emailKindSchema.safeParse(formData.get("kind"));
+  const kind = noticeKindSchema.safeParse(formData.get("kind"));
   if (!kind.success) return { error: "Tipo inválido." };
 
   const order = await prisma.order.findFirst({
     where: { id: orderId, storeId: store.id },
   });
   if (!order) return { error: "Pedido no encontrado." };
+  if (order.status === "CANCELLED") return { error: "El pedido está cancelado." };
 
   const ok = await sendStatusEmail({
     to: order.customerEmail,
     storeName: store.name,
-    customerName: order.customerName,
-    orderShortId: order.id.slice(-8),
-    kind: kind.data,
-    address: order.address,
-    total: formatPrice(order.totalCents, order.currency),
+    ...noticeText(kind.data, order, store.name),
   });
-  return ok
-    ? { ok: true }
-    : { error: "No se pudo enviar (revisa la config de correo en Vercel)." };
+  if (!ok) {
+    return { error: "No se pudo enviar (revisa la config de correo en Vercel)." };
+  }
+  await advanceFulfillment(
+    { id: order.id, storeId: store.id },
+    NOTICE_STATE[kind.data],
+  );
+  refresh(order.id);
+  return { ok: true };
+}
+
+/** Se avisó por WhatsApp: el pedido avanza a "confirmado" / "en camino". */
+export async function markNoticeSentAction(orderId: string, kind: string) {
+  const { store } = await requireAdminStore();
+  const parsed = noticeKindSchema.safeParse(kind);
+  if (!parsed.success || typeof orderId !== "string") return;
+  await advanceFulfillment(
+    { id: orderId, storeId: store.id },
+    NOTICE_STATE[parsed.data],
+  );
+  refresh(orderId);
 }
 
 /** Cambia el estado de PAGO del pedido (pendiente / pagado / cancelado). */
@@ -58,7 +79,7 @@ export async function updateOrderStatusAction(formData: FormData) {
   revalidatePath(`/admin/orders/${orderId}`);
 }
 
-/** Cambia el estado de ENVÍO del pedido (por enviar / enviado / entregado). */
+/** Cambia el estado de ATENCIÓN (por confirmar / confirmado / en camino / entregado). */
 export async function updateFulfillmentAction(formData: FormData) {
   const { store } = await requireAdminStore();
   const orderId = String(formData.get("orderId") ?? "");

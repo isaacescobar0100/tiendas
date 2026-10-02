@@ -1,6 +1,7 @@
 // Confirmación de pago de un pedido. Compartido por la página de éxito
 // (redirección de Wompi) y el webhook, de forma que solo se marque y notifique
 // una vez aunque ambos lleguen (idempotente).
+import type { Fulfillment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { tracksStock } from "@/lib/store-type";
@@ -201,4 +202,21 @@ export async function setOrderPaymentStatus(
     await takeStock(order.items);
   }
   return true;
+}
+
+/**
+ * Al avisar al cliente ("confirmado" / "va en camino") el pedido avanza a ese
+ * estado. Solo hacia adelante y nunca en pedidos cancelados: reenviar un aviso
+ * viejo no hace retroceder un pedido ya entregado.
+ */
+export async function advanceFulfillment(
+  scope: { id: string; storeId: string; locationName?: string },
+  to: "CONFIRMED" | "SHIPPED",
+) {
+  const from: Fulfillment[] =
+    to === "CONFIRMED" ? ["PENDING"] : ["PENDING", "CONFIRMED"];
+  await prisma.order.updateMany({
+    where: { ...scope, status: { not: "CANCELLED" }, fulfillment: { in: from } },
+    data: { fulfillment: to },
+  });
 }

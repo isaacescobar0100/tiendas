@@ -43,9 +43,11 @@ enum PaymentMethod {
   TRANSFER // transferencia directa: QR / llave Bre-B / Nequi / Daviplata / link
 }
 
-// Estado de ENVÍO del pedido (independiente del pago).
+// Estado de ATENCIÓN del pedido (independiente del pago):
+// por confirmar → confirmado por la tienda → en camino → entregado.
 enum Fulfillment {
   PENDING
+  CONFIRMED
   SHIPPED
   DELIVERED
 }

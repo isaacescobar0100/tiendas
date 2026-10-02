@@ -6,6 +6,9 @@ import { formatPrice, variantLabel } from "@/lib/utils";
 import { getCurrentSede } from "@/lib/sede-auth";
 import { SedeFulfillmentSelect } from "@/components/sede-fulfillment-select";
 import { SedePaymentSelect } from "@/components/sede-payment-select";
+import { WhatsappNoticeButton } from "@/components/whatsapp-notice-button";
+import { whatsappLink } from "@/lib/whatsapp";
+import { noticeText } from "@/lib/order-messages";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +20,11 @@ const dateFmt = new Intl.DateTimeFormat("es", {
 export default async function SedeOrders() {
   const sede = await getCurrentSede();
   if (!sede) redirect("/sede/login");
+  const store = await prisma.store.findUnique({
+    where: { id: sede.storeId },
+    select: { name: true },
+  });
+  const storeName = store?.name ?? "";
 
   const orders = await prisma.order.findMany({
     where: { storeId: sede.storeId, locationName: sede.name },
@@ -69,7 +77,7 @@ export default async function SedeOrders() {
                     <SedePaymentSelect orderId={o.id} current={o.status} />
                   </label>
                   <label className="flex items-center gap-1 text-xs text-gray-400">
-                    Envío
+                    Estado
                     <SedeFulfillmentSelect
                       orderId={o.id}
                       current={o.fulfillment}
@@ -77,6 +85,8 @@ export default async function SedeOrders() {
                   </label>
                 </div>
               </div>
+
+              <SedeNotice order={o} storeName={storeName} />
 
               <ul className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 text-sm">
                 {o.items.map((i) => (
@@ -115,6 +125,45 @@ export default async function SedeOrders() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Siguiente aviso al cliente por WhatsApp: confirmar el pedido (pide el
+// comprobante si el pago sigue pendiente) o avisar que va en camino.
+function SedeNotice({
+  order,
+  storeName,
+}: {
+  order: Parameters<typeof noticeText>[1] & {
+    customerPhone: string | null;
+    fulfillment: string;
+  };
+  storeName: string;
+}) {
+  if (order.status === "CANCELLED") return null;
+  const kind =
+    order.fulfillment === "PENDING"
+      ? "confirmed"
+      : order.fulfillment === "CONFIRMED"
+        ? "shipped"
+        : null;
+  if (!kind) return null;
+  const href = whatsappLink(
+    order.customerPhone,
+    noticeText(kind, order, storeName).lines.join("\n"),
+  );
+  if (!href) return null;
+  return (
+    <div className="mt-3">
+      <WhatsappNoticeButton
+        href={href}
+        orderId={order.id}
+        kind={kind}
+        panel="sede"
+        label={kind === "confirmed" ? "Confirmar por WhatsApp" : "Avisar: va en camino"}
+        className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-green-700"
+      />
     </div>
   );
 }

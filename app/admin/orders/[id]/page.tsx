@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { paymentMethodLabel } from "@/lib/payment-methods";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Truck, PackageCheck, MessageCircle } from "lucide-react";
+import { ArrowLeft, Truck, CircleCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
@@ -17,6 +17,8 @@ import {
   FulfillmentSelect,
 } from "@/components/order-status-select";
 import { NotifyEmailButton } from "@/components/notify-email-button";
+import { WhatsappNoticeButton } from "@/components/whatsapp-notice-button";
+import { noticeText, type NoticeKind } from "@/lib/order-messages";
 
 export const dynamic = "force-dynamic";
 
@@ -43,18 +45,19 @@ export default async function OrderDetailPage({
   if (!order) notFound();
 
   // Enlaces de WhatsApp al cliente (solo se usan si el admin activó ese canal).
-  const short = order.id.slice(-8);
-  const total = formatPrice(order.totalCents, order.currency);
-  const waShipped = whatsappLink(
-    order.customerPhone,
-    `Hola ${order.customerName}! Tu pedido #${short} de ${store.name} ya va en camino.\n` +
-      `Envío a: ${order.address}\nTotal: ${total}\n¡Gracias por tu compra!`,
-  );
-  const waDelivered = whatsappLink(
-    order.customerPhone,
-    `Hola ${order.customerName}! Tu pedido #${short} de ${store.name} fue entregado. ` +
-      `¡Gracias por tu compra! Esperamos que lo disfrutes.`,
-  );
+  // El texto de "confirmado" cambia según el pago: pide el comprobante si
+  // aún no llega, o dice que ya se recibió.
+  const waNotice = (kind: NoticeKind) =>
+    whatsappLink(
+      order.customerPhone,
+      noticeText(kind, order, store.name).lines.join("\n"),
+    );
+  const notices = [
+    { kind: "confirmed" as const, label: "Confirmar pedido", Icon: CircleCheck },
+    { kind: "shipped" as const, label: "Va en camino", Icon: Truck },
+  ];
+  const cancelled = order.status === "CANCELLED";
+  const hasWa = !!waNotice("confirmed");
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -215,7 +218,7 @@ export default async function OrderDetailPage({
             <PaymentSelect orderId={order.id} value={order.status} />
           </div>
           <div className="border-t border-gray-100 pt-4">
-            <h2 className="mb-2 text-sm font-semibold text-gray-900">Envío</h2>
+            <h2 className="mb-2 text-sm font-semibold text-gray-900">Estado del pedido</h2>
             <FulfillmentSelect orderId={order.id} value={order.fulfillment} />
           </div>
         </div>
@@ -226,53 +229,43 @@ export default async function OrderDetailPage({
             Avisar al cliente
           </h2>
 
-          {store.notifyEmail || store.notifyWhatsapp ? (
+          {cancelled ? (
+            <p className="text-xs text-gray-400">
+              El pedido está cancelado: no se envían avisos.
+            </p>
+          ) : store.notifyEmail || store.notifyWhatsapp ? (
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                    <Truck className="h-4 w-4" /> Va en camino
-                  </p>
-                  <div className="space-y-2">
-                    {store.notifyWhatsapp && waShipped && (
-                      <a
-                        href={waShipped}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-                      >
-                        <MessageCircle className="h-4 w-4" /> WhatsApp
-                      </a>
-                    )}
-                    {store.notifyEmail && (
-                      <NotifyEmailButton orderId={order.id} kind="shipped" />
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
-                    <PackageCheck className="h-4 w-4" /> Entregado
-                  </p>
-                  <div className="space-y-2">
-                    {store.notifyWhatsapp && waDelivered && (
-                      <a
-                        href={waDelivered}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700"
-                      >
-                        <MessageCircle className="h-4 w-4" /> WhatsApp
-                      </a>
-                    )}
-                    {store.notifyEmail && (
-                      <NotifyEmailButton orderId={order.id} kind="delivered" />
-                    )}
-                  </div>
-                </div>
+                {notices.map(({ kind, label, Icon }) => {
+                  const wa = waNotice(kind);
+                  return (
+                    <div key={kind}>
+                      <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                        <Icon className="h-4 w-4" /> {label}
+                      </p>
+                      <div className="space-y-2">
+                        {store.notifyWhatsapp && wa && (
+                          <WhatsappNoticeButton
+                            href={wa}
+                            orderId={order.id}
+                            kind={kind}
+                          />
+                        )}
+                        {store.notifyEmail && (
+                          <NotifyEmailButton orderId={order.id} kind={kind} />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              {store.notifyWhatsapp && !waShipped && (
-                <p className="mt-3 text-xs text-amber-600">
+              <p className="mt-3 text-xs text-gray-400">
+                Confirma antes o después del comprobante: el mensaje se ajusta
+                solo (pide el comprobante si el pago sigue pendiente). Al
+                avisar, el pedido pasa a ese estado.
+              </p>
+              {store.notifyWhatsapp && !hasWa && (
+                <p className="mt-2 text-xs text-amber-600">
                   El teléfono del cliente no es válido para WhatsApp; usa email.
                 </p>
               )}

@@ -9,6 +9,7 @@ import {
   FULFILLMENT_LABEL,
   FULFILLMENT_BADGE,
 } from "@/lib/order-status";
+import { OrderProgress } from "@/components/order-progress";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { AccountForms } from "./account-forms";
 import { VerifyEmailNotice } from "./verify-email-notice";
@@ -112,6 +113,8 @@ export default async function AccountPage({
                   </span>
                 </div>
               </div>
+
+              <OrderProgress fulfillment={o.fulfillment} status={o.status} />
 
               <ul className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 text-sm">
                 {o.items.map((i) => (

@@ -4,13 +4,13 @@ import { useActionState } from "react";
 import { Mail, Check } from "lucide-react";
 import { notifyByEmailAction, type NotifyState } from "@/app/admin/orders/actions";
 
-// Botón que envía al cliente el correo de estado (va en camino / entregado).
+// Botón que envía al cliente el correo de estado (confirmado / va en camino).
 export function NotifyEmailButton({
   orderId,
   kind,
 }: {
   orderId: string;
-  kind: "shipped" | "delivered";
+  kind: "confirmed" | "shipped";
 }) {
   const [state, action, pending] = useActionState<NotifyState, FormData>(
     notifyByEmailAction,

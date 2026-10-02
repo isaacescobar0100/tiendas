@@ -11,7 +11,13 @@ import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/guards";
 import { storePublicUrl } from "@/lib/site-url";
 import { formatPrice, variantLabel } from "@/lib/utils";
-import { PAYMENT_BADGE, PAYMENT_LABEL } from "@/lib/order-status";
+import {
+  PAYMENT_BADGE,
+  PAYMENT_LABEL,
+  FULFILLMENT_STATUSES,
+  FULFILLMENT_LABEL,
+  FULFILLMENT_COLOR,
+} from "@/lib/order-status";
 import { SalesBars, Donut, HBars } from "@/components/charts";
 import { impersonateStoreAction } from "../../actions";
 
@@ -75,23 +81,11 @@ export default async function SuperadminStoreDetail({
   }));
 
   const active = orders.filter((o) => o.status !== "CANCELLED");
-  const segments = [
-    {
-      label: "Por enviar",
-      value: active.filter((o) => o.fulfillment === "PENDING").length,
-      color: "#f59e0b",
-    },
-    {
-      label: "Enviado",
-      value: active.filter((o) => o.fulfillment === "SHIPPED").length,
-      color: "#3b82f6",
-    },
-    {
-      label: "Entregado",
-      value: active.filter((o) => o.fulfillment === "DELIVERED").length,
-      color: "#16a34a",
-    },
-  ];
+  const segments = FULFILLMENT_STATUSES.map((f) => ({
+    label: FULFILLMENT_LABEL[f],
+    value: active.filter((o) => o.fulfillment === f).length,
+    color: FULFILLMENT_COLOR[f],
+  }));
 
   const soldByName = new Map<string, number>();
   for (const o of orders) {

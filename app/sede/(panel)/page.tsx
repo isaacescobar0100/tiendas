@@ -1,7 +1,12 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
-import { isDelivered } from "@/lib/order-status";
+import {
+  isDelivered,
+  FULFILLMENT_STATUSES,
+  FULFILLMENT_LABEL,
+  FULFILLMENT_COLOR,
+} from "@/lib/order-status";
 import { getCurrentSede } from "@/lib/sede-auth";
 import { SalesBars, Donut, HBars } from "@/components/charts";
 
@@ -49,23 +54,11 @@ export default async function SedeDashboard() {
   }));
 
   const active = orders.filter((o) => o.status !== "CANCELLED");
-  const segments = [
-    {
-      label: "Por enviar",
-      value: active.filter((o) => o.fulfillment === "PENDING").length,
-      color: "#f59e0b",
-    },
-    {
-      label: "Enviado",
-      value: active.filter((o) => o.fulfillment === "SHIPPED").length,
-      color: "#3b82f6",
-    },
-    {
-      label: "Entregado",
-      value: active.filter((o) => o.fulfillment === "DELIVERED").length,
-      color: "#16a34a",
-    },
-  ];
+  const segments = FULFILLMENT_STATUSES.map((f) => ({
+    label: FULFILLMENT_LABEL[f],
+    value: active.filter((o) => o.fulfillment === f).length,
+    color: FULFILLMENT_COLOR[f],
+  }));
 
   const soldByName = new Map<string, number>();
   for (const o of orders) {

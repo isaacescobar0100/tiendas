@@ -191,39 +191,26 @@ export async function sendOrderEmails(
 }
 
 /**
- * Envía al cliente un correo de cambio de estado (en camino / entregado).
+ * Envía al cliente un aviso de estado (pedido confirmado / va en camino). El
+ * texto lo arma lib/order-messages para que coincida con el de WhatsApp.
  * Devuelve true si se envió; false si no está configurado o falló.
  */
 export async function sendStatusEmail(opts: {
   to: string;
   storeName: string;
-  customerName: string;
-  orderShortId: string;
-  kind: "shipped" | "delivered";
-  address?: string | null;
-  total?: string | null;
+  title: string;
+  lines: string[];
 }): Promise<boolean> {
   if (!BREVO_API_KEY || !SENDER_EMAIL) return false;
 
-  const shipped = opts.kind === "shipped";
-  const subject = shipped
-    ? `🚚 Tu pedido va en camino (#${opts.orderShortId})`
-    : `✅ Tu pedido fue entregado (#${opts.orderShortId})`;
-  const body = shipped
-    ? `<h2 style="margin:0 0 8px">¡Tu pedido va en camino! 🚚</h2>
-       <p>Hola ${esc(opts.customerName)}, tu pedido <strong>#${opts.orderShortId}</strong> de ${esc(opts.storeName)} ya está en camino.</p>
-       ${opts.address ? `<p style="color:#555">Envío a: ${esc(opts.address)}</p>` : ""}
-       ${opts.total ? `<p style="color:#555">Total: ${esc(opts.total)}</p>` : ""}
-       <p style="margin-top:16px">¡Gracias por tu compra!</p>`
-    : `<h2 style="margin:0 0 8px">¡Pedido entregado! ✅</h2>
-       <p>Hola ${esc(opts.customerName)}, tu pedido <strong>#${opts.orderShortId}</strong> de ${esc(opts.storeName)} fue entregado.</p>
-       <p style="margin-top:16px">¡Gracias por tu compra! Esperamos que lo disfrutes 😊</p>`;
+  const body = `<h2 style="margin:0 0 8px">${esc(opts.title)}</h2>
+     ${opts.lines.map((l) => `<p>${esc(l)}</p>`).join("")}`;
 
   try {
     await brevoSend({
       to: opts.to,
       senderName: opts.storeName,
-      subject,
+      subject: `${opts.title} - ${opts.storeName}`,
       html: wrap(body),
     });
     return true;

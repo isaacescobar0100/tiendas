@@ -9,7 +9,13 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
-import { PAYMENT_BADGE, PAYMENT_LABEL } from "@/lib/order-status";
+import {
+  PAYMENT_BADGE,
+  PAYMENT_LABEL,
+  FULFILLMENT_STATUSES,
+  FULFILLMENT_LABEL,
+  FULFILLMENT_COLOR,
+} from "@/lib/order-status";
 
 export const dynamic = "force-dynamic";
 
@@ -67,16 +73,11 @@ export default async function DashboardPage() {
 
   // Estado de envío (pipeline operativo), sin cancelados.
   const active = orders.filter((o) => o.status !== "CANCELLED");
-  const fulfil = {
-    pending: active.filter((o) => o.fulfillment === "PENDING").length,
-    shipped: active.filter((o) => o.fulfillment === "SHIPPED").length,
-    delivered: active.filter((o) => o.fulfillment === "DELIVERED").length,
-  };
-  const statusSegments = [
-    { label: "Por enviar", value: fulfil.pending, color: "#f59e0b" },
-    { label: "Enviado", value: fulfil.shipped, color: "#3b82f6" },
-    { label: "Entregado", value: fulfil.delivered, color: "#16a34a" },
-  ];
+  const statusSegments = FULFILLMENT_STATUSES.map((f) => ({
+    label: FULFILLMENT_LABEL[f],
+    value: active.filter((o) => o.fulfillment === f).length,
+    color: FULFILLMENT_COLOR[f],
+  }));
 
   // Productos más vendidos (por unidades).
   const soldByName = new Map<string, number>();

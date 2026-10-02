@@ -8,6 +8,7 @@ import {
   FULFILLMENT_LABEL,
   FULFILLMENT_BADGE,
 } from "@/lib/order-status";
+import { OrderProgress } from "@/components/order-progress";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -137,6 +138,8 @@ export default async function TrackOrderPage({
               </span>
             </div>
           </div>
+
+          <OrderProgress fulfillment={order.fulfillment} status={order.status} />
 
           <ul className="mt-4 space-y-2 border-t border-gray-100 pt-4">
             {order.items.map((i) => (
