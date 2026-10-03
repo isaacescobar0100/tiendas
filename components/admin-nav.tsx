@@ -40,7 +40,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
   return (
     <>
       {/* Escritorio */}
-      <nav className="hidden items-center gap-4 whitespace-nowrap text-sm xl:flex">
+      <nav className="hidden items-center gap-3.5 whitespace-nowrap text-[13px] xl:flex">
         {LINKS.map((l) => (
           <Link
             key={l.href}

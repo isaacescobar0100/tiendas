@@ -78,7 +78,7 @@ export default async function AdminLayout({
       )}
       <header className="relative border-b border-gray-200 bg-white print:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex min-w-0 shrink-0 items-center gap-2.5">
             <Link
               prefetch={false}
               href="/admin"
@@ -92,9 +92,9 @@ export default async function AdminLayout({
                   {store.name.slice(0, 1)}
                 </span>
               )}
-              <span className="truncate">{store.name}</span>
+              <span className="max-w-[11rem] truncate">{store.name}</span>
             </Link>
-            <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand-text">
+            <span className="hidden shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand-text sm:inline 2xl:inline xl:hidden">
               Admin
             </span>
           </div>
