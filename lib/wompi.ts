@@ -50,6 +50,9 @@ function isSandbox(keys: WompiKeys): boolean {
 }
 
 /** Base de la API REST de Wompi según el entorno de las llaves. */
+// Si Wompi tarda, no se congela la página (admin, éxito): se reintenta luego.
+const WOMPI_TIMEOUT_MS = 5000;
+
 function apiBase(keys: WompiKeys): string {
   return isSandbox(keys)
     ? "https://sandbox.wompi.co/v1"
@@ -128,6 +131,7 @@ export async function getTransaction(
     const res = await fetch(`${apiBase(keys)}/transactions/${encodeURIComponent(id)}`, {
       headers: { Authorization: `Bearer ${keys.privateKey}` },
       cache: "no-store",
+      signal: AbortSignal.timeout(WOMPI_TIMEOUT_MS),
     });
     if (!res.ok) return null;
     const body = (await res.json()) as { data?: WompiTransaction };
@@ -150,7 +154,11 @@ export async function findTransactionByReference(
   try {
     const res = await fetch(
       `${apiBase(keys)}/transactions?reference=${encodeURIComponent(reference)}`,
-      { headers: { Authorization: `Bearer ${keys.privateKey}` }, cache: "no-store" },
+      {
+        headers: { Authorization: `Bearer ${keys.privateKey}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(WOMPI_TIMEOUT_MS),
+      },
     );
     if (!res.ok) return null;
     const body = (await res.json()) as { data?: WompiTransaction[] };
