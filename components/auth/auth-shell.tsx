@@ -15,7 +15,7 @@ import {
 import { storeForHost } from "@/lib/host-store";
 import { DEFAULT_THEME, storeTheme, themeStyle } from "@/lib/theme";
 import { themeFontVars } from "@/lib/fonts";
-import { parseStorePhotos } from "@/lib/store-photos";
+import { parseStorePhoto } from "@/lib/store-photos";
 import { StorePhotoImg } from "@/components/store-photo";
 
 export type AuthVariant = "admin" | "sede" | "recover" | "reset";
@@ -86,20 +86,36 @@ export async function AuthShell({
   const theme = store ? storeTheme(store) : DEFAULT_THEME;
   const c = copy(variant, store?.name ?? null);
   const name = store?.name ?? "MiTienda";
-  // Fotos del negocio (Apariencia): mosaico bajo los beneficios, nunca detrás
-  // del texto (así el contraste del texto no depende de la foto).
-  const photos = store ? parseStorePhotos(store.photosJson).slice(0, 3) : [];
+  // Foto de fondo del acceso (Apariencia > Fotos de fondo). Con foto, toda la
+  // pantalla la lleva de fondo con una capa oscura; el texto del panel va en
+  // blanco y el formulario en una tarjeta translúcida, así siempre se lee.
+  const bg = store ? parseStorePhoto(store.loginBgJson) : null;
+  const panelText = bg ? "text-white" : "text-brand-ink";
+  const chip = bg ? "bg-white/15 ring-1 ring-white/25" : "bg-brand-ink/15 ring-1 ring-brand-ink/20";
 
   return (
     <div
-      className={`store-theme ${themeFontVars} grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]`}
+      className={`store-theme ${themeFontVars} relative grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]`}
       style={themeStyle(theme)}
     >
+      {bg && (
+        <div className="pointer-events-none fixed inset-0" aria-hidden>
+          <StorePhotoImg photo={bg} alt="" eager className="h-full w-full" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/60 to-black/45" />
+        </div>
+      )}
+
       {/* ── Panel informativo (escritorio) ── */}
-      <aside className="relative hidden overflow-hidden bg-brand text-brand-ink lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
-        {/* Manchas de luz decorativas (sin texto encima: no afectan el contraste) */}
-        <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-ink/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 -right-24 h-[28rem] w-[28rem] rounded-full bg-brand-ink/10 blur-3xl" />
+      <aside
+        className={`relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16 ${bg ? "" : "bg-brand"} ${panelText}`}
+      >
+        {!bg && (
+          <>
+            {/* Manchas de luz decorativas (sin texto encima: no afectan el contraste) */}
+            <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-brand-ink/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-40 -right-24 h-[28rem] w-[28rem] rounded-full bg-brand-ink/10 blur-3xl" />
+          </>
+        )}
 
         <div className="relative flex items-center gap-3">
           <Logo logoUrl={store?.logoUrl ?? null} isStore={!!store} />
@@ -115,7 +131,7 @@ export async function AuthShell({
           <ul className="mt-10 space-y-5">
             {c.features.map((f) => (
               <li key={f.title} className="flex gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-ink/15 ring-1 ring-brand-ink/20">
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl backdrop-blur ${chip}`}>
                   <f.icon className="h-5 w-5" />
                 </span>
                 <span>
@@ -125,21 +141,6 @@ export async function AuthShell({
               </li>
             ))}
           </ul>
-          {photos.length > 0 && (
-            <div
-              className={`mt-10 grid h-44 gap-3 ${photos.length === 1 ? "grid-cols-1" : photos.length === 2 ? "grid-cols-2" : "grid-cols-3 grid-rows-2"}`}
-            >
-              {photos.map((ph, i) => (
-                <StorePhotoImg
-                  key={ph.url}
-                  photo={ph}
-                  alt={`Foto de ${name}`}
-                  eager
-                  className={`rounded-2xl shadow-xl ring-2 ring-brand-ink/15 ${photos.length === 3 && i === 0 ? "col-span-2 row-span-2" : photos.length === 3 ? "row-span-1" : ""}`}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
         <p className="relative text-xs font-medium">
@@ -148,21 +149,27 @@ export async function AuthShell({
       </aside>
 
       {/* ── Formulario ── */}
-      <main className="flex flex-col bg-bg px-6 py-10 sm:px-10">
+      <main className={`relative flex flex-col px-6 py-10 sm:px-10 ${bg ? "" : "bg-bg"}`}>
         {/* Celular: marca arriba (el panel informativo no cabe) */}
-        <div className="mb-10 flex items-center gap-3 lg:hidden">
-          <span className="text-brand-ink">
-            <span className="flex rounded-2xl bg-brand p-0.5">
-              <Logo logoUrl={store?.logoUrl ?? null} isStore={!!store} />
-            </span>
+        <div className={`mb-10 flex items-center gap-3 lg:hidden ${bg ? "text-white" : ""}`}>
+          <span className="flex rounded-2xl bg-brand p-0.5 text-brand-ink">
+            <Logo logoUrl={store?.logoUrl ?? null} isStore={!!store} />
           </span>
           <span>
-            <span className="block font-bold text-ink">{name}</span>
-            <span className="block text-xs text-ink-3">{c.eyebrow}</span>
+            <span className={`block font-bold ${bg ? "" : "text-ink"}`}>{name}</span>
+            <span className={`block text-xs ${bg ? "" : "text-ink-3"}`}>{c.eyebrow}</span>
           </span>
         </div>
-        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center">{children}</div>
-        <p className="mt-10 text-center text-xs text-ink-3 lg:hidden">
+        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center">
+          {bg ? (
+            <div className="rounded-3xl bg-bg/90 p-7 shadow-2xl ring-1 ring-line backdrop-blur-xl sm:p-9">
+              {children}
+            </div>
+          ) : (
+            children
+          )}
+        </div>
+        <p className={`mt-10 text-center text-xs lg:hidden ${bg ? "text-white" : "text-ink-3"}`}>
           {store ? `${store.name} · con tecnología de MiTienda` : "MiTienda"}
         </p>
       </main>

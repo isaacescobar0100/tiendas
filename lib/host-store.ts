@@ -18,7 +18,7 @@ const SELECT = {
   themeInk: true,
   themeMode: true,
   themeFont: true,
-  photosJson: true,
+  loginBgJson: true,
 } as const;
 
 export async function storeForHost() {

@@ -32,14 +32,14 @@ export function MenuView({
   location,
   open,
   sections,
-  photos = [],
+  cover = null,
 }: {
   storeName: string;
   logoUrl: string | null;
   location: { name: string; address: string | null } | null;
   open: { isOpen: boolean; message: string | null } | null;
   sections: MenuSection[];
-  photos?: StorePhoto[];
+  cover?: StorePhoto | null;
 }) {
   const [active, setActive] = useState(ALL);
   const [selected, setSelected] = useState<MenuItem | null>(null);
@@ -85,13 +85,27 @@ export function MenuView({
     };
   }, [selected, close]);
 
+  const chip = cover ? "bg-white/15 ring-1 ring-white/20" : "bg-brand-ink/15";
+
   return (
     <div className="min-h-screen bg-bg pb-28">
-      {/* Portada con el color de la marca */}
-      <header className="relative overflow-hidden bg-brand px-5 pb-16 pt-12 text-center text-brand-ink">
-        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-ink/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -right-20 h-80 w-80 rounded-full bg-brand-ink/10 blur-3xl" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/25" />
+      {/* Portada: foto del negocio de fondo (Apariencia) o el color de la marca.
+          Con foto, una capa oscura y texto blanco: se lee sea cual sea la foto. */}
+      <header
+        className={`relative overflow-hidden bg-brand px-5 text-center ${cover ? "pb-24 pt-16 text-white sm:pb-32 sm:pt-24" : "pb-16 pt-12 text-brand-ink"}`}
+      >
+        {cover ? (
+          <>
+            <StorePhotoImg photo={cover} alt="" eager className="absolute inset-0 h-full w-full" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/60 to-black/80" />
+          </>
+        ) : (
+          <>
+            <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-ink/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-32 -right-20 h-80 w-80 rounded-full bg-brand-ink/10 blur-3xl" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/25" />
+          </>
+        )}
 
         <div className="relative">
           {logoUrl ? (
@@ -99,14 +113,14 @@ export function MenuView({
             <img
               src={logoUrl}
               alt={storeName}
-              className="mx-auto h-24 w-24 rounded-[28px] bg-surface object-cover shadow-2xl ring-4 ring-brand-ink/20"
+              className={`mx-auto h-24 w-24 rounded-[28px] bg-surface object-cover shadow-2xl ring-4 ${cover ? "ring-white/25" : "ring-brand-ink/20"}`}
             />
           ) : (
             <span className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-brand-ink/15 shadow-2xl ring-4 ring-brand-ink/20">
               <UtensilsCrossed className="h-10 w-10" />
             </span>
           )}
-          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-ink">
+          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.3em]">
             Menú digital
           </p>
           <h1 className="mt-1 text-[32px] font-extrabold leading-tight tracking-tight">
@@ -116,13 +130,13 @@ export function MenuView({
           {(location || open) && (
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-medium">
               {location && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-ink/15 px-3 py-1.5 backdrop-blur">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur ${chip}`}>
                   <MapPin className="h-3.5 w-3.5" />
                   {location.name}
                 </span>
               )}
               {open && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-ink/15 px-3 py-1.5 backdrop-blur">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 backdrop-blur ${chip}`}>
                   <span
                     className={`h-2 w-2 rounded-full ${open.isOpen ? "bg-ok shadow-[0_0_0_3px_rgba(52,211,153,0.3)]" : "bg-warn"}`}
                   />
@@ -133,31 +147,13 @@ export function MenuView({
             </div>
           )}
           {location?.address && (
-            <p className="mt-2 text-xs text-brand-ink">{location.address}</p>
+            <p className="mt-2 text-xs">{location.address}</p>
           )}
         </div>
       </header>
 
       {/* Hoja que se monta sobre la portada */}
       <div className="relative -mt-8 rounded-t-[32px] bg-bg pt-2">
-        {/* Conócenos: fotos del local, el equipo o los dueños (Apariencia) */}
-        {photos.length > 0 && (
-          <section aria-label="Conócenos" className="mx-auto max-w-6xl px-4 pt-4">
-            <h2 className="mb-3 px-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-3">
-              Conócenos
-            </h2>
-            <div className="flex snap-x gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {photos.map((ph) => (
-                <StorePhotoImg
-                  key={ph.url}
-                  photo={ph}
-                  alt={`Foto de ${storeName}`}
-                  className="h-40 w-60 shrink-0 snap-start rounded-2xl ring-1 ring-line sm:h-52 sm:w-80"
-                />
-              ))}
-            </div>
-          </section>
-        )}
         {sections.length === 0 ? (
           <p className="px-6 py-20 text-center text-ink-3">
             Estamos actualizando la carta. Pregunta a tu mesero.

@@ -3,7 +3,7 @@ import { storeTheme } from "@/lib/theme";
 import { themeFontVars } from "@/lib/fonts";
 import { ThemeEditor } from "./theme-editor";
 import { PhotosForm } from "./photos-form";
-import { parseStorePhotos } from "@/lib/store-photos";
+import { parseStorePhoto, parseStorePhotos } from "@/lib/store-photos";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +26,11 @@ export default async function AppearancePage() {
         storeName={store.name}
         logoUrl={store.logoUrl}
       />
-      <PhotosForm initial={parseStorePhotos(store.photosJson)} />
+      <PhotosForm
+        menuBg={parseStorePhoto(store.menuBgJson)}
+        loginBg={parseStorePhoto(store.loginBgJson)}
+        gallery={parseStorePhotos(store.photosJson)}
+      />
     </div>
   );
 }
