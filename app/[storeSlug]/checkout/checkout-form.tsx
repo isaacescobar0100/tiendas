@@ -120,7 +120,7 @@ export default function CheckoutForm({
       </Link>
       <h1 className="mb-6 text-2xl font-bold text-ink">Finalizar compra</h1>
 
-      <div className="grid gap-8 md:grid-cols-[1fr_360px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-8 md:grid-cols-[minmax(0,1fr)_360px]">
         {/* Formulario de datos */}
         <form onSubmit={keepFormSubmit(formAction)} className="space-y-5">
           <input type="hidden" name="storeSlug" value={storeSlug} />

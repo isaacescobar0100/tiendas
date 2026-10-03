@@ -83,7 +83,7 @@ export function ThemeEditor({
     });
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       {/* ── Controles ── */}
       <div className="space-y-6">
         <Section title="Paletas" desc="Un punto de partida; después puedes ajustar cada color.">

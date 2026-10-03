@@ -97,7 +97,7 @@ export default async function OrderDetailPage({
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[1fr_260px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_260px]">
         {/* Artículos */}
         <div className="space-y-6">
           <div className="overflow-hidden rounded-2xl border border-line bg-surface">

@@ -314,7 +314,7 @@ export default async function ProductPage({
           )}
         </div>
 
-        <div className="grid gap-8 md:grid-cols-[1fr_360px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-8 md:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-5">
             {reviews.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-line-2 p-8 text-center text-sm text-ink-3">
