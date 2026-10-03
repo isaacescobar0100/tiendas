@@ -9,8 +9,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         <h1 className="text-2xl font-bold text-ink">Ajustes</h1>
         <p className="text-sm text-ink-3">Configura tu tienda y tu cuenta.</p>
       </div>
-      <div className="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
+        <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start">
           <SettingsNav />
         </aside>
         <div className="min-w-0 space-y-6">{children}</div>
