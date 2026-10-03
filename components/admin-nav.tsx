@@ -14,6 +14,7 @@ const LINKS = [
   { href: "/admin/categories", label: "Categorías" },
   { href: "/admin/promotions", label: "Promociones" },
   { href: "/admin/sedes", label: "Sedes" },
+  { href: "/admin/menu-qr", label: "Menú QR" },
   { href: "/admin/exportar", label: "Exportar" },
   { href: "/admin/settings", label: "Ajustes" },
 ];
