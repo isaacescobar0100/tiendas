@@ -130,7 +130,7 @@ export function ThemeEditor({
               </button>
             ))}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-[repeat(2,minmax(0,1fr))]">
             {COLOR_FIELDS.map((f) => (
               <ColorField
                 key={f.key}
@@ -338,7 +338,7 @@ function ColorField({
     setText(value);
   }
   return (
-    <label className="flex items-center gap-3 rounded-xl border border-line p-2.5">
+    <label className="flex min-w-0 items-center gap-3 rounded-xl border border-line p-2.5">
       <input
         type="color"
         value={isHex(value) ? value : "#000000"}
