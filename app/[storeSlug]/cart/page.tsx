@@ -37,17 +37,19 @@ export default function CartPage() {
 
       <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
         {items.map((item) => (
-          <li key={item.key} className="flex items-center gap-4 p-4">
+          <li key={item.key} className="flex gap-3 p-4 sm:items-center sm:gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.imageUrl || "https://placehold.co/64x64?text=%20"}
               alt=""
-              className="h-16 w-16 rounded-lg object-cover"
+              className="h-16 w-16 shrink-0 rounded-lg object-cover"
             />
+            {/* En el celular: datos arriba y cantidad/precio debajo (no se pisan). */}
+            <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="min-w-0 flex-1">
               <Link
                 href={sh(`/${item.slug}`)}
-                className="truncate font-medium text-ink hover:underline"
+                className="block truncate font-medium text-ink hover:underline"
               >
                 {item.name}
               </Link>
@@ -66,6 +68,7 @@ export default function CartPage() {
               </p>
             </div>
 
+            <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-4">
             <div className="flex items-center rounded-lg border border-line-2">
               <button
                 onClick={() => setQuantity(item.key, item.quantity - 1)}
@@ -95,6 +98,8 @@ export default function CartPage() {
             >
               <X className="h-4 w-4" />
             </button>
+            </div>
+            </div>
           </li>
         ))}
       </ul>
