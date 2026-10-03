@@ -282,9 +282,6 @@ function HoursEditor({ initialJson }: { initialJson: string }) {
   return (
     <div>
       <input type="hidden" name="hoursJson" value={hoursJson} />
-      <h2 className="mb-1 text-sm font-semibold text-ink">
-        Horario de atención
-      </h2>
       <p className="mb-3 text-xs text-ink-3">
         Si lo activas, la tienda no aceptará pedidos fuera de este horario
         (hora de Colombia) y mostrará cuándo vuelve a abrir.
