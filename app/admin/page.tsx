@@ -7,6 +7,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { reconcileOnlineOrders } from "@/lib/orders";
+import { TZ, dayKey, lastDays } from "@/lib/dates";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -19,17 +21,18 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const dateFmt = new Intl.DateTimeFormat("es", {
+const dateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ,
   day: "2-digit",
   month: "short",
 });
-const dayMonthFmt = new Intl.DateTimeFormat("es", {
+const dayMonthFmt = new Intl.DateTimeFormat("es", { timeZone: TZ,
   day: "2-digit",
   month: "2-digit",
 });
 
 export default async function DashboardPage() {
   const { store } = await requireAdminStore();
+  await reconcileOnlineOrders({ storeId: store.id }); // pagos de Wompi sin webhook
   const brand = store.themeColor || "#111827";
 
   const [orders, products] = await Promise.all([
@@ -51,19 +54,12 @@ export default async function DashboardPage() {
     .sort((a, b) => a.stock - b.stock);
 
   // Ventas de los últimos 14 días (suma por día, sin cancelados).
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (13 - i));
-    return { date: d, cents: 0, count: 0 };
-  });
-  const dayIndex = new Map(days.map((d, i) => [d.date.getTime(), i]));
+  // (Días en hora de Colombia.)
+  const days = lastDays(14).map((d) => ({ ...d, cents: 0, count: 0 }));
+  const dayIndex = new Map(days.map((d, i) => [d.key, i]));
   for (const o of orders) {
     if (o.status === "CANCELLED") continue;
-    const od = new Date(o.createdAt);
-    od.setHours(0, 0, 0, 0);
-    const idx = dayIndex.get(od.getTime());
+    const idx = dayIndex.get(dayKey(o.createdAt));
     if (idx !== undefined) {
       days[idx].cents += o.totalCents;
       days[idx].count += 1;

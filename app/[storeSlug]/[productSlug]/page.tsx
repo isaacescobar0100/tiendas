@@ -16,6 +16,7 @@ import { ProductCard } from "@/components/product-card";
 import { StarRating } from "@/components/star-rating";
 import { ReviewForm } from "@/components/review-form";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
+import { TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -154,7 +155,7 @@ export default async function ProductPage({
   const myReview = customer
     ? reviews.find((r) => r.customerId === customer.id) ?? null
     : null;
-  const reviewDateFmt = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
+  const reviewDateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ, dateStyle: "medium" });
 
   return (
     <div>

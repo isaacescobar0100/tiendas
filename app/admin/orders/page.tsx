@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { paymentMethodLabel } from "@/lib/payment-methods";
 import { prisma } from "@/lib/prisma";
+import { reconcileOnlineOrders } from "@/lib/orders";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
 import { isDelivered } from "@/lib/order-status";
@@ -8,10 +9,11 @@ import {
   PaymentSelect,
   FulfillmentSelect,
 } from "@/components/order-status-select";
+import { TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
-const dateFmt = new Intl.DateTimeFormat("es", {
+const dateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ,
   day: "2-digit",
   month: "short",
   year: "numeric",
@@ -21,6 +23,8 @@ const dateFmt = new Intl.DateTimeFormat("es", {
 
 export default async function OrdersPage() {
   const { store } = await requireAdminStore();
+  // Pagos en línea aprobados en Wompi que no nos llegaron por webhook.
+  await reconcileOnlineOrders({ storeId: store.id });
   const orders = await prisma.order.findMany({
     where: { storeId: store.id },
     orderBy: { createdAt: "desc" },

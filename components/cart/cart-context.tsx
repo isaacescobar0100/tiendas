@@ -86,6 +86,10 @@ export function CartProvider({
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
+      // Se lee localStorage DESPUÉS de montar (en el servidor no existe): leerlo al
+      // inicializar el estado haría que el HTML del servidor y el del navegador no
+      // coincidan. Un render extra al cargar es lo esperado aquí.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setItems(JSON.parse(raw));
     } catch {
       // ignora datos corruptos

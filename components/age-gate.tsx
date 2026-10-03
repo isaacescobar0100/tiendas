@@ -19,6 +19,10 @@ export function AgeGate({
 
   useEffect(() => {
     try {
+      // Se lee localStorage DESPUÉS de montar (en el servidor no existe): leerlo al
+      // inicializar el estado haría que el HTML del servidor y el del navegador no
+      // coincidan. Un render extra al cargar es lo esperado aquí.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus(localStorage.getItem(key) === "1" ? "ok" : "ask");
     } catch {
       setStatus("ask");

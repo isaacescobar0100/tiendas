@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ExternalLink, X, Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { TZ, dayKey, lastDays, startOfDay } from "@/lib/dates";
 import { formatPrice } from "@/lib/utils";
 import { SalesBars, HBars } from "@/components/charts";
 import {
@@ -18,8 +19,8 @@ import { requireSuperadmin } from "@/lib/guards";
 import { readTempPasswordFlash } from "@/lib/flash";
 import { storePublicUrl } from "@/lib/site-url";
 
-const dateFmt = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
-const dayFmt = new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit" });
+const dateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ, dateStyle: "medium" });
+const dayFmt = new Intl.DateTimeFormat("es", { timeZone: TZ, day: "2-digit", month: "2-digit" });
 
 export const dynamic = "force-dynamic";
 
@@ -53,23 +54,15 @@ export default async function SuperadminHome() {
   ]);
 
   // Ventas de los últimos 14 días (toda la plataforma, sin cancelados).
-  const startDay = new Date();
-  startDay.setHours(0, 0, 0, 0);
-  startDay.setDate(startDay.getDate() - 13);
+  const days = lastDays(14).map((d) => ({ ...d, cents: 0 }));
+  const startDay = startOfDay(days[0].key);
   const recentOrders = await prisma.order.findMany({
     where: { status: { not: "CANCELLED" }, createdAt: { gte: startDay } },
     select: { createdAt: true, totalCents: true },
   });
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(startDay);
-    d.setDate(d.getDate() + i);
-    return { date: d, cents: 0 };
-  });
-  const dayIdx = new Map(days.map((d, i) => [d.date.getTime(), i]));
+  const dayIdx = new Map(days.map((d, i) => [d.key, i]));
   for (const o of recentOrders) {
-    const od = new Date(o.createdAt);
-    od.setHours(0, 0, 0, 0);
-    const j = dayIdx.get(od.getTime());
+    const j = dayIdx.get(dayKey(o.createdAt));
     if (j !== undefined) days[j].cents += o.totalCents;
   }
   const dayPoints = days.map((d) => ({
@@ -85,11 +78,11 @@ export default async function SuperadminHome() {
     revByStoreRaw.map((r) => [r.storeId, r._sum.totalCents ?? 0]),
   );
 
-  // Rentas vencidas (fecha de pago ya pasada).
-  const now = Date.now();
-  const overdueCount = stores.filter(
-    (s) => s.paidUntil && s.paidUntil.getTime() < now,
-  ).length;
+  // Planes vencidos (en gracia o ya suspendidos).
+  const overdueCount = stores.filter((s) => {
+    const { status } = billingOf(s);
+    return status === "grace" || status === "suspended";
+  }).length;
 
   // Ranking: facturado por tienda (entregados).
   const rankItems = stores
@@ -137,6 +130,8 @@ export default async function SuperadminHome() {
           </p>
         </div>
         <div className="flex gap-2">
+          {/* Descarga de un CSV (ruta API): con <Link> Next haría prefetch. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/api/superadmin/export?store=all"
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"

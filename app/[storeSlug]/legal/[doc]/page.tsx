@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
+import { TZ } from "@/lib/dates";
 
 // Documentos legales genéricos por tienda. El dueño puede pedir ajustarlos.
 const DOCS = {
@@ -47,7 +48,7 @@ export default async function LegalPage({
   const store = await getStore(storeSlug);
   if (!store) notFound();
 
-  const today = new Intl.DateTimeFormat("es", { dateStyle: "long" });
+  const today = new Intl.DateTimeFormat("es", { timeZone: TZ, dateStyle: "long" });
   const contacto = store.whatsapp
     ? `WhatsApp ${store.whatsapp}`
     : "los canales de contacto publicados en la tienda";

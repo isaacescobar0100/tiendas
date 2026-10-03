@@ -10,10 +10,11 @@ import {
 } from "@/lib/order-status";
 import { OrderProgress } from "@/components/order-progress";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
-const dateFmt = new Intl.DateTimeFormat("es", {
+const dateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ,
   dateStyle: "long",
   timeStyle: "short",
 });

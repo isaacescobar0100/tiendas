@@ -15,10 +15,11 @@ import { AccountForms } from "./account-forms";
 import { VerifyEmailNotice } from "./verify-email-notice";
 import { logoutAction } from "./actions";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
+import { TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
-const dateFmt = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
+const dateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ, dateStyle: "medium" });
 
 export default async function AccountPage({
   params,

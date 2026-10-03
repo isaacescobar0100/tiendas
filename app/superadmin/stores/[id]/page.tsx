@@ -8,9 +8,10 @@ import {
   Download,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { TZ, dayKey, lastDays } from "@/lib/dates";
 import { requireSuperadmin } from "@/lib/guards";
 import { storePublicUrl } from "@/lib/site-url";
-import { formatPrice, variantLabel } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import {
   PAYMENT_BADGE,
   PAYMENT_LABEL,
@@ -23,8 +24,8 @@ import { impersonateStoreAction } from "../../actions";
 
 export const dynamic = "force-dynamic";
 
-const dateFmt = new Intl.DateTimeFormat("es", { day: "2-digit", month: "short" });
-const dayFmt = new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit" });
+const dateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ, day: "2-digit", month: "short" });
+const dayFmt = new Intl.DateTimeFormat("es", { timeZone: TZ, day: "2-digit", month: "2-digit" });
 
 export default async function SuperadminStoreDetail({
   params,
@@ -60,19 +61,11 @@ export default async function SuperadminStoreDetail({
   const lowStock = products.filter((p) => p.stock < 5).length;
 
   // Ventas 14 días
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (13 - i));
-    return { date: d, cents: 0 };
-  });
-  const idx = new Map(days.map((d, i) => [d.date.getTime(), i]));
+  const days = lastDays(14).map((d) => ({ ...d, cents: 0 }));
+  const idx = new Map(days.map((d, i) => [d.key, i]));
   for (const o of orders) {
     if (o.status === "CANCELLED") continue;
-    const od = new Date(o.createdAt);
-    od.setHours(0, 0, 0, 0);
-    const j = idx.get(od.getTime());
+    const j = idx.get(dayKey(o.createdAt));
     if (j !== undefined) days[j].cents += o.totalCents;
   }
   const dayPoints = days.map((d) => ({

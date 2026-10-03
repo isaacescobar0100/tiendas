@@ -28,6 +28,8 @@ export function SedeNav() {
           {l.label}
         </Link>
       ))}
+      {/* Descarga de un CSV (ruta API): con <Link> Next haría prefetch. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a
         href="/api/sede/export"
         className="text-gray-600 hover:text-gray-900"

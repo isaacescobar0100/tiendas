@@ -137,6 +137,30 @@ export async function getTransaction(
   }
 }
 
+/**
+ * Busca en Wompi la transacción de un pedido por su referencia (el id del
+ * pedido). Respaldo para cuando no llegó el webhook ni el cliente volvió a la
+ * tienda tras pagar. Devuelve la APROBADA si la hay; si no, la más reciente.
+ */
+export async function findTransactionByReference(
+  reference: string,
+  keys: WompiKeys,
+): Promise<WompiTransaction | null> {
+  if (!keys.privateKey || !/^[a-z0-9]{10,40}$/.test(reference)) return null;
+  try {
+    const res = await fetch(
+      `${apiBase(keys)}/transactions?reference=${encodeURIComponent(reference)}`,
+      { headers: { Authorization: `Bearer ${keys.privateKey}` }, cache: "no-store" },
+    );
+    if (!res.ok) return null;
+    const body = (await res.json()) as { data?: WompiTransaction[] };
+    const txs = (body.data ?? []).filter((t) => t.reference === reference);
+    return txs.find((t) => t.status === "APPROVED") ?? txs[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── Verificación del webhook de eventos ─────────────────────────────────────
 
 type WompiEvent = {

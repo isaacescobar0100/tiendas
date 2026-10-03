@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { paymentMethodLabel } from "@/lib/payment-methods";
 import { PackageSearch } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { reconcileOnlineOrders } from "@/lib/orders";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { getCurrentSede } from "@/lib/sede-auth";
 import { SedeFulfillmentSelect } from "@/components/sede-fulfillment-select";
@@ -9,10 +10,11 @@ import { SedePaymentSelect } from "@/components/sede-payment-select";
 import { WhatsappNoticeButton } from "@/components/whatsapp-notice-button";
 import { whatsappLink } from "@/lib/whatsapp";
 import { noticeText } from "@/lib/order-messages";
+import { TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
-const dateFmt = new Intl.DateTimeFormat("es", {
+const dateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ,
   dateStyle: "short",
   timeStyle: "short",
 });
@@ -20,6 +22,8 @@ const dateFmt = new Intl.DateTimeFormat("es", {
 export default async function SedeOrders() {
   const sede = await getCurrentSede();
   if (!sede) redirect("/sede/login");
+  // Pagos en línea aprobados en Wompi que no nos llegaron por webhook.
+  await reconcileOnlineOrders({ storeId: sede.storeId, locationName: sede.name });
   const store = await prisma.store.findUnique({
     where: { id: sede.storeId },
     select: { name: true },

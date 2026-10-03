@@ -5,7 +5,11 @@ import type { Fulfillment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendOrderEmails } from "@/lib/email";
 import { tracksStock } from "@/lib/store-type";
-import type { WompiTransaction } from "@/lib/wompi";
+import {
+  findTransactionByReference,
+  resolveWompiKeys,
+  type WompiTransaction,
+} from "@/lib/wompi";
 
 /**
  * Marca el pedido como PAGADO con una transacción de Wompi y envía los emails,
@@ -219,4 +223,45 @@ export async function advanceFulfillment(
     where: { ...scope, status: { not: "CANCELLED" }, fulfillment: { in: from } },
     data: { fulfillment: to },
   });
+}
+
+/**
+ * Concilia con Wompi los pedidos EN LÍNEA que siguen pendientes: si el pago
+ * quedó aprobado en Wompi pero no llegó el webhook (o el cliente cerró la
+ * pestaña sin volver), los marca pagados con las mismas comprobaciones de
+ * markOrderPaid (monto, moneda, método). Solo pedidos recientes y un máximo
+ * por llamada, para no saturar a Wompi. `scope` limita a la tienda/sede.
+ */
+export async function reconcileOnlineOrders(
+  scope: { storeId: string; locationName?: string; id?: string },
+  { maxAgeHours = 72, limit = 10 } = {},
+): Promise<number> {
+  const pending = await prisma.order.findMany({
+    where: {
+      ...scope,
+      paymentMethod: "ONLINE",
+      status: "PENDING",
+      createdAt: { gte: new Date(Date.now() - maxAgeHours * 3_600_000) },
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      store: {
+        select: {
+          wompiPublicKey: true,
+          wompiPrivateKey: true,
+          wompiIntegritySecret: true,
+          wompiEventsSecret: true,
+        },
+      },
+    },
+  });
+  const done = await Promise.all(
+    pending.map(async (o) => {
+      const tx = await findTransactionByReference(o.id, resolveWompiKeys(o.store));
+      return tx ? markOrderPaid(o.id, tx) : false;
+    }),
+  );
+  return done.filter(Boolean).length;
 }

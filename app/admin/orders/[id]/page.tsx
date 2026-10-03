@@ -3,6 +3,7 @@ import { paymentMethodLabel } from "@/lib/payment-methods";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Truck, CircleCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { reconcileOnlineOrders } from "@/lib/orders";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -19,10 +20,11 @@ import {
 import { NotifyEmailButton } from "@/components/notify-email-button";
 import { WhatsappNoticeButton } from "@/components/whatsapp-notice-button";
 import { noticeText, type NoticeKind } from "@/lib/order-messages";
+import { TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
-const dateFmt = new Intl.DateTimeFormat("es", {
+const dateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ,
   dateStyle: "long",
   timeStyle: "short",
 });
@@ -34,6 +36,8 @@ export default async function OrderDetailPage({
 }) {
   const { id } = await params;
   const { store } = await requireAdminStore();
+  // Si fue un pago en línea que Wompi aprobó pero no nos avisó, se marca ya.
+  await reconcileOnlineOrders({ storeId: store.id, id }, { limit: 1, maxAgeHours: 24 * 30 });
 
   const order = await prisma.order.findFirst({
     where: { id, storeId: store.id },

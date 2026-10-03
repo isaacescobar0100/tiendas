@@ -14,7 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { normalizeWhatsapp } from "@/lib/whatsapp";
 import { getTransaction, resolveWompiKeys } from "@/lib/wompi";
-import { markOrderPaid } from "@/lib/orders";
+import { markOrderPaid, reconcileOnlineOrders } from "@/lib/orders";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import {
   parseTransferAccounts,
@@ -68,6 +68,16 @@ export default async function OrderSuccessPage({
   });
   if (!order) notFound();
 
+  // Pago en línea aún pendiente y sin id de transacción (el cliente no volvió
+  // desde Wompi o recargó la página): se pregunta a Wompi por la referencia.
+  let status = order.status;
+  if (!txId && order.paymentMethod === "ONLINE" && status === "PENDING") {
+    const rl = await rateLimit(`wompi-lookup:${await clientIp()}`, 30, 10 * 60 * 1000);
+    if (rl.ok && (await reconcileOnlineOrders({ storeId: order.storeId, id: order.id }, { limit: 1 }))) {
+      status = "PAID";
+    }
+  }
+
   // Determina el estado del pago.
   let payment: Payment;
   if (txId) {
@@ -92,14 +102,14 @@ export default async function OrderSuccessPage({
       payment = "failed"; // DECLINED / VOIDED / ERROR
     } else {
       // No pudimos verificar: si el webhook ya lo marcó pagado, respétalo.
-      payment = order.status === "PAID" ? "approved" : "pending";
+      payment = status === "PAID" ? "approved" : "pending";
     }
   } else if (order.paymentMethod === "TRANSFER" && order.status === "PENDING") {
     // Transferencia: el pedido existe pero falta que el cliente pague.
     payment = "awaiting";
   } else {
     // Sin transacción (contraentrega / pago manual) o ya confirmado por webhook.
-    payment = order.status === "PAID" ? "approved" : "registered";
+    payment = status === "PAID" ? "approved" : "registered";
   }
 
   // Cuentas/QR de la tienda para pagar por transferencia.

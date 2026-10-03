@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { TZ, dayKey, lastDays } from "@/lib/dates";
 import { formatPrice } from "@/lib/utils";
 import {
   isDelivered,
@@ -12,7 +13,7 @@ import { SalesBars, Donut, HBars } from "@/components/charts";
 
 export const dynamic = "force-dynamic";
 
-const dayFmt = new Intl.DateTimeFormat("es", { day: "2-digit", month: "2-digit" });
+const dayFmt = new Intl.DateTimeFormat("es", { timeZone: TZ, day: "2-digit", month: "2-digit" });
 
 export default async function SedeDashboard() {
   const sede = await getCurrentSede();
@@ -33,19 +34,11 @@ export default async function SedeDashboard() {
     .filter((o) => o.status === "PAID")
     .reduce((n, o) => n + o.totalCents, 0);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (13 - i));
-    return { date: d, cents: 0 };
-  });
-  const idx = new Map(days.map((d, i) => [d.date.getTime(), i]));
+  const days = lastDays(14).map((d) => ({ ...d, cents: 0 }));
+  const idx = new Map(days.map((d, i) => [d.key, i]));
   for (const o of orders) {
     if (o.status === "CANCELLED") continue;
-    const od = new Date(o.createdAt);
-    od.setHours(0, 0, 0, 0);
-    const j = idx.get(od.getTime());
+    const j = idx.get(dayKey(o.createdAt));
     if (j !== undefined) days[j].cents += o.totalCents;
   }
   const dayPoints = days.map((d) => ({

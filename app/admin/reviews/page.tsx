@@ -2,10 +2,11 @@ import { Star, MessageSquare, Trash2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { deleteReviewAction } from "./actions";
+import { TZ } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
-const dateFmt = new Intl.DateTimeFormat("es", { dateStyle: "medium" });
+const dateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ, dateStyle: "medium" });
 
 export default async function AdminReviewsPage() {
   const { store } = await requireAdminStore();
