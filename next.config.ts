@@ -16,7 +16,8 @@ const csp = [
   "media-src 'self' blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https:",
-  "frame-src 'self' https://checkout.wompi.co",
+  // Reproductores para el video de portada (YouTube sin cookies y Vimeo).
+  "frame-src 'self' https://checkout.wompi.co https://www.youtube-nocookie.com https://player.vimeo.com",
 ].join("; ");
 
 // Cabeceras de seguridad aplicadas a todas las rutas.

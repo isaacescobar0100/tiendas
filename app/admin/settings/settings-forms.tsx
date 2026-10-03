@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
+import { VideoField } from "@/components/video-field";
 import {
   parseStoreHours,
   defaultHours,
@@ -19,53 +20,70 @@ import {
 } from "./actions";
 import { keepFormSubmit } from "@/components/keep-form";
 
-type StoreData = {
-  name: string;
-  description: string | null;
-  logoUrl: string | null;
-  bannerUrl: string | null;
-  bannerVideoUrl: string | null;
-  surveyUrl: string | null;
-  whatsapp: string | null;
-  notifyEmail: boolean;
-  notifyWhatsapp: boolean;
-  themeColor: string;
-  shippingCents: number;
-  freeShippingOverCents: number;
-  hoursJson: string;
-  merchCategoryIds: string[];
-};
-
 type Category = { id: string; name: string };
 
-export function StoreForm({
-  store,
-  categories,
+/**
+ * Una sección de Ajustes: su propio formulario y su botón Guardar. Envía
+ * "section" y la acción solo actualiza esos campos (no toca las demás).
+ */
+function SectionForm({
+  section,
+  title,
+  description,
+  children,
 }: {
-  store: StoreData;
-  categories: Category[];
+  section: "general" | "portada" | "envios" | "horario" | "avisos";
+  title: string;
+  description?: string;
+  children: React.ReactNode;
 }) {
   const [state, formAction, pending] = useActionState<SettingsState, FormData>(
     updateStoreAction,
     undefined,
   );
-
   return (
     <form
       onSubmit={keepFormSubmit(formAction)}
       className="space-y-5 rounded-2xl border border-line bg-surface p-6"
     >
-      <h2 className="text-sm font-semibold text-ink">Datos de la tienda</h2>
-
+      <input type="hidden" name="section" value={section} />
       <div>
-        <label className={labelCls}>Nombre de la tienda</label>
-        <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink-3">
-          {store.name}
-        </p>
-        <p className="mt-1 text-xs text-ink-3">
-          El nombre lo gestiona el administrador de la plataforma. Escríbele si
-          necesitas cambiarlo.
-        </p>
+        <h2 className="text-base font-semibold text-ink">{title}</h2>
+        {description && <p className="mt-0.5 text-sm text-ink-3">{description}</p>}
+      </div>
+      {children}
+      {state?.error && <Alert type="error">{state.error}</Alert>}
+      {state?.ok && <Alert type="ok">Cambios guardados</Alert>}
+      <button type="submit" disabled={pending} className={btnCls}>
+        {pending ? "Guardando…" : "Guardar cambios"}
+      </button>
+    </form>
+  );
+}
+
+export function GeneralForm({
+  store,
+}: {
+  store: {
+    name: string;
+    description: string | null;
+    logoUrl: string | null;
+    surveyUrl: string | null;
+    whatsapp: string | null;
+  };
+}) {
+  return (
+    <SectionForm section="general" title="General" description="Lo básico de tu tienda.">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className={labelCls}>Nombre de la tienda</label>
+          <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink-3">{store.name}</p>
+          <p className="mt-1 text-xs text-ink-3">Lo cambia el administrador de la plataforma.</p>
+        </div>
+        <div>
+          <label className={labelCls}>Moneda</label>
+          <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink-3">COP · Peso colombiano</p>
+        </div>
       </div>
 
       <div>
@@ -81,170 +99,121 @@ export function StoreForm({
 
       <ImageUpload name="logoUrl" label="Logo" defaultUrl={store.logoUrl} />
 
-      <div>
-        <ImageUpload
-          name="bannerUrl"
-          label="Banner (portada de la tienda)"
-          defaultUrl={store.bannerUrl}
-          aspect="wide"
-        />
-        <p className="mt-1 text-xs text-ink-3">
-          Portada en la parte superior de tu tienda, a todo el ancho y en franja
-          baja. Usa una imagen bien horizontal (recomendado 1600×400) y pon lo
-          importante hacia el centro. Déjalo vacío para no mostrarlo.
-        </p>
-      </div>
-
-      <div>
-        <label className={labelCls}>Video de portada (opcional)</label>
-        <input
-          name="bannerVideoUrl"
-          inputMode="url"
-          defaultValue={store.bannerVideoUrl ?? ""}
-          placeholder="https://…/video.mp4"
-          className={inputCls}
-        />
-        <p className="mt-1 text-xs text-ink-3">
-          Pega la URL de un video <strong>.mp4</strong>. Si lo pones, la portada
-          muestra el video (en bucle, sin sonido) en vez del banner. Ideal para
-          un look tipo landing. Déjalo vacío para usar la imagen.
-        </p>
-      </div>
-
-      <div>
-        <label className={labelCls}>Enlace de encuesta (opcional)</label>
-        <input
-          name="surveyUrl"
-          inputMode="url"
-          defaultValue={store.surveyUrl ?? ""}
-          placeholder="https://forms.gle/…"
-          className={inputCls}
-        />
-        <p className="mt-1 text-xs text-ink-3">
-          Si lo rellenas (ej. un Google Forms), aparece un botón
-          &ldquo;Encuesta de satisfacción&rdquo; en el pie de tu tienda.
-        </p>
-      </div>
-
-      <div>
-        <label className={labelCls}>WhatsApp (para avisos de pedido)</label>
-        <input
-          name="whatsapp"
-          inputMode="tel"
-          defaultValue={store.whatsapp ?? ""}
-          placeholder="300 123 4567"
-          className={inputCls}
-        />
-        <p className="mt-1 text-xs text-ink-3">
-          Al confirmar un pedido, el cliente verá un botón para enviártelo por
-          WhatsApp a este número. Déjalo vacío para no mostrarlo.
-        </p>
-      </div>
-
-      {/* Canales para avisar al cliente del estado del pedido */}
-      <div className="border-t border-line pt-5">
-        <h2 className="mb-1 text-sm font-semibold text-ink">
-          Avisar al cliente (va en camino / entregado)
-        </h2>
-        <p className="mb-3 text-xs text-ink-3">
-          Elige por qué canales podrás avisar al cliente desde el pedido.
-        </p>
-        <label className="flex items-center gap-2 text-sm text-ink-2">
-          <input
-            type="checkbox"
-            name="notifyEmail"
-            defaultChecked={store.notifyEmail}
-            className="h-4 w-4 rounded border-line-2"
-          />
-          Por email
-        </label>
-        <label className="mt-2 flex items-center gap-2 text-sm text-ink-2">
-          <input
-            type="checkbox"
-            name="notifyWhatsapp"
-            defaultChecked={store.notifyWhatsapp}
-            className="h-4 w-4 rounded border-line-2"
-          />
-          Por WhatsApp (al número del cliente)
-        </label>
-      </div>
-
-      {/* Los colores y la letra de la tienda se editan en Apariencia */}
-      <div className="rounded-xl border border-line bg-surface-2 px-4 py-3 text-sm text-ink-2">
-        Los colores y la tipografía de tu tienda ahora están en{" "}
-        <Link href="/admin/apariencia" prefetch={false} className="font-medium text-ink underline">
-          Apariencia
-        </Link>
-        , con vista previa en vivo.
-      </div>
-
-      <div>
-        <label className={labelCls}>Moneda</label>
-        <p className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm text-ink-3">
-          COP · Peso colombiano
-        </p>
-      </div>
-
-      {/* Envío */}
-      <div className="border-t border-line pt-5">
-        <h2 className="mb-3 text-sm font-semibold text-ink">Envío</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className={labelCls}>Costo de envío (por pedido)</label>
-            <input
-              name="shipping"
-              inputMode="numeric"
-              defaultValue={String(Math.round(store.shippingCents / 100))}
-              placeholder="10000"
-              className={inputCls}
-            />
-            <p className="mt-1 text-xs text-ink-3">
-              En pesos. Pon <strong>0</strong> para envío gratis siempre.
-            </p>
-          </div>
-          <div>
-            <label className={labelCls}>Envío gratis desde (opcional)</label>
-            <input
-              name="freeShippingOver"
-              inputMode="numeric"
-              defaultValue={String(
-                Math.round(store.freeShippingOverCents / 100),
-              )}
-              placeholder="100000"
-              className={inputCls}
-            />
-            <p className="mt-1 text-xs text-ink-3">
-              Si el pedido supera este monto, el envío es gratis. <strong>0</strong>{" "}
-              = desactivado.
-            </p>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className={labelCls}>WhatsApp de la tienda</label>
+          <input name="whatsapp" inputMode="tel" defaultValue={store.whatsapp ?? ""} placeholder="300 123 4567" className={inputCls} />
+          <p className="mt-1 text-xs text-ink-3">Para que el cliente te envíe su pedido. Vacío = no se muestra.</p>
+        </div>
+        <div>
+          <label className={labelCls}>Enlace de encuesta (opcional)</label>
+          <input name="surveyUrl" inputMode="url" defaultValue={store.surveyUrl ?? ""} placeholder="https://forms.gle/…" className={inputCls} />
+          <p className="mt-1 text-xs text-ink-3">Muestra &ldquo;Encuesta de satisfacción&rdquo; en el pie.</p>
         </div>
       </div>
 
-      {/* Horario de atención */}
-      <div className="border-t border-line pt-5">
-        <HoursEditor initialJson={store.hoursJson} />
+      <p className="rounded-xl border border-line bg-surface-2 px-4 py-3 text-sm text-ink-2">
+        Los colores, la tipografía y las fotos de fondo están en{" "}
+        <Link href="/admin/apariencia" prefetch={false} className="font-medium text-ink underline">
+          Apariencia
+        </Link>
+        .
+      </p>
+    </SectionForm>
+  );
+}
+
+export function PortadaForm({
+  store,
+}: {
+  store: { bannerUrl: string | null; bannerVideoUrl: string | null };
+}) {
+  return (
+    <SectionForm
+      section="portada"
+      title="Portada de la tienda"
+      description="Lo primero que ven tus clientes: una imagen o un video a todo el ancho."
+    >
+      <div>
+        <ImageUpload name="bannerUrl" label="Imagen de portada (banner)" defaultUrl={store.bannerUrl} aspect="wide" />
+        <p className="mt-1 text-xs text-ink-3">
+          Bien horizontal (recomendado 1600×400), con lo importante al centro. Vacío = sin banner.
+        </p>
       </div>
-
-      {/* Merch: categorías que se pueden pedir aunque esté cerrado */}
       <div className="border-t border-line pt-5">
-        <MerchCategories
-          categories={categories}
-          initial={store.merchCategoryIds}
-        />
+        <label className={labelCls}>Video de portada (opcional)</label>
+        <p className="mb-3 text-xs text-ink-3">
+          Si pones un video, la portada lo muestra en bucle y sin sonido en lugar de la imagen
+          (la imagen queda de fondo mientras carga).
+        </p>
+        <VideoField name="bannerVideoUrl" defaultUrl={store.bannerVideoUrl} />
       </div>
+    </SectionForm>
+  );
+}
 
-      {state?.error && <Alert type="error">{state.error}</Alert>}
-      {state?.ok && <Alert type="ok">Cambios guardados</Alert>}
+export function EnviosForm({
+  store,
+}: {
+  store: { shippingCents: number; freeShippingOverCents: number };
+}) {
+  return (
+    <SectionForm section="envios" title="Envíos" description="Lo que cobras por llevar el pedido.">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className={labelCls}>Costo de envío (por pedido)</label>
+          <input name="shipping" inputMode="numeric" defaultValue={String(Math.round(store.shippingCents / 100))} placeholder="10000" className={inputCls} />
+          <p className="mt-1 text-xs text-ink-3">En pesos. <strong>0</strong> = envío gratis siempre.</p>
+        </div>
+        <div>
+          <label className={labelCls}>Envío gratis desde (opcional)</label>
+          <input name="freeShippingOver" inputMode="numeric" defaultValue={String(Math.round(store.freeShippingOverCents / 100))} placeholder="100000" className={inputCls} />
+          <p className="mt-1 text-xs text-ink-3">Si el pedido supera este monto, el envío es gratis. <strong>0</strong> = desactivado.</p>
+        </div>
+      </div>
+    </SectionForm>
+  );
+}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className={btnCls}
-      >
-        {pending ? "Guardando…" : "Guardar cambios"}
-      </button>
-    </form>
+export function HorarioForm({
+  hoursJson,
+  merchCategoryIds,
+  categories,
+}: {
+  hoursJson: string;
+  merchCategoryIds: string[];
+  categories: Category[];
+}) {
+  return (
+    <SectionForm section="horario" title="Horario de atención" description="Cuándo recibes pedidos.">
+      <HoursEditor initialJson={hoursJson} />
+      <div className="border-t border-line pt-5">
+        <MerchCategories categories={categories} initial={merchCategoryIds} />
+      </div>
+    </SectionForm>
+  );
+}
+
+export function AvisosForm({
+  store,
+}: {
+  store: { notifyEmail: boolean; notifyWhatsapp: boolean };
+}) {
+  return (
+    <SectionForm
+      section="avisos"
+      title="Avisos al cliente"
+      description="Por qué canales avisas al cliente que su pedido fue confirmado o va en camino."
+    >
+      <label className="flex items-center gap-2 text-sm text-ink-2">
+        <input type="checkbox" name="notifyEmail" defaultChecked={store.notifyEmail} className="h-4 w-4 rounded border-line-2" />
+        Por email
+      </label>
+      <label className="flex items-center gap-2 text-sm text-ink-2">
+        <input type="checkbox" name="notifyWhatsapp" defaultChecked={store.notifyWhatsapp} className="h-4 w-4 rounded border-line-2" />
+        Por WhatsApp (al número del cliente)
+      </label>
+    </SectionForm>
   );
 }
 

@@ -84,7 +84,7 @@ export default async function AdminLayout({
               )}
               <span className="max-w-[11rem] truncate">{store.name}</span>
             </Link>
-            <span className="hidden shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand-text sm:inline 2xl:inline xl:hidden">
+            <span className="hidden shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand-text sm:inline">
               Admin
             </span>
           </div>

@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
+import { parseCoverVideo } from "@/lib/video";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { signOut } from "@/auth";
@@ -17,107 +19,86 @@ import {
 
 export type SettingsState = { error?: string; ok?: boolean } | undefined;
 
-const storeSchema = z.object({
-  description: z.string().optional(),
-  // Solo http(s) (o /uploads para imágenes): nunca javascript:, data:, etc.
-  logoUrl: z
-    .string()
-    .refine((v) => v === "" || isSafeImageUrl(v), "URL de logo inválida.")
-    .optional(),
-  bannerUrl: z
-    .string()
-    .refine((v) => v === "" || isSafeImageUrl(v), "URL de banner inválida.")
-    .optional(),
-  bannerVideoUrl: z
-    .string()
-    .refine((v) => v === "" || isHttpUrl(v), "URL de video inválida.")
-    .optional(),
-  surveyUrl: z
-    .string()
-    .refine((v) => v === "" || isHttpUrl(v), "URL de encuesta inválida.")
-    .optional(),
-  // Color de marca en formato hex (#rrggbb). La moneda es fija (COP).
-  themeColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Color inválido.")
-    .optional(),
-  // Envío (en pesos, texto): costo fijo y umbral de envío gratis.
-  shipping: z.string().optional(),
-  freeShippingOver: z.string().optional(),
-  // WhatsApp de la tienda (para avisos de pedido). Texto libre; se normaliza al usar.
-  whatsapp: z.string().optional(),
-});
-
+/**
+ * Guarda UNA sección de Ajustes (General, Portada, Envíos, Horario, Avisos).
+ * Cada sección solo toca sus propios campos: guardar una no borra las demás.
+ */
 export async function updateStoreAction(
   _prev: SettingsState,
   formData: FormData,
 ): Promise<SettingsState> {
   const { store } = await requireAdminStore();
+  const str = (k: string) => String(formData.get(k) ?? "").trim();
+  const section = str("section");
+  let data: Prisma.StoreUpdateInput;
 
-  const parsed = storeSchema.safeParse({
-    description: formData.get("description") ?? "",
-    logoUrl: formData.get("logoUrl") ?? "",
-    bannerUrl: formData.get("bannerUrl") ?? "",
-    bannerVideoUrl: formData.get("bannerVideoUrl") ?? "",
-    surveyUrl: formData.get("surveyUrl") ?? "",
-    themeColor: (formData.get("themeColor") as string) || undefined,
-    shipping: (formData.get("shipping") as string) ?? "",
-    freeShippingOver: (formData.get("freeShippingOver") as string) ?? "",
-    whatsapp: (formData.get("whatsapp") as string) ?? "",
-  });
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  switch (section) {
+    case "general": {
+      const logoUrl = str("logoUrl");
+      const surveyUrl = str("surveyUrl");
+      // Solo http(s) (o /uploads para imágenes): nunca javascript:, data:, etc.
+      if (logoUrl && !isSafeImageUrl(logoUrl)) return { error: "URL de logo inválida." };
+      if (surveyUrl && !isHttpUrl(surveyUrl)) return { error: "URL de encuesta inválida." };
+      data = {
+        description: str("description").slice(0, 600) || null,
+        logoUrl: logoUrl || null,
+        surveyUrl: surveyUrl || null,
+        whatsapp: str("whatsapp").slice(0, 30) || null,
+      };
+      break;
+    }
+    case "portada": {
+      const bannerUrl = str("bannerUrl");
+      const bannerVideoUrl = str("bannerVideoUrl");
+      if (bannerUrl && !isSafeImageUrl(bannerUrl)) return { error: "URL de banner inválida." };
+      // Video: archivo https, YouTube o Vimeo (mismo criterio que la portada).
+      if (bannerVideoUrl && !parseCoverVideo(bannerVideoUrl)) {
+        return { error: "Video no válido: usa YouTube, Vimeo o un video .mp4 con https." };
+      }
+      data = { bannerUrl: bannerUrl || null, bannerVideoUrl: bannerVideoUrl || null };
+      break;
+    }
+    case "envios": {
+      // Se escribe en pesos; se guarda en céntimos (0 si vacío/inválido).
+      data = {
+        shippingCents: parsePriceToCents(str("shipping") || "0") ?? 0,
+        freeShippingOverCents: parsePriceToCents(str("freeShippingOver") || "0") ?? 0,
+      };
+      break;
+    }
+    case "horario": {
+      // Horario re-serializado canónico (vacío si es inválido) y categorías
+      // "merch" validadas contra las categorías de la tienda.
+      const valid = new Set(
+        (
+          await prisma.category.findMany({ where: { storeId: store.id }, select: { id: true } })
+        ).map((c) => c.id),
+      );
+      data = {
+        hoursJson: serializeStoreHours(parseStoreHours(str("hoursJson"))),
+        merchCategoryIds: [
+          ...new Set(formData.getAll("merchCategoryIds").map(String)),
+        ].filter((id) => valid.has(id)),
+      };
+      break;
+    }
+    case "avisos": {
+      data = {
+        notifyEmail: formData.get("notifyEmail") === "on",
+        notifyWhatsapp: formData.get("notifyWhatsapp") === "on",
+      };
+      break;
+    }
+    default:
+      return { error: "Sección inválida." };
+  }
 
-  // Envío: se escribe en pesos; se guarda en céntimos (0 si vacío/ inválido).
-  const shippingCents = parsePriceToCents(parsed.data.shipping || "0") ?? 0;
-  const freeShippingOverCents =
-    parsePriceToCents(parsed.data.freeShippingOver || "0") ?? 0;
+  // La URL (slug), el nombre y la moneda (COP) no los cambia el admin.
+  await prisma.store.update({ where: { id: store.id }, data });
 
-  // Horario de atención: se re-serializa canónico (vacío si es inválido).
-  const hoursJson = serializeStoreHours(
-    parseStoreHours(String(formData.get("hoursJson") ?? "")),
-  );
-
-  // Merch: categorías marcadas, validadas contra las categorías de la tienda.
-  const requestedMerch = formData
-    .getAll("merchCategoryIds")
-    .map((v) => String(v));
-  const validCategoryIds = new Set(
-    (
-      await prisma.category.findMany({
-        where: { storeId: store.id },
-        select: { id: true },
-      })
-    ).map((c) => c.id),
-  );
-  const merchCategoryIds = [...new Set(requestedMerch)].filter((id) =>
-    validCategoryIds.has(id),
-  );
-
-  // La URL (slug) y la moneda (COP) no las cambia el admin.
-  await prisma.store.update({
-    where: { id: store.id },
-    data: {
-      description: parsed.data.description || null,
-      logoUrl: parsed.data.logoUrl || null,
-      bannerUrl: parsed.data.bannerUrl || null,
-      bannerVideoUrl: parsed.data.bannerVideoUrl || null,
-      surveyUrl: parsed.data.surveyUrl || null,
-      whatsapp: parsed.data.whatsapp?.trim() || null,
-      notifyEmail: formData.get("notifyEmail") === "on",
-      notifyWhatsapp: formData.get("notifyWhatsapp") === "on",
-      shippingCents,
-      freeShippingOverCents,
-      hoursJson,
-      merchCategoryIds,
-      ...(parsed.data.themeColor
-        ? { themeColor: parsed.data.themeColor }
-        : {}),
-    },
-  });
-
-  revalidatePath("/admin/settings");
+  revalidatePath("/admin/settings", "layout");
   revalidatePath("/admin");
-  revalidatePath(`/${store.slug}`);
+  revalidatePath(`/${store.slug}`, "layout");
   return { ok: true };
 }
 

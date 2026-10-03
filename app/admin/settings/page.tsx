@@ -1,60 +1,20 @@
 import { requireAdminStore } from "@/lib/guards";
-import { prisma } from "@/lib/prisma";
-import { isWompiConfigured, resolveWompiKeys } from "@/lib/wompi";
-import { parseTransferAccounts } from "@/lib/payment-methods";
-import { StoreForm, PasswordForm } from "./settings-forms";
-import { PaymentsForm } from "./payments-form";
+import { GeneralForm } from "./settings-forms";
 
 export const dynamic = "force-dynamic";
 
-export default async function SettingsPage() {
+// Ajustes › General
+export default async function SettingsGeneralPage() {
   const { store } = await requireAdminStore();
-  const categories = await prisma.category.findMany({
-    where: { storeId: store.id },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
-
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-ink">Ajustes</h1>
-        <p className="text-sm text-ink-3">
-          Configura tu tienda y tu cuenta.
-        </p>
-      </div>
-
-      <StoreForm
-        store={{
-          name: store.name,
-          description: store.description,
-          logoUrl: store.logoUrl,
-          bannerUrl: store.bannerUrl,
-          bannerVideoUrl: store.bannerVideoUrl,
-          surveyUrl: store.surveyUrl,
-          whatsapp: store.whatsapp,
-          notifyEmail: store.notifyEmail,
-          notifyWhatsapp: store.notifyWhatsapp,
-          themeColor: store.themeColor,
-          shippingCents: store.shippingCents,
-          freeShippingOverCents: store.freeShippingOverCents,
-          hoursJson: store.hoursJson,
-          merchCategoryIds: store.merchCategoryIds,
-        }}
-        categories={categories}
-      />
-
-      <PaymentsForm
-        data={{
-          wompiReady: isWompiConfigured(resolveWompiKeys(store)),
-          onlinePaymentEnabled: store.onlinePaymentEnabled,
-          codEnabled: store.codEnabled,
-          transferEnabled: store.transferEnabled,
-          transferAccounts: parseTransferAccounts(store.transferAccountsJson),
-        }}
-      />
-
-      <PasswordForm />
-    </div>
+    <GeneralForm
+      store={{
+        name: store.name,
+        description: store.description,
+        logoUrl: store.logoUrl,
+        surveyUrl: store.surveyUrl,
+        whatsapp: store.whatsapp,
+      }}
+    />
   );
 }
