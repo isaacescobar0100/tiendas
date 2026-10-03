@@ -1,51 +1,73 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Heart, Lock, Mail, PackageSearch, User, Zap } from "lucide-react";
 import { loginAction, registerAction, type AccountState } from "./actions";
 import { useStoreHref } from "@/components/store-base";
+import { Field, Notice, PasswordField, SubmitButton } from "@/components/auth/fields";
 
-const inputCls =
-  "w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";
-const labelCls = "mb-1 block text-sm font-medium text-ink-2";
-const btnCls =
-  "w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink transition hover:brightness-110 disabled:opacity-60";
-
-export function AccountForms({ storeSlug }: { storeSlug: string }) {
+// Acceso del cliente de la tienda: a la izquierda para qué sirve la cuenta, a
+// la derecha iniciar sesión o crearla. Todo con el tema de la tienda.
+export function AccountForms({ storeSlug, storeName }: { storeSlug: string; storeName: string }) {
   const [mode, setMode] = useState<"login" | "register">("login");
+  const perks = [
+    { icon: PackageSearch, title: "Sigue tus pedidos", text: "Mira el estado de cada pedido en un solo lugar." },
+    { icon: Heart, title: "Guarda tus favoritos", text: "Tenlos a mano en cualquier dispositivo." },
+    { icon: Zap, title: "Compra más rápido", text: "Tus datos listos para el próximo pedido." },
+  ];
 
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-ink">Mi cuenta</h1>
-      <p className="mt-1 text-sm text-ink-3">
-        {mode === "login"
-          ? "Inicia sesión para ver tus pedidos."
-          : "Crea una cuenta para seguir tus pedidos."}
-      </p>
+    <div className="mx-auto grid max-w-4xl overflow-hidden rounded-3xl bg-surface shadow-sm ring-1 ring-line md:grid-cols-2">
+      <aside className="relative hidden overflow-hidden bg-brand p-10 text-brand-ink md:block">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-ink/10 blur-3xl" />
+        <p className="relative text-xs font-semibold uppercase tracking-[0.25em]">Mi cuenta</p>
+        <h2 className="relative mt-3 text-3xl font-extrabold leading-tight tracking-tight">
+          Tu cuenta en {storeName}
+        </h2>
+        <ul className="relative mt-8 space-y-5">
+          {perks.map((p) => (
+            <li key={p.title} className="flex gap-3.5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-ink/15 ring-1 ring-brand-ink/20">
+                <p.icon className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block font-semibold">{p.title}</span>
+                <span className="block text-sm leading-relaxed">{p.text}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </aside>
 
-      {/* Pestañas */}
-      <div className="mt-6 flex rounded-lg bg-surface-3 p-1 text-sm font-medium">
-        <button
-          type="button"
-          onClick={() => setMode("login")}
-          className={`flex-1 rounded-md py-2 ${mode === "login" ? "bg-surface shadow" : "text-ink-3"}`}
-        >
-          Iniciar sesión
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("register")}
-          className={`flex-1 rounded-md py-2 ${mode === "register" ? "bg-surface shadow" : "text-ink-3"}`}
-        >
-          Crear cuenta
-        </button>
-      </div>
+      <div className="p-6 sm:p-10">
+        <h1 className="text-[26px] font-extrabold leading-tight tracking-tight text-ink">
+          {mode === "login" ? "Hola de nuevo" : "Crea tu cuenta"}
+        </h1>
+        <p className="mt-1.5 text-[15px] text-ink-3">
+          {mode === "login"
+            ? "Inicia sesión para ver tus pedidos."
+            : "Te enviamos un enlace al correo para crear tu contraseña."}
+        </p>
 
-      <div className="mt-5">
-        {mode === "login" ? (
-          <LoginForm storeSlug={storeSlug} />
-        ) : (
-          <RegisterForm storeSlug={storeSlug} />
-        )}
+        {/* Pestañas */}
+        <div role="tablist" className="mt-6 grid grid-cols-2 rounded-xl bg-surface-3 p-1 text-sm font-semibold">
+          {(["login", "register"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => setMode(m)}
+              className={`rounded-lg py-2.5 transition ${mode === m ? "bg-surface text-ink shadow-sm" : "text-ink-3 hover:text-ink"}`}
+            >
+              {m === "login" ? "Iniciar sesión" : "Crear cuenta"}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-6">
+          {mode === "login" ? <LoginForm storeSlug={storeSlug} /> : <RegisterForm storeSlug={storeSlug} />}
+        </div>
       </div>
     </div>
   );
@@ -53,84 +75,51 @@ export function AccountForms({ storeSlug }: { storeSlug: string }) {
 
 function LoginForm({ storeSlug }: { storeSlug: string }) {
   const sh = useStoreHref();
-  const [state, formAction, pending] = useActionState<AccountState, FormData>(
-    loginAction,
-    undefined,
-  );
+  const [state, formAction, pending] = useActionState<AccountState, FormData>(loginAction, undefined);
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-5">
       <input type="hidden" name="storeSlug" value={storeSlug} />
-      <div>
-        <label className={labelCls}>Email</label>
-        <input name="email" type="email" required autoComplete="email" className={inputCls} />
-      </div>
-      <div>
-        <label className={labelCls}>Contraseña</label>
-        <input
-          name="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          className={inputCls}
-        />
-      </div>
-      {state?.error && <Err>{state.error}</Err>}
-      <button type="submit" disabled={pending} className={btnCls}>
-        {pending ? "Entrando…" : "Iniciar sesión"}
-      </button>
-      <p className="text-center text-sm">
-        <a
-          href={sh(`/cuenta/recuperar`)}
-          className="text-ink-3 hover:text-ink"
-        >
-          ¿Olvidaste tu contraseña?
-        </a>
-      </p>
+      <Field id="email" name="email" type="email" label="Correo" icon={Mail} required autoComplete="email" inputMode="email" placeholder="tu@correo.com" />
+      <PasswordField
+        id="password"
+        name="password"
+        label="Contraseña"
+        icon={Lock}
+        required
+        autoComplete="current-password"
+        placeholder="Tu contraseña"
+        aside={
+          <a href={sh(`/cuenta/recuperar`)} className="text-sm font-medium text-brand-text hover:underline">
+            ¿La olvidaste?
+          </a>
+        }
+      />
+      {state?.error && <Notice kind="error">{state.error}</Notice>}
+      <SubmitButton pending={pending} pendingText="Entrando…">
+        Iniciar sesión
+      </SubmitButton>
     </form>
   );
 }
 
 function RegisterForm({ storeSlug }: { storeSlug: string }) {
-  const [state, formAction, pending] = useActionState<AccountState, FormData>(
-    registerAction,
-    undefined,
-  );
+  const [state, formAction, pending] = useActionState<AccountState, FormData>(registerAction, undefined);
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-5">
       <input type="hidden" name="storeSlug" value={storeSlug} />
-      <div>
-        <label className={labelCls}>Nombre</label>
-        <input name="name" required className={inputCls} />
-      </div>
-      <div>
-        <label className={labelCls}>Email</label>
-        <input name="email" type="email" required autoComplete="email" className={inputCls} />
-      </div>
-      {state?.error && <Err>{state.error}</Err>}
+      <Field id="name" name="name" label="Nombre" icon={User} required autoComplete="name" placeholder="Tu nombre" />
+      <Field id="reg-email" name="email" type="email" label="Correo" icon={Mail} required autoComplete="email" inputMode="email" placeholder="tu@correo.com" />
+      {state?.error && <Notice kind="error">{state.error}</Notice>}
       {state?.ok ? (
-        <p className="rounded-lg bg-ok-soft px-3 py-2 text-sm text-ok-ink">
-          Listo. Te enviamos un correo con un enlace para crear tu contraseña y
-          activar tu cuenta. Revisa también la carpeta de spam.
-        </p>
+        <Notice kind="success">
+          Listo. Te enviamos un correo con un enlace para crear tu contraseña y activar tu cuenta.
+          Revisa también la carpeta de spam.
+        </Notice>
       ) : (
-        <>
-          <p className="text-xs text-ink-3">
-            Te enviaremos un enlace a tu correo para crear tu contraseña. Así
-            confirmamos que el correo es tuyo.
-          </p>
-          <button type="submit" disabled={pending} className={btnCls}>
-            {pending ? "Enviando…" : "Crear cuenta"}
-          </button>
-        </>
+        <SubmitButton pending={pending} pendingText="Enviando…">
+          Crear cuenta
+        </SubmitButton>
       )}
     </form>
-  );
-}
-
-function Err({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad-ink">
-      {children}
-    </p>
   );
 }

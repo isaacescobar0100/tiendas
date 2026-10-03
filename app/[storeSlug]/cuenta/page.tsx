@@ -32,7 +32,7 @@ export default async function AccountPage({
   const sh = (p = "") => joinStorePath(storeBase, p);
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, name: true },
   });
   if (!store) notFound();
 
@@ -40,7 +40,7 @@ export default async function AccountPage({
 
   // Sin sesión → formularios de login / registro.
   if (!customer) {
-    return <AccountForms storeSlug={store.slug} />;
+    return <AccountForms storeSlug={store.slug} storeName={store.name} />;
   }
 
   // Historial: pedidos hechos con el email de la cuenta en esta tienda. Solo si
