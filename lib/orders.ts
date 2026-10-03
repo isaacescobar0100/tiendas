@@ -3,6 +3,7 @@
 // una vez aunque ambos lleguen (idempotente).
 import type { Fulfillment } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import { sendOrderEmails } from "@/lib/email";
 import { tracksStock } from "@/lib/store-type";
 import {
@@ -236,6 +237,10 @@ export async function reconcileOnlineOrders(
   scope: { storeId: string; locationName?: string; id?: string },
   { maxAgeHours = 72, limit = 10 } = {},
 ): Promise<number> {
+  // Como mucho una consulta a Wompi por minuto y tienda (o por pedido, si se
+  // pide uno concreto), por muchas páginas del admin que se abran.
+  const throttle = await rateLimit(`wompi-reconcile:${scope.id ?? scope.storeId}`, 1, 60_000);
+  if (!throttle.ok) return 0;
   const pending = await prisma.order.findMany({
     where: {
       ...scope,

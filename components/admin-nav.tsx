@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { ExternalLink, Menu, X } from "lucide-react";
 import { signOutAction } from "@/lib/session-actions";
 
+// Panel privado: los enlaces no hacen prefetch. Cada prefetch es un render
+// dinámico (sesión + base de datos) y el menú tiene más de 10 enlaces.
 const LINKS = [
   { href: "/admin", label: "Inicio" },
   { href: "/admin/products", label: "Productos" },
@@ -42,6 +44,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
           <Link
             key={l.href}
             href={l.href}
+            prefetch={false}
             className={
               isActive(l.href)
                 ? "font-medium text-gray-900"
@@ -53,6 +56,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
         ))}
         <Link
           href={`/${storeSlug}`}
+          prefetch={false}
           target="_blank"
           className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900"
         >
@@ -112,6 +116,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
               <Link
                 key={l.href}
                 href={l.href}
+                prefetch={false}
                 onClick={() => setOpen(false)}
                 className={`rounded-lg px-3 py-2.5 text-sm ${
                   isActive(l.href)
@@ -124,6 +129,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
             ))}
             <Link
               href={`/${storeSlug}`}
+          prefetch={false}
               target="_blank"
               onClick={() => setOpen(false)}
               className="flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50"

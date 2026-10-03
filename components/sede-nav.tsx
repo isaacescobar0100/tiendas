@@ -19,6 +19,7 @@ export function SedeNav() {
         <Link
           key={l.href}
           href={l.href}
+          prefetch={false} // panel privado: sin renders de más
           className={
             isActive(l.href, l.exact)
               ? "font-medium text-gray-900"

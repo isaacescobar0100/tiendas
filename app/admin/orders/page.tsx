@@ -71,6 +71,7 @@ export default async function OrdersPage() {
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/orders/${o.id}`}
+                      prefetch={false}
                       className="font-mono text-gray-900 hover:underline"
                     >
                       #{o.id.slice(-8)}
