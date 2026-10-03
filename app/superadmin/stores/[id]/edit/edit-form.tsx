@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Check } from "lucide-react";
 import { updateStoreConfigAction, type ActionState } from "../../../actions";
 import { STORE_TYPE_OPTIONS } from "@/lib/store-type";
+import { GRACE_DAYS } from "@/lib/billing";
 import type { StoreType } from "@prisma/client";
 
 type StoreCfg = {
@@ -154,8 +155,8 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
             defaultValue={store.plan}
             className={inputCls}
           >
-            <option value="SALE">Venta única (es del cliente)</option>
-            <option value="RENT">Renta (pago recurrente)</option>
+            <option value="SALE">Pago único + cuota anual</option>
+            <option value="RENT">Mensual</option>
           </select>
         </div>
         <div>
@@ -174,7 +175,7 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
           </p>
         </div>
         <div>
-          <label className={labelCls}>Pagada hasta (solo renta)</label>
+          <label className={labelCls}>Pagada hasta</label>
           <input
             type="date"
             name="paidUntil"
@@ -182,8 +183,10 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
             className={inputCls}
           />
           <p className="mt-1 text-xs text-gray-400">
-            El panel te avisará cuando esté vencida. También puedes usar
-            &ldquo;Renovar +1 mes&rdquo; desde la lista de tiendas.
+            Anual: avisa 30 y 7 días antes. Mensual: 3 días antes. Al vencer
+            hay {GRACE_DAYS} días de gracia y luego la tienda pública se suspende hasta
+            renovar. Vacío = sin vencimiento. También puedes usar
+            &ldquo;Renovar&rdquo; desde la lista de tiendas.
           </p>
         </div>
       </fieldset>

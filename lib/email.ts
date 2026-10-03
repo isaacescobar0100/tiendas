@@ -1,4 +1,5 @@
 import { formatPrice, variantLabel } from "./utils";
+import { GRACE_DAYS } from "@/lib/billing";
 
 // Envío de correos por Brevo (API HTTP). Funciona en Vercel (a diferencia del
 // SMTP de Gmail). Si no está configurado, el envío se omite sin romper nada.
@@ -220,11 +221,12 @@ export async function sendStatusEmail(opts: {
   }
 }
 
-/** Aviso de renta al admin de la tienda (vence pronto / vencida / renovada). */
+/** Aviso del plan al admin de la tienda (vence pronto / vencido / suspendida / renovado). */
 export async function sendRentEmail(opts: {
   to: string;
   storeName: string;
-  kind: "soon" | "overdue" | "renewed";
+  kind: "soon" | "overdue" | "suspended" | "renewed";
+  days?: number;
   paidUntil: Date;
 }): Promise<boolean> {
   if (!BREVO_API_KEY || !SENDER_EMAIL) return false;
@@ -238,17 +240,23 @@ export async function sendRentEmail(opts: {
       subject: `Tu plan de ${opts.storeName} vence pronto`,
       body: `<h2 style="margin:0 0 8px">Tu plan vence pronto</h2>
         <p>El plan de tu tienda <strong>${esc(opts.storeName)}</strong> vence el <strong>${fecha}</strong>.</p>
-        <p>Renueva el pago a tiempo para que tu tienda siga activa sin interrupciones.</p>`,
+        <p>Faltan ${opts.days ?? 0} día${opts.days === 1 ? "" : "s"}. Renueva el pago a tiempo para que tu tienda siga activa sin interrupciones.</p>`,
     },
     overdue: {
       subject: `Tu plan de ${opts.storeName} está vencido`,
       body: `<h2 style="margin:0 0 8px">Tu plan está vencido</h2>
         <p>El plan de tu tienda <strong>${esc(opts.storeName)}</strong> venció el <strong>${fecha}</strong>.</p>
-        <p>Ponte al día con el pago para no perder el acceso a tu tienda.</p>`,
+        <p>Tienes ${GRACE_DAYS} días de gracia: después, la tienda deja de estar visible para tus clientes hasta que renueves.</p>`,
+    },
+    suspended: {
+      subject: `Tu tienda ${opts.storeName} fue suspendida`,
+      body: `<h2 style="margin:0 0 8px">Tienda suspendida</h2>
+        <p>El plan de <strong>${esc(opts.storeName)}</strong> venció el <strong>${fecha}</strong> y terminó el periodo de gracia.</p>
+        <p>Tus clientes no pueden ver la tienda ni hacer pedidos. Tus datos están guardados: renueva y se reactiva de inmediato.</p>`,
     },
     renewed: {
-      subject: `Plan renovado — ${opts.storeName}`,
-      body: `<h2 style="margin:0 0 8px">¡Plan renovado! ✅</h2>
+      subject: `Plan renovado - ${opts.storeName}`,
+      body: `<h2 style="margin:0 0 8px">Plan renovado</h2>
         <p>El plan de tu tienda <strong>${esc(opts.storeName)}</strong> quedó activo hasta el <strong>${fecha}</strong>.</p>
         <p>¡Gracias!</p>`,
     },

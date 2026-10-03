@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { Store, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { isSuspended } from "@/lib/billing";
 import { getStoreOpenState } from "@/lib/store-hours";
 import { isAgeRestricted } from "@/lib/store-type";
 import { AgeGate } from "@/components/age-gate";
@@ -43,6 +44,8 @@ export default async function StoreLayout({
       shippingCents: true,
       freeShippingOverCents: true,
       hoursJson: true,
+      plan: true,
+      paidUntil: true,
     },
   });
   if (!store) {
@@ -60,8 +63,9 @@ export default async function StoreLayout({
     notFound();
   }
 
-  // Tienda desactivada: página de mantenimiento (no renderizamos la tienda).
-  if (!store.active) {
+  // Tienda desactivada o suspendida por plan vencido: página de mantenimiento
+  // (no renderizamos la tienda).
+  if (!store.active || isSuspended(store)) {
     return (
       <StoreUnavailable
         name={store.name}

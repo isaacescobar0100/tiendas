@@ -13,6 +13,7 @@ import {
   dismissTempPasswordAction,
 } from "./actions";
 import type { StorePlan } from "@prisma/client";
+import { billingOf, PLAN_LABEL } from "@/lib/billing";
 import { requireSuperadmin } from "@/lib/guards";
 import { readTempPasswordFlash } from "@/lib/flash";
 import { storePublicUrl } from "@/lib/site-url";
@@ -87,7 +88,7 @@ export default async function SuperadminHome() {
   // Rentas vencidas (fecha de pago ya pasada).
   const now = Date.now();
   const overdueCount = stores.filter(
-    (s) => s.plan === "RENT" && s.paidUntil && s.paidUntil.getTime() < now,
+    (s) => s.paidUntil && s.paidUntil.getTime() < now,
   ).length;
 
   // Ranking: facturado por tienda (entregados).
@@ -161,7 +162,7 @@ export default async function SuperadminHome() {
         <StatCard label="Pedidos" value={String(totalOrders)} />
         <StatCard label="Facturado*" value={formatPrice(grossCents)} />
         <StatCard
-          label="Rentas vencidas"
+          label="Planes vencidos"
           value={String(overdueCount)}
           highlight={overdueCount > 0}
         />
@@ -299,18 +300,12 @@ export default async function SuperadminHome() {
                           Entrar
                         </button>
                       </form>
-                      {store.plan === "RENT" && (
-                        <form action={renewStoreAction}>
-                          <input
-                            type="hidden"
-                            name="storeId"
-                            value={store.id}
-                          />
-                          <button className="rounded-md border border-blue-200 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50">
-                            Renovar +1 mes
-                          </button>
-                        </form>
-                      )}
+                      <form action={renewStoreAction}>
+                        <input type="hidden" name="storeId" value={store.id} />
+                        <button className="rounded-md border border-blue-200 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50">
+                          Renovar {store.plan === "SALE" ? "+1 año" : "+1 mes"}
+                        </button>
+                      </form>
                       <form action={toggleStoreActiveAction}>
                         <input type="hidden" name="storeId" value={store.id} />
                         <button className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50">
@@ -341,7 +336,7 @@ export default async function SuperadminHome() {
   );
 }
 
-// Celda de plan: "Venta única" o "Renta" con su fecha y estado.
+// Celda de plan: tipo de cobro con su fecha y estado (al día / vence / vencida).
 function PlanCell({
   plan,
   paidUntil,
@@ -349,28 +344,32 @@ function PlanCell({
   plan: StorePlan;
   paidUntil: Date | null;
 }) {
-  if (plan === "SALE") {
-    return <span className="text-xs text-gray-500">Venta única</span>;
-  }
   if (!paidUntil) {
     return (
       <div>
-        <div className="text-xs font-medium text-gray-700">Renta</div>
+        <div className="text-xs font-medium text-gray-700">{PLAN_LABEL[plan]}</div>
         <span className="text-xs text-amber-600">Sin fecha</span>
       </div>
     );
   }
-  const days = Math.ceil((paidUntil.getTime() - Date.now()) / 86400000);
-  const badge =
-    days < 0
-      ? "bg-red-100 text-red-700"
-      : days <= 3
-        ? "bg-amber-100 text-amber-700"
-        : "bg-green-100 text-green-700";
-  const label = days < 0 ? "Vencida" : days <= 3 ? "Vence pronto" : "Al día";
+  const { status, days } = billingOf({ plan, paidUntil });
+  const badge = {
+    none: "bg-gray-100 text-gray-500",
+    ok: "bg-green-100 text-green-700",
+    soon: "bg-amber-100 text-amber-700",
+    grace: "bg-red-100 text-red-700",
+    suspended: "bg-red-600 text-white",
+  }[status];
+  const label = {
+    none: "",
+    ok: "Al día",
+    soon: `Vence en ${days} día${days === 1 ? "" : "s"}`,
+    grace: "Vencida (en gracia)",
+    suspended: "Suspendida",
+  }[status];
   return (
     <div>
-      <div className="text-xs font-medium text-gray-700">Renta</div>
+      <div className="text-xs font-medium text-gray-700">{PLAN_LABEL[plan]}</div>
       <span
         className={`rounded-full px-1.5 py-0.5 text-[11px] font-medium ${badge}`}
       >

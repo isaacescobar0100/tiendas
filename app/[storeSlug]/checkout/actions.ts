@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { isSuspended } from "@/lib/billing";
 import { sendOrderEmails } from "@/lib/email";
 import {
   isWompiConfigured,
@@ -122,6 +123,10 @@ export async function placeOrderAction(
     },
   });
   if (!store) return { error: "Tienda no encontrada." };
+  // Plan vencido (fuera del periodo de gracia): la tienda no recibe pedidos.
+  if (isSuspended(store)) {
+    return { error: "Esta tienda no está recibiendo pedidos en este momento." };
+  }
 
   // Fuera del horario de atención solo se aceptan pedidos de merch
   // (productos con alwaysAvailable). La validación por producto va más abajo.

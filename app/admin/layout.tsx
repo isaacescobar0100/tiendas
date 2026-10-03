@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAdminStore } from "@/lib/guards";
+import { billingOf, GRACE_DAYS } from "@/lib/billing";
 import { AdminNav } from "@/components/admin-nav";
 import { stopImpersonationAction } from "@/app/superadmin/actions";
 
@@ -10,24 +11,32 @@ export default async function AdminLayout({
 }) {
   const { store, impersonating } = await requireAdminStore();
 
-  // Aviso de renta (solo tiendas de renta con fecha de pago).
-  let rentBanner: { text: string; danger: boolean } | null = null;
-  if (store.plan === "RENT" && store.paidUntil) {
-    const days = Math.ceil(
-      (store.paidUntil.getTime() - Date.now()) / 86400000,
-    );
-    if (days < 0) {
-      rentBanner = {
-        text: "Tu plan está vencido. Renueva el pago para no perder el acceso a tu tienda.",
-        danger: true,
-      };
-    } else if (days <= 3) {
-      rentBanner = {
-        text: `Tu plan vence ${days === 0 ? "hoy" : `en ${days} día${days === 1 ? "" : "s"}`}. Renueva a tiempo para no perder el acceso.`,
-        danger: false,
-      };
-    }
-  }
+  // Aviso de vencimiento del plan (anual o mensual).
+  const billing = billingOf(store);
+  const fecha = store.paidUntil
+    ? new Intl.DateTimeFormat("es", {
+        timeZone: "America/Bogota",
+        dateStyle: "long",
+      }).format(store.paidUntil)
+    : "";
+  const days = billing.days ?? 0;
+  const rentBanner: { text: string; danger: boolean } | null =
+    billing.status === "suspended"
+      ? {
+          text: `Tu tienda está suspendida: el plan venció el ${fecha}. Tus clientes no pueden ver ni comprar. Renueva para reactivarla.`,
+          danger: true,
+        }
+      : billing.status === "grace"
+        ? {
+            text: `Tu plan venció el ${fecha}. Tienes ${GRACE_DAYS + days + 1} día${GRACE_DAYS + days + 1 === 1 ? "" : "s"} antes de que la tienda se suspenda. Renueva el pago.`,
+            danger: true,
+          }
+        : billing.status === "soon"
+          ? {
+              text: `Tu plan vence ${days === 0 ? "hoy" : `en ${days} día${days === 1 ? "" : "s"}`} (${fecha}). Renueva a tiempo para no perder el acceso.`,
+              danger: false,
+            }
+          : null;
 
   return (
     <div className="min-h-screen bg-gray-50">

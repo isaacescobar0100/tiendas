@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendRentEmail } from "@/lib/email";
+import { billingOf } from "@/lib/billing";
 
 // Comparación en tiempo constante del header de autorización.
 function sameSecret(given: string, expected: string): boolean {
@@ -9,8 +10,9 @@ function sameSecret(given: string, expected: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-// Cron diario (Vercel): avisa por correo a las tiendas de renta cuyo plan
-// vence pronto (≤3 días) o ya venció. No repite el mismo aviso (rentNotice).
+// Cron diario (Vercel): avisa por correo al admin de cada tienda cuyo plan
+// vence pronto (anual: 30 y 7 días antes; mensual: 3), ya venció (en gracia) o
+// quedó suspendida. Cada aviso sale una sola vez por fecha (rentNotice).
 export async function GET(request: Request) {
   // Exige el header que Vercel añade a los crons (Authorization: Bearer
   // CRON_SECRET). Sin CRON_SECRET configurado, el endpoint queda cerrado.
@@ -22,9 +24,10 @@ export async function GET(request: Request) {
 
   const now = Date.now();
   const stores = await prisma.store.findMany({
-    where: { plan: "RENT", paidUntil: { not: null } },
+    where: { paidUntil: { not: null } },
     select: {
       id: true,
+      plan: true,
       name: true,
       paidUntil: true,
       rentNotice: true,
@@ -35,11 +38,12 @@ export async function GET(request: Request) {
   let sent = 0;
   for (const store of stores) {
     if (!store.paidUntil) continue;
-    const days = Math.ceil((store.paidUntil.getTime() - now) / 86400000);
-    const kind = days < 0 ? "overdue" : days <= 3 ? "soon" : null;
-    if (!kind) continue;
+    const { status, stage, days } = billingOf(store, now);
+    if (!stage || days === null) continue;
+    const kind =
+      status === "suspended" ? "suspended" : status === "grace" ? "overdue" : "soon";
 
-    const key = `${kind}:${store.paidUntil.toISOString().slice(0, 10)}`;
+    const key = `${stage}:${store.paidUntil.toISOString().slice(0, 10)}`;
     if (store.rentNotice === key) continue; // ya avisado
 
     // Reserva el aviso antes de enviarlo (atómico): dos ejecuciones a la vez
@@ -54,6 +58,7 @@ export async function GET(request: Request) {
       to: store.owner.email,
       storeName: store.name,
       kind,
+      days,
       paidUntil: store.paidUntil,
     });
     if (ok) {

@@ -6,6 +6,7 @@ import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { renewedUntil } from "@/lib/billing";
 import { slugify, isReservedSlug } from "@/lib/utils";
 import { requireSuperadmin } from "@/lib/guards";
 import { setImpersonation, clearImpersonation } from "@/lib/impersonation";
@@ -178,8 +179,11 @@ export async function updateStoreConfigAction(
   }
 
   const plan = d.plan === "RENT" ? "RENT" : "SALE";
-  const paidUntil =
-    plan === "RENT" && d.paidUntil ? new Date(d.paidUntil) : null;
+  // Ambos planes vencen: anual (pago único) o mensual. Vacío = sin control.
+  const paidUntil = d.paidUntil ? new Date(`${d.paidUntil}T23:59:59-05:00`) : null;
+  if (paidUntil && Number.isNaN(paidUntil.getTime())) {
+    return { error: "Fecha de pago inválida." };
+  }
   // Si cambia la fecha de pago, reinicia el aviso para el nuevo ciclo.
   const paidChanged =
     (paidUntil?.getTime() ?? null) !== (store.paidUntil?.getTime() ?? null);
@@ -219,8 +223,8 @@ export async function updateStoreConfigAction(
   return { ok: true };
 }
 
-/** Renta: suma 1 mes a la fecha de pago (desde la actual si es futura, si no
- *  desde hoy) y reactiva la tienda. Marca el plan como RENT. */
+/** Renueva el plan: +1 año (pago único + anual) o +1 mes (mensual), desde la
+ *  fecha actual si aún no vence o desde hoy si ya venció. Reactiva la tienda. */
 export async function renewStoreAction(formData: FormData) {
   await requireSuperadmin();
   const storeId = String(formData.get("storeId"));
@@ -230,15 +234,11 @@ export async function renewStoreAction(formData: FormData) {
   });
   if (!store) return;
 
-  const base =
-    store.paidUntil && store.paidUntil.getTime() > Date.now()
-      ? new Date(store.paidUntil)
-      : new Date();
-  base.setMonth(base.getMonth() + 1);
+  const base = renewedUntil(store);
 
   await prisma.store.update({
     where: { id: storeId },
-    data: { plan: "RENT", paidUntil: base, active: true, rentNotice: null },
+    data: { paidUntil: base, active: true, rentNotice: null },
   });
   // Confirmación al admin de la tienda (no bloquea si el correo falla).
   await sendRentEmail({

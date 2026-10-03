@@ -48,8 +48,11 @@ export default async function EditStorePage({
           plan: store.plan,
           maxLocations: store.maxLocations,
           sedesUsed: store._count.locations,
+          // Fecha en hora de Colombia (YYYY-MM-DD): con UTC se correría un día.
           paidUntil: store.paidUntil
-            ? store.paidUntil.toISOString().slice(0, 10)
+            ? new Intl.DateTimeFormat("en-CA", {
+                timeZone: "America/Bogota",
+              }).format(store.paidUntil)
             : "",
           onlinePaymentEnabled: store.onlinePaymentEnabled,
           codEnabled: store.codEnabled,
