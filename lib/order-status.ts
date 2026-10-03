@@ -12,10 +12,10 @@ export const PAYMENT_LABEL: Record<OrderStatus, string> = {
 };
 
 export const PAYMENT_BADGE: Record<OrderStatus, string> = {
-  PENDING: "bg-amber-100 text-amber-700",
-  PAID: "bg-green-100 text-green-700",
-  SHIPPED: "bg-green-100 text-green-700",
-  CANCELLED: "bg-gray-100 text-gray-500",
+  PENDING: "bg-warn-soft text-warn-ink",
+  PAID: "bg-ok-soft text-ok-ink",
+  SHIPPED: "bg-ok-soft text-ok-ink",
+  CANCELLED: "bg-surface-3 text-ink-3",
 };
 
 // "Facturado" solo cuenta lo cobrado (pagado). Pendiente/cancelado no suman.
@@ -44,10 +44,10 @@ export const FULFILLMENT_LABEL: Record<Fulfillment, string> = {
 };
 
 export const FULFILLMENT_BADGE: Record<Fulfillment, string> = {
-  PENDING: "bg-amber-100 text-amber-700",
-  CONFIRMED: "bg-violet-100 text-violet-700",
-  SHIPPED: "bg-blue-100 text-blue-700",
-  DELIVERED: "bg-green-100 text-green-700",
+  PENDING: "bg-warn-soft text-warn-ink",
+  CONFIRMED: "bg-alt-soft text-alt-ink",
+  SHIPPED: "bg-info-soft text-info-ink",
+  DELIVERED: "bg-ok-soft text-ok-ink",
 };
 
 export const FULFILLMENT_COLOR: Record<Fulfillment, string> = {

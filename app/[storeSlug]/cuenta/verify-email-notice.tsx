@@ -18,32 +18,32 @@ export function VerifyEmailNotice({
   );
 
   return (
-    <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-      <div className="flex items-center gap-2 text-amber-900">
+    <div className="mt-4 rounded-2xl border border-warn/30 bg-warn-soft p-5">
+      <div className="flex items-center gap-2 text-warn-ink">
         <MailCheck className="h-5 w-5" />
         <p className="font-semibold">Confirma tu correo para ver tus pedidos</p>
       </div>
-      <p className="mt-1 text-sm text-amber-800">
+      <p className="mt-1 text-sm text-warn-ink">
         Por seguridad, mostramos los pedidos solo cuando confirmas que{" "}
         <strong>{email}</strong> es tuyo. Te enviamos un enlace para hacerlo.
       </p>
       <form action={formAction} className="mt-3">
         <input type="hidden" name="storeSlug" value={storeSlug} />
         {state?.ok ? (
-          <p className="text-sm text-green-700">
+          <p className="text-sm text-ok-ink">
             Listo, revisa tu correo (y la carpeta de spam).
           </p>
         ) : (
           <button
             type="submit"
             disabled={pending}
-            className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-60"
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:brightness-110 disabled:opacity-60"
           >
             {pending ? "Enviando…" : "Enviarme el enlace"}
           </button>
         )}
         {state?.error && (
-          <p className="mt-2 text-sm text-red-600">{state.error}</p>
+          <p className="mt-2 text-sm text-bad-ink">{state.error}</p>
         )}
       </form>
     </div>

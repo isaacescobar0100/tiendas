@@ -62,28 +62,28 @@ export default async function AccountPage({
     <div className="mx-auto max-w-2xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Hola, {customer.name}</h1>
-          <p className="text-sm text-gray-500">{customer.email}</p>
+          <h1 className="text-2xl font-bold text-ink">Hola, {customer.name}</h1>
+          <p className="text-sm text-ink-3">{customer.email}</p>
         </div>
         <form action={logoutAction}>
           <input type="hidden" name="storeSlug" value={store.slug} />
-          <button className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-line-2 px-3 py-2 text-sm text-ink-2 hover:bg-surface-2">
             <LogOut className="h-4 w-4" /> Cerrar sesión
           </button>
         </form>
       </div>
 
-      <h2 className="mt-8 text-lg font-bold text-gray-900">Mis pedidos</h2>
+      <h2 className="mt-8 text-lg font-bold text-ink">Mis pedidos</h2>
 
       {!verified ? (
         <VerifyEmailNotice storeSlug={store.slug} email={customer.email} />
       ) : orders.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-gray-300 p-10 text-center">
-          <PackageSearch className="mx-auto h-9 w-9 text-gray-300" />
-          <p className="mt-3 text-gray-500">Todavía no tienes pedidos.</p>
+        <div className="mt-4 rounded-2xl border border-dashed border-line-2 p-10 text-center">
+          <PackageSearch className="mx-auto h-9 w-9 text-ink-4" />
+          <p className="mt-3 text-ink-3">Todavía no tienes pedidos.</p>
           <Link
             href={sh()}
-            className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
+            className="mt-4 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:brightness-110"
           >
             Ir a comprar
           </Link>
@@ -91,13 +91,13 @@ export default async function AccountPage({
       ) : (
         <div className="mt-4 space-y-4">
           {orders.map((o) => (
-            <div key={o.id} className="rounded-2xl border border-gray-200 p-5">
+            <div key={o.id} className="rounded-2xl border border-line p-5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-semibold text-ink">
                     Pedido #{o.id.slice(-8)}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-ink-3">
                     {dateFmt.format(o.createdAt)}
                   </p>
                 </div>
@@ -117,28 +117,28 @@ export default async function AccountPage({
 
               <OrderProgress fulfillment={o.fulfillment} status={o.status} />
 
-              <ul className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 text-sm">
+              <ul className="mt-3 space-y-1.5 border-t border-line pt-3 text-sm">
                 {o.items.map((i) => (
                   <li key={i.id} className="flex justify-between">
-                    <span className="text-gray-600">
+                    <span className="text-ink-2">
                       {i.name}
                       {variantLabel(i.color, i.size) && (
-                        <span className="text-gray-400">
+                        <span className="text-ink-3">
                           {" "}
                           ({variantLabel(i.color, i.size)})
                         </span>
                       )}{" "}
-                      <span className="text-gray-400">×{i.quantity}</span>
+                      <span className="text-ink-3">×{i.quantity}</span>
                     </span>
-                    <span className="text-gray-900">
+                    <span className="text-ink">
                       {formatPrice(i.priceCents * i.quantity, o.currency)}
                     </span>
                   </li>
                 ))}
               </ul>
-              <div className="mt-2 flex justify-between border-t border-gray-100 pt-2">
-                <span className="font-medium text-gray-900">Total</span>
-                <span className="font-bold text-gray-900">
+              <div className="mt-2 flex justify-between border-t border-line pt-2">
+                <span className="font-medium text-ink">Total</span>
+                <span className="font-bold text-ink">
                   {formatPrice(o.totalCents, o.currency)}
                 </span>
               </div>

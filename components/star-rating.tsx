@@ -22,14 +22,14 @@ export function StarRating({
           const fill = rounded >= n ? 1 : rounded >= n - 0.5 ? 0.5 : 0;
           return (
             <span key={n} className={`relative ${px}`}>
-              <Star className={`${px} absolute inset-0 text-gray-300`} />
+              <Star className={`${px} absolute inset-0 text-ink-4`} />
               {fill > 0 && (
                 <span
                   className="absolute inset-0 overflow-hidden"
                   style={{ width: fill === 0.5 ? "50%" : "100%" }}
                 >
                   <Star
-                    className={`${px} fill-amber-400 text-amber-400`}
+                    className={`${px} fill-warn text-warn-ink`}
                   />
                 </span>
               )}
@@ -38,7 +38,7 @@ export function StarRating({
         })}
       </span>
       {showCount && count != null && count > 0 && (
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-ink-3">
           {value.toFixed(1)} ({count})
         </span>
       )}

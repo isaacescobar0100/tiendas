@@ -16,7 +16,7 @@ export function OrderProgress({
 }) {
   if (status === "CANCELLED") {
     return (
-      <p className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-500">
+      <p className="mt-4 rounded-lg bg-surface-2 px-4 py-3 text-sm text-ink-3">
         Este pedido fue cancelado.
       </p>
     );
@@ -31,14 +31,14 @@ export function OrderProgress({
             <li key={s} className="relative flex flex-1 flex-col items-center">
               {i > 0 && (
                 <span
-                  className={`absolute right-1/2 top-2 h-0.5 w-full ${done ? "bg-[var(--brand)]" : "bg-gray-200"}`}
+                  className={`absolute right-1/2 top-2 h-0.5 w-full ${done ? "bg-brand" : "bg-line"}`}
                 />
               )}
               <span
-                className={`relative z-10 h-4 w-4 rounded-full border-2 ${done ? "border-[var(--brand)] bg-[var(--brand)]" : "border-gray-300 bg-white"}`}
+                className={`relative z-10 h-4 w-4 rounded-full border-2 ${done ? "border-brand bg-brand" : "border-line-2 bg-surface"}`}
               />
               <span
-                className={`mt-1.5 text-center text-[11px] leading-tight ${i === current ? "font-semibold text-gray-900" : done ? "text-gray-600" : "text-gray-400"}`}
+                className={`mt-1.5 text-center text-[11px] leading-tight ${i === current ? "font-semibold text-ink" : done ? "text-ink-2" : "text-ink-3"}`}
               >
                 {FULFILLMENT_LABEL[s]}
               </span>
@@ -46,7 +46,7 @@ export function OrderProgress({
           );
         })}
       </ol>
-      <p className="mt-3 text-center text-sm text-gray-600">
+      <p className="mt-3 text-center text-sm text-ink-2">
         {FULFILLMENT_HINT[fulfillment]}
       </p>
     </div>

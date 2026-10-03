@@ -27,7 +27,7 @@ export function BannerSlider({ slides }: { slides: BannerSlide[] }) {
   if (n === 0) return null;
 
   return (
-    <div className="relative mb-8 h-[216px] overflow-hidden rounded-2xl border border-gray-200 sm:h-[264px] md:h-[312px]">
+    <div className="relative mb-8 h-[216px] overflow-hidden rounded-2xl border border-line sm:h-[264px] md:h-[312px]">
       {slides.map((s, idx) => (
         <Slide key={idx} slide={s} active={idx === i} priority={idx === 0} />
       ))}
@@ -41,7 +41,7 @@ export function BannerSlider({ slides }: { slides: BannerSlide[] }) {
               onClick={() => setI(idx)}
               aria-label={`Ir a la promoción ${idx + 1}`}
               className={`h-2 w-2 rounded-full transition ${
-                idx === i ? "bg-white" : "bg-white/50 hover:bg-white/80"
+                idx === i ? "bg-surface" : "bg-surface/50 hover:bg-surface/80"
               }`}
             />
           ))}
@@ -82,7 +82,7 @@ function Slide({
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="h-full w-full bg-[var(--brand)]" />
+        <div className="h-full w-full bg-brand" />
       )}
 
       {(slide.title || slide.subtitle || slide.linkUrl) && (
@@ -101,7 +101,7 @@ function Slide({
                 </p>
               )}
               {slide.linkUrl && (
-                <span className="mt-3 inline-flex items-center gap-1 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-900 shadow sm:text-sm">
+                <span className="mt-3 inline-flex items-center gap-1 rounded-lg bg-surface/95 px-3 py-1.5 text-xs font-semibold text-ink shadow sm:text-sm">
                   Ver oferta →
                 </span>
               )}

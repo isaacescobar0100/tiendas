@@ -13,17 +13,17 @@ export default function CartPage() {
     useCart();
 
   if (!ready) {
-    return <p className="text-sm text-gray-400">Cargando carrito…</p>;
+    return <p className="text-sm text-ink-3">Cargando carrito…</p>;
   }
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-md rounded-2xl border border-dashed border-gray-300 p-12 text-center">
-        <ShoppingCart className="mx-auto h-10 w-10 text-gray-300" />
-        <p className="mt-3 text-gray-500">Tu carrito está vacío.</p>
+      <div className="mx-auto max-w-md rounded-2xl border border-dashed border-line-2 p-12 text-center">
+        <ShoppingCart className="mx-auto h-10 w-10 text-ink-4" />
+        <p className="mt-3 text-ink-3">Tu carrito está vacío.</p>
         <Link
           href={sh()}
-          className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
+          className="mt-4 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:brightness-110"
         >
           Ver productos
         </Link>
@@ -33,9 +33,9 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Tu carrito</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">Tu carrito</h1>
 
-      <ul className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200">
+      <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
         {items.map((item) => (
           <li key={item.key} className="flex items-center gap-4 p-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -47,29 +47,29 @@ export default function CartPage() {
             <div className="min-w-0 flex-1">
               <Link
                 href={sh(`/${item.slug}`)}
-                className="truncate font-medium text-gray-900 hover:underline"
+                className="truncate font-medium text-ink hover:underline"
               >
                 {item.name}
               </Link>
               {variantLabel(item.color, item.size) && (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-ink-3">
                   {variantLabel(item.color, item.size)}
                 </p>
               )}
               {item.modifiers && item.modifiers.length > 0 && (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-ink-3">
                   {item.modifiers.map((m) => m.optionName).join(" · ")}
                 </p>
               )}
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-ink-3">
                 {formatPrice(item.priceCents, currency)}
               </p>
             </div>
 
-            <div className="flex items-center rounded-lg border border-gray-300">
+            <div className="flex items-center rounded-lg border border-line-2">
               <button
                 onClick={() => setQuantity(item.key, item.quantity - 1)}
-                className="px-2.5 py-1.5 text-gray-600 hover:text-gray-900"
+                className="px-2.5 py-1.5 text-ink-2 hover:text-ink"
                 aria-label="Menos"
               >
                 −
@@ -77,20 +77,20 @@ export default function CartPage() {
               <span className="w-8 text-center text-sm">{item.quantity}</span>
               <button
                 onClick={() => setQuantity(item.key, item.quantity + 1)}
-                className="px-2.5 py-1.5 text-gray-600 hover:text-gray-900"
+                className="px-2.5 py-1.5 text-ink-2 hover:text-ink"
                 aria-label="Más"
               >
                 +
               </button>
             </div>
 
-            <div className="w-20 text-right text-sm font-semibold text-gray-900">
+            <div className="w-20 text-right text-sm font-semibold text-ink">
               {formatPrice(item.priceCents * item.quantity, currency)}
             </div>
 
             <button
               onClick={() => remove(item.key)}
-              className="text-gray-400 hover:text-red-500"
+              className="text-ink-3 hover:text-bad-ink"
               aria-label="Quitar"
             >
               <X className="h-4 w-4" />
@@ -102,9 +102,9 @@ export default function CartPage() {
       <div className="mt-6">
         <FreeShippingNote />
       </div>
-      <div className="mt-3 flex items-center justify-between rounded-2xl border border-gray-200 p-4">
-        <span className="text-gray-500">Total</span>
-        <span className="text-2xl font-bold text-gray-900">
+      <div className="mt-3 flex items-center justify-between rounded-2xl border border-line p-4">
+        <span className="text-ink-3">Total</span>
+        <span className="text-2xl font-bold text-ink">
           {formatPrice(totalCents, currency)}
         </span>
       </div>
@@ -112,13 +112,13 @@ export default function CartPage() {
       <div className="mt-6 flex items-center justify-between">
         <Link
           href={sh()}
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
+          className="inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink"
         >
           <ArrowLeft className="h-4 w-4" /> Seguir comprando
         </Link>
         <Link
           href={sh(`/checkout`)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white hover:brightness-110"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-6 py-3 text-sm font-medium text-brand-ink hover:brightness-110"
         >
           Finalizar compra <ArrowRight className="h-4 w-4" />
         </Link>

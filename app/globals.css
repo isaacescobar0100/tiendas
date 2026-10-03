@@ -3,9 +3,77 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Tema por defecto (fuera de una tienda: admin, login…). Generado con
+     themeTokens(DEFAULT_THEME); cada tienda los sobrescribe en su contenedor. */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f5f6f7;
+  --surface-3: #ecedee;
+  --ink: #111827;
+  --ink-2: #3d4351;
+  --ink-3: #616672;
+  --ink-4: #898e97;
+  --line: #e1e2e5;
+  --line-2: #c9cbcf;
+  --brand: #111827;
+  --brand-ink: #ffffff;
+  --brand-hover: #1f2636;
+  --brand-soft: #dee0e2;
+  --brand-text: #111827;
+  --ok: #2f7d55;
+  --ok-soft: #e6efe9;
+  --ok-ink: #26764e;
+  --warn: #a86b12;
+  --warn-soft: #f5ede4;
+  --warn-ink: #985d00;
+  --bad: #b83a3a;
+  --bad-soft: #f9e8e6;
+  --bad-ink: #b83a3a;
+  --info: #2f64a8;
+  --info-soft: #e5ecf5;
+  --info-ink: #2f64a8;
+  --alt: #6b4fa8;
+  --alt-soft: #ece9f5;
+  --alt-ink: #6b4fa8;
+  --font-heading-family: var(--font-geist-sans);
+  --font-body-family: var(--font-geist-sans);
 }
 
 @theme inline {
+  /* Tokens del tema de cada tienda (lib/theme.ts). Clases: bg-surface,
+     text-ink, text-ink-2, border-line, bg-brand, text-brand-ink, … */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-text: var(--brand-text);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-ok-ink: var(--ok-ink);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-ink: var(--warn-ink);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-bad-ink: var(--bad-ink);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-ink: var(--info-ink);
+  --color-alt: var(--alt);
+  --color-alt-soft: var(--alt-soft);
+  --color-alt-ink: var(--alt-ink);
+  --font-heading: var(--font-heading-family);
+  --font-body: var(--font-body-family);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -38,4 +106,22 @@ select {
 ::placeholder {
   color: #9ca3af; /* gray-400 */
   opacity: 1;
+}
+
+/* ─── Contenedor de una tienda con su tema ─────────────────────────────────── */
+.store-theme {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body-family), system-ui, sans-serif;
+}
+.store-theme :is(h1, h2, h3) {
+  font-family: var(--font-heading-family), system-ui, sans-serif;
+}
+/* Campos con los colores del tema (también en modo oscuro). */
+.store-theme :is(input, textarea, select) {
+  color: var(--ink);
+  background-color: var(--surface);
+}
+.store-theme ::placeholder {
+  color: var(--ink-4);
 }

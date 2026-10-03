@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { Store, Clock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { isSuspended } from "@/lib/billing";
+import { storeTheme, themeStyle } from "@/lib/theme";
+import { themeFontVars } from "@/lib/fonts";
 import { getStoreOpenState } from "@/lib/store-hours";
 import { isAgeRestricted } from "@/lib/store-type";
 import { AgeGate } from "@/components/age-gate";
@@ -39,6 +41,11 @@ export default async function StoreLayout({
       currency: true,
       logoUrl: true,
       themeColor: true,
+      themeBg: true,
+      themeSurface: true,
+      themeInk: true,
+      themeMode: true,
+      themeFont: true,
       surveyUrl: true,
       whatsapp: true,
       shippingCents: true,
@@ -63,15 +70,18 @@ export default async function StoreLayout({
     notFound();
   }
 
+  // Tema de la tienda (Admin > Apariencia): variables CSS en el contenedor
+  // raíz. Llegan con el HTML del servidor, así que no hay parpadeo al cargar.
+  const themeCss = themeStyle(storeTheme(store));
+  const themeCls = `store-theme ${themeFontVars}`;
+
   // Tienda desactivada o suspendida por plan vencido: página de mantenimiento
   // (no renderizamos la tienda).
   if (!store.active || isSuspended(store)) {
     return (
-      <StoreUnavailable
-        name={store.name}
-        logoUrl={store.logoUrl}
-        themeColor={store.themeColor}
-      />
+      <div className={themeCls} style={themeCss}>
+        <StoreUnavailable name={store.name} logoUrl={store.logoUrl} />
+      </div>
     );
   }
 
@@ -80,11 +90,8 @@ export default async function StoreLayout({
   const path = (await headers()).get("x-pathname") ?? "";
   if (path === `/${store.slug}/menu`) {
     return (
-      // La carta trae su propia portada: aquí solo el color de marca.
-      <div
-        className="min-h-screen bg-stone-100"
-        style={{ ["--brand" as string]: store.themeColor }}
-      >
+      // La carta trae su propia portada: aquí solo el tema.
+      <div className={`${themeCls} min-h-screen`} style={themeCss}>
         {children}
         {isAgeRestricted(store.type) && (
           <AgeGate storeSlug={store.slug} storeName={store.name} />
@@ -107,18 +114,15 @@ export default async function StoreLayout({
       freeShippingOverCents={store.freeShippingOverCents}
       storeClosed={openState.enforced && !openState.isOpen}
     >
-      {/* --brand: color de marca de la tienda, usado por botones y acentos */}
-      <div
-        className="contents"
-        style={{ ["--brand" as string]: store.themeColor }}
-      >
-      <div className="flex min-h-screen flex-col bg-white">
-        <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/90 backdrop-blur">
+      {/* Tema de la tienda: todos los colores y fuentes salen de aquí */}
+      <div className={themeCls} style={themeCss}>
+      <div className="flex min-h-screen flex-col bg-surface">
+        <header className="sticky top-0 z-10 border-b border-line bg-surface/90 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
             <div className="flex items-center gap-3">
               <Link
                 href={sh()}
-                className="flex items-center gap-2 font-bold text-gray-900"
+                className="flex items-center gap-2 font-bold text-ink"
               >
                 {store.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -128,7 +132,7 @@ export default async function StoreLayout({
                     className="h-8 w-8 rounded-lg object-cover"
                   />
                 ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand)] text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-brand-ink">
                     <Store className="h-4 w-4" />
                   </span>
                 )}
@@ -146,8 +150,8 @@ export default async function StoreLayout({
         </header>
 
         {openState.enforced && !openState.isOpen && (
-          <div className="border-b border-amber-200 bg-amber-50">
-            <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-4 py-2 text-center text-sm font-medium text-amber-800">
+          <div className="border-b border-warn/30 bg-warn-soft">
+            <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-4 py-2 text-center text-sm font-medium text-warn-ink">
               <Clock className="h-4 w-4 shrink-0" />
               <span>
                 Cerrado ahora
@@ -161,23 +165,23 @@ export default async function StoreLayout({
           {children}
         </main>
 
-        <footer className="border-t border-gray-200 py-6 text-center text-sm text-gray-400">
+        <footer className="border-t border-line py-6 text-center text-sm text-ink-3">
           <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
             <Link
               href={sh(`/rastrear`)}
-              className="font-medium text-gray-500 hover:text-gray-900"
+              className="font-medium text-ink-3 hover:text-ink"
             >
               Rastrear pedido
             </Link>
             <Link
               href={sh(`/legal/terminos`)}
-              className="text-gray-500 hover:text-gray-900"
+              className="text-ink-3 hover:text-ink"
             >
               Términos y condiciones
             </Link>
             <Link
               href={sh(`/legal/privacidad`)}
-              className="text-gray-500 hover:text-gray-900"
+              className="text-ink-3 hover:text-ink"
             >
               Política de privacidad
             </Link>
@@ -186,7 +190,7 @@ export default async function StoreLayout({
                 href={store.surveyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-gray-500 hover:text-gray-900"
+                className="font-medium text-ink-3 hover:text-ink"
               >
                 Encuesta de satisfacción
               </a>

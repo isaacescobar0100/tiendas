@@ -91,7 +91,7 @@ export function AddToCart({
     return (
       <button
         disabled
-        className="mt-8 w-full cursor-not-allowed rounded-lg bg-gray-200 px-6 py-3 text-sm font-medium text-gray-500 sm:w-auto"
+        className="mt-8 w-full cursor-not-allowed rounded-lg bg-line px-6 py-3 text-sm font-medium text-ink-3 sm:w-auto"
       >
         Agotado
       </button>
@@ -102,7 +102,7 @@ export function AddToCart({
   const blockedByHours = storeClosed && !product.alwaysAvailable;
   if (blockedByHours) {
     return (
-      <div className="mt-8 flex items-start gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      <div className="mt-8 flex items-start gap-2 rounded-lg bg-warn-soft px-4 py-3 text-sm text-warn-ink">
         <Clock className="mt-0.5 h-4 w-4 shrink-0" />
         <span>
           Estamos cerrados por ahora. Este producto solo se puede pedir en
@@ -153,7 +153,7 @@ export function AddToCart({
     <div className="mt-8 space-y-4">
       {hasColors && (
         <div>
-          <p className="mb-2 text-sm font-medium text-gray-700">
+          <p className="mb-2 text-sm font-medium text-ink-2">
             Color{selColor ? `: ${selColor}` : ""}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -172,10 +172,10 @@ export function AddToCart({
                   }}
                   className={`rounded-lg border px-3 py-2 text-sm transition ${
                     active
-                      ? "border-gray-900 bg-gray-900 text-white"
+                      ? "border-ink bg-ink text-bg"
                       : out
-                        ? "cursor-not-allowed border-gray-200 text-gray-300 line-through"
-                        : "border-gray-300 text-gray-700 hover:border-gray-900"
+                        ? "cursor-not-allowed border-line text-ink-4 line-through"
+                        : "border-line-2 text-ink-2 hover:border-ink"
                   }`}
                 >
                   {c}
@@ -188,7 +188,7 @@ export function AddToCart({
 
       {hasSizes && (
         <div>
-          <p className="mb-2 text-sm font-medium text-gray-700">Talla</p>
+          <p className="mb-2 text-sm font-medium text-ink-2">Talla</p>
           <div className="flex flex-wrap gap-2">
             {sizes.map((s) => {
               const stock = sizeStock(s);
@@ -206,10 +206,10 @@ export function AddToCart({
                   }}
                   className={`min-w-11 rounded-lg border px-3 py-2 text-sm transition ${
                     active
-                      ? "border-gray-900 bg-gray-900 text-white"
+                      ? "border-ink bg-ink text-bg"
                       : out || blockedByColor
-                        ? "cursor-not-allowed border-gray-200 text-gray-300 line-through"
-                        : "border-gray-300 text-gray-700 hover:border-gray-900"
+                        ? "cursor-not-allowed border-line text-ink-4 line-through"
+                        : "border-line-2 text-ink-2 hover:border-ink"
                   }`}
                 >
                   {s}
@@ -218,17 +218,17 @@ export function AddToCart({
             })}
           </div>
           {hasColors && !selColor && (
-            <p className="mt-1 text-xs text-gray-400">Elige primero un color.</p>
+            <p className="mt-1 text-xs text-ink-3">Elige primero un color.</p>
           )}
         </div>
       )}
 
       {modifierGroups.map((g) => (
         <div key={g.id}>
-          <p className="mb-2 text-sm font-medium text-gray-700">
+          <p className="mb-2 text-sm font-medium text-ink-2">
             {g.name}
-            {g.required && <span className="text-red-500"> *</span>}
-            <span className="ml-1 text-xs font-normal text-gray-400">
+            {g.required && <span className="text-bad-ink"> *</span>}
+            <span className="ml-1 text-xs font-normal text-ink-3">
               {g.multiple ? "(elige las que quieras)" : "(elige una)"}
             </span>
           </p>
@@ -240,8 +240,8 @@ export function AddToCart({
                   key={o.id}
                   className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition ${
                     checked
-                      ? "border-gray-900 bg-gray-50"
-                      : "border-gray-200 hover:border-gray-300"
+                      ? "border-ink bg-surface-2"
+                      : "border-line hover:border-line-2"
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -255,7 +255,7 @@ export function AddToCart({
                     {o.name}
                   </span>
                   {o.priceCents > 0 && (
-                    <span className="text-gray-500">
+                    <span className="text-ink-3">
                       +{formatPrice(o.priceCents, currency)}
                     </span>
                   )}
@@ -267,26 +267,26 @@ export function AddToCart({
       ))}
 
       {selected && canAdd && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-ink-3">
           {selected.stock} disponibles
         </p>
       )}
       {modifierGroups.length > 0 && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-2">
           Precio:{" "}
-          <span className="font-semibold text-gray-900">
+          <span className="font-semibold text-ink">
             {formatPrice(product.priceCents + modSelection.addedCents, currency)}
           </span>
         </p>
       )}
-      {warn && <p className="text-xs text-red-500">{warn}</p>}
+      {warn && <p className="text-xs text-bad-ink">{warn}</p>}
 
       <div className="flex items-center gap-3">
-        <div className="flex items-center rounded-lg border border-gray-300">
+        <div className="flex items-center rounded-lg border border-line-2">
           <button
             type="button"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="px-3 py-2 text-gray-600 hover:text-gray-900"
+            className="px-3 py-2 text-ink-2 hover:text-ink"
             aria-label="Menos"
           >
             −
@@ -295,7 +295,7 @@ export function AddToCart({
           <button
             type="button"
             onClick={() => setQty((q) => q + 1)}
-            className="px-3 py-2 text-gray-600 hover:text-gray-900"
+            className="px-3 py-2 text-ink-2 hover:text-ink"
             aria-label="Más"
           >
             +
@@ -313,7 +313,7 @@ export function AddToCart({
               setTimeout(() => setAdded(false), 1500);
             }
           }}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-50 sm:flex-none"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand px-6 py-3 text-sm font-medium text-brand-ink transition hover:brightness-110 disabled:opacity-50 sm:flex-none"
         >
           {added ? (
             <>
@@ -330,7 +330,7 @@ export function AddToCart({
         onClick={() => {
           if (doAdd()) router.push(sh(`/cart`));
         }}
-        className="inline-flex items-center gap-1 text-sm text-gray-500 underline hover:text-gray-900"
+        className="inline-flex items-center gap-1 text-sm text-ink-3 underline hover:text-ink"
       >
         Comprar ahora <ArrowRight className="h-4 w-4" />
       </button>
