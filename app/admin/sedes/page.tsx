@@ -20,6 +20,12 @@ export default async function SedesPage() {
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
   const loginUrl = "/sede/login";
+  // Cupo del plan (lo fija el superadmin). Las que ya existen se conservan.
+  const { maxLocations } = await prisma.store.findUniqueOrThrow({
+    where: { id: store.id },
+    select: { maxLocations: true },
+  });
+  const full = locations.length >= maxLocations;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -42,7 +48,21 @@ export default async function SedesPage() {
         </p>
       </div>
 
-      <LocationForm action={createLocationAction} title="Nueva sede" submitLabel="Añadir sede" />
+      <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm">
+        <span className="text-gray-600">Sedes de tu plan</span>
+        <span className="font-semibold text-gray-900">
+          {locations.length} de {maxLocations}
+        </span>
+      </div>
+
+      {full ? (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          Ya usas todas las sedes de tu plan. Para abrir otra sede, pide que
+          amplíen tu plan.
+        </p>
+      ) : (
+        <LocationForm action={createLocationAction} title="Nueva sede" submitLabel="Añadir sede" />
+      )}
 
       {locations.length > 0 && (
         <div className="space-y-4">

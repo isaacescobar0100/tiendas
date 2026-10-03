@@ -112,6 +112,8 @@ model Store {
   wompiEventsSecret    String?
   // Cobro: tipo de plan y (para renta) hasta cuándo está pagada.
   plan       StorePlan @default(SALE)
+  // Sedes que incluye el plan: la tienda crea las suyas hasta este tope.
+  maxLocations Int     @default(1)
   paidUntil  DateTime?
   // Último aviso de renta enviado (ej. "soon:2026-08-09"); evita reenvíos diarios.
   rentNotice String?

@@ -16,7 +16,10 @@ export default async function EditStorePage({
   const { id } = await params;
   const store = await prisma.store.findUnique({
     where: { id },
-    include: { owner: { select: { email: true } } },
+    include: {
+      owner: { select: { email: true } },
+      _count: { select: { locations: true } },
+    },
   });
   if (!store) notFound();
 
@@ -43,6 +46,8 @@ export default async function EditStorePage({
           type: store.type,
           customDomain: store.customDomain,
           plan: store.plan,
+          maxLocations: store.maxLocations,
+          sedesUsed: store._count.locations,
           paidUntil: store.paidUntil
             ? store.paidUntil.toISOString().slice(0, 10)
             : "",

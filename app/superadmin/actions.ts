@@ -104,6 +104,11 @@ const configSchema = z.object({
   customDomain: z.string().optional(),
   plan: z.enum(["SALE", "RENT"]).optional(),
   paidUntil: z.string().optional(),
+  maxLocations: z.coerce
+    .number()
+    .int("Las sedes deben ser un número entero.")
+    .min(1, "El plan incluye al menos 1 sede.")
+    .max(50, "Máximo 50 sedes."),
   wompiPublicKey: z.string().optional(),
   wompiPrivateKey: z.string().optional(),
   wompiIntegritySecret: z.string().optional(),
@@ -125,6 +130,7 @@ export async function updateStoreConfigAction(
     customDomain: formData.get("customDomain") ?? "",
     plan: (formData.get("plan") as string) || "SALE",
     paidUntil: formData.get("paidUntil") ?? "",
+    maxLocations: formData.get("maxLocations") ?? 1,
     wompiPublicKey: formData.get("wompiPublicKey") ?? "",
     wompiPrivateKey: formData.get("wompiPrivateKey") ?? "",
     wompiIntegritySecret: formData.get("wompiIntegritySecret") ?? "",
@@ -195,6 +201,7 @@ export async function updateStoreConfigAction(
       customDomain,
       plan,
       paidUntil,
+      maxLocations: d.maxLocations,
       onlinePaymentEnabled,
       codEnabled,
       transferEnabled,

@@ -14,6 +14,8 @@ type StoreCfg = {
   customDomain: string | null;
   plan: "SALE" | "RENT";
   paidUntil: string; // YYYY-MM-DD o ""
+  maxLocations: number;
+  sedesUsed: number;
   onlinePaymentEnabled: boolean;
   codEnabled: boolean;
   transferEnabled: boolean;
@@ -155,6 +157,21 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
             <option value="SALE">Venta única (es del cliente)</option>
             <option value="RENT">Renta (pago recurrente)</option>
           </select>
+        </div>
+        <div>
+          <label className={labelCls}>Sedes incluidas en el plan</label>
+          <input
+            type="number"
+            name="maxLocations"
+            min={1}
+            max={50}
+            defaultValue={store.maxLocations}
+            className={inputCls}
+          />
+          <p className="mt-1 text-xs text-gray-400">
+            La tienda crea sus sedes sola hasta este tope. Usa ahora{" "}
+            {store.sedesUsed}. Si lo bajas, las que ya existen se conservan.
+          </p>
         </div>
         <div>
           <label className={labelCls}>Pagada hasta (solo renta)</label>

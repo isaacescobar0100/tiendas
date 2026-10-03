@@ -41,16 +41,24 @@ export async function createLocationAction(formData: FormData) {
   const passwordHash =
     password.length >= SEDE_MIN_PASSWORD ? await bcrypt.hash(password, 10) : null;
 
-  await prisma.storeLocation.create({
-    data: {
-      storeId: store.id,
-      name: d.name,
-      address: d.address,
-      whatsapp: d.whatsapp,
-      sortOrder: d.sortOrder,
-      email,
-      passwordHash,
-    },
+  // Cupo del plan: se cuenta y se crea bajo un bloqueo de la fila de la tienda,
+  // así dos envíos a la vez no pasan del tope.
+  await prisma.$transaction(async (tx) => {
+    const [row] = await tx.$queryRaw<{ maxLocations: number }[]>`
+      SELECT "maxLocations" FROM "Store" WHERE id = ${store.id} FOR UPDATE`;
+    const used = await tx.storeLocation.count({ where: { storeId: store.id } });
+    if (!row || used >= row.maxLocations) return;
+    await tx.storeLocation.create({
+      data: {
+        storeId: store.id,
+        name: d.name!,
+        address: d.address,
+        whatsapp: d.whatsapp,
+        sortOrder: d.sortOrder,
+        email,
+        passwordHash,
+      },
+    });
   });
   revalidatePath("/admin/sedes");
   revalidatePath(`/${store.slug}`);
