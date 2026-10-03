@@ -18,11 +18,11 @@ export default function CopyButton({ text }: { text: string }) {
           // Sin permiso de portapapeles: el texto sigue visible para copiarlo a mano.
         }
       }}
-      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-line-2 bg-surface px-2 py-1 text-xs font-medium text-ink-2 hover:bg-surface-2"
+      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
     >
       {copied ? (
         <>
-          <Check className="h-3.5 w-3.5 text-ok-ink" /> Copiado
+          <Check className="h-3.5 w-3.5 text-green-600" /> Copiado
         </>
       ) : (
         <>

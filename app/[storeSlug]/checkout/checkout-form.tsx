@@ -74,7 +74,7 @@ export default function CheckoutForm({
 
   if (state?.orderId || state?.checkoutUrl) {
     return (
-      <p className="text-sm text-ink-3">
+      <p className="text-sm text-gray-500">
         {state?.checkoutUrl
           ? "Redirigiendo a la pasarela de pago…"
           : "Procesando tu pedido…"}
@@ -83,16 +83,16 @@ export default function CheckoutForm({
   }
 
   if (!ready) {
-    return <p className="text-sm text-ink-3">Cargando…</p>;
+    return <p className="text-sm text-gray-400">Cargando…</p>;
   }
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-md rounded-2xl border border-dashed border-line-2 p-12 text-center">
-        <p className="text-ink-3">Tu carrito está vacío.</p>
+      <div className="mx-auto max-w-md rounded-2xl border border-dashed border-gray-300 p-12 text-center">
+        <p className="text-gray-500">Tu carrito está vacío.</p>
         <Link
           href={sh()}
-          className="mt-4 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:brightness-110"
+          className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
         >
           Ver productos
         </Link>
@@ -113,11 +113,11 @@ export default function CheckoutForm({
     <div className="mx-auto max-w-4xl">
       <Link
         href={sh(`/cart`)}
-        className="mb-6 inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink"
+        className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
       >
         <ArrowLeft className="h-4 w-4" /> Volver al carrito
       </Link>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Finalizar compra</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">Finalizar compra</h1>
 
       <div className="grid gap-8 md:grid-cols-[1fr_360px]">
         {/* Formulario de datos */}
@@ -127,7 +127,7 @@ export default function CheckoutForm({
 
           {locations.length > 0 && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-ink-2">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 ¿En qué sede quieres tu pedido?
               </label>
               <select
@@ -164,8 +164,8 @@ export default function CheckoutForm({
             required
           />
 
-          <div className="border-t border-line pt-5">
-            <h2 className="mb-3 text-sm font-semibold text-ink">
+          <div className="border-t border-gray-100 pt-5">
+            <h2 className="mb-3 text-sm font-semibold text-gray-900">
               Dirección de envío
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -212,14 +212,14 @@ export default function CheckoutForm({
           </div>
 
           {/* Método de pago */}
-          <div className="border-t border-line pt-5">
-            <h2 className="mb-3 text-sm font-semibold text-ink">
+          <div className="border-t border-gray-100 pt-5">
+            <h2 className="mb-3 text-sm font-semibold text-gray-900">
               Método de pago
             </h2>
             <input type="hidden" name="paymentMethod" value={method} />
 
             {noMethod ? (
-              <p className="rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn-ink">
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
                 El pago no está disponible en este momento. Vuelve a intentarlo
                 más tarde.
               </p>
@@ -237,14 +237,14 @@ export default function CheckoutForm({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-ink-3">
+              <p className="text-sm text-gray-500">
                 {METHOD_INFO[method].title}: {METHOD_INFO[method].desc}
               </p>
             )}
           </div>
 
           {hoursBlocked && (
-            <div className="rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn-ink">
+            <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
               <div className="flex items-start gap-2">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
@@ -262,7 +262,7 @@ export default function CheckoutForm({
           )}
 
           {state?.error && (
-            <p className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad-ink">
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
               {state.error}
             </p>
           )}
@@ -270,7 +270,7 @@ export default function CheckoutForm({
           <button
             type="submit"
             disabled={pending || noMethod || hoursBlocked}
-            className="w-full rounded-lg bg-brand px-6 py-3 text-sm font-medium text-brand-ink transition hover:brightness-110 disabled:opacity-60"
+            className="w-full rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
           >
             {hoursBlocked
               ? "Cerrado ahora"
@@ -283,60 +283,60 @@ export default function CheckoutForm({
                   : "Confirmar pedido"}
           </button>
           {!noMethod && (
-            <p className="text-center text-xs text-ink-3">
+            <p className="text-center text-xs text-gray-400">
               {METHOD_INFO[method].hint}
             </p>
           )}
         </form>
 
         {/* Resumen */}
-        <div className="h-fit rounded-2xl border border-line p-5">
-          <h2 className="mb-4 text-sm font-semibold text-ink">
+        <div className="h-fit rounded-2xl border border-gray-200 p-5">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900">
             Resumen del pedido
           </h2>
           <ul className="space-y-3">
             {items.map((i) => (
               <li key={i.key} className="flex justify-between text-sm">
-                <span className="text-ink-2">
+                <span className="text-gray-600">
                   {i.name}
                   {variantLabel(i.color, i.size) && (
-                    <span className="text-ink-3">
+                    <span className="text-gray-400">
                       {" "}
                       ({variantLabel(i.color, i.size)})
                     </span>
                   )}{" "}
-                  <span className="text-ink-3">×{i.quantity}</span>
+                  <span className="text-gray-400">×{i.quantity}</span>
                   {i.modifiers && i.modifiers.length > 0 && (
-                    <span className="block text-xs text-ink-3">
+                    <span className="block text-xs text-gray-400">
                       {i.modifiers.map((m) => m.optionName).join(" · ")}
                     </span>
                   )}
                 </span>
-                <span className="text-ink">
+                <span className="text-gray-900">
                   {formatPrice(i.priceCents * i.quantity, currency)}
                 </span>
               </li>
             ))}
           </ul>
-          <div className="mt-4 space-y-1 border-t border-line pt-4 text-sm">
-            <div className="flex justify-between text-ink-2">
+          <div className="mt-4 space-y-1 border-t border-gray-100 pt-4 text-sm">
+            <div className="flex justify-between text-gray-600">
               <span>Subtotal</span>
               <span>{formatPrice(totalCents, currency)}</span>
             </div>
-            <div className="flex justify-between text-ink-2">
+            <div className="flex justify-between text-gray-600">
               <span>Envío</span>
               <span>
                 {shippingCents > 0 ? (
                   formatPrice(shippingCents, currency)
                 ) : (
-                  <span className="font-medium text-ok-ink">Gratis</span>
+                  <span className="font-medium text-green-600">Gratis</span>
                 )}
               </span>
             </div>
           </div>
-          <div className="mt-2 flex justify-between border-t border-line pt-3">
-            <span className="font-medium text-ink">Total</span>
-            <span className="text-lg font-bold text-ink">
+          <div className="mt-2 flex justify-between border-t border-gray-100 pt-3">
+            <span className="font-medium text-gray-900">Total</span>
+            <span className="text-lg font-bold text-gray-900">
               {formatPrice(grandTotal, currency)}
             </span>
           </div>
@@ -390,18 +390,18 @@ function MethodOption({
       onClick={onSelect}
       className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${
         checked
-          ? "border-ink bg-surface-2 ring-1 ring-ink"
-          : "border-line hover:border-line-2"
+          ? "border-gray-900 bg-gray-50 ring-1 ring-gray-900"
+          : "border-gray-200 hover:border-gray-300"
       }`}
     >
-      <span className="mt-0.5 text-ink-2">{icon}</span>
+      <span className="mt-0.5 text-gray-700">{icon}</span>
       <span className="flex-1">
-        <span className="block text-sm font-medium text-ink">{title}</span>
-        <span className="block text-xs text-ink-3">{desc}</span>
+        <span className="block text-sm font-medium text-gray-900">{title}</span>
+        <span className="block text-xs text-gray-500">{desc}</span>
       </span>
       <span
         className={`mt-1 h-4 w-4 shrink-0 rounded-full border ${
-          checked ? "border-ink bg-ink" : "border-line-2"
+          checked ? "border-gray-900 bg-gray-900" : "border-gray-300"
         }`}
       />
     </button>
@@ -414,7 +414,7 @@ function Field({
 }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-ink-2">
+      <label className="mb-1 block text-sm font-medium text-gray-700">
         {label}
       </label>
       <input {...props} className={inputCls} />
@@ -423,4 +423,4 @@ function Field({
 }
 
 const inputCls =
-  "w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";
+  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";

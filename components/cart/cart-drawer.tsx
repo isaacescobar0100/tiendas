@@ -43,15 +43,15 @@ export function CartDrawer() {
 
       {/* Panel */}
       <div
-        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-surface shadow-xl transition-transform ${
+        className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white shadow-xl transition-transform ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <h2 className="font-semibold text-ink">Tu carrito</h2>
+        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+          <h2 className="font-semibold text-gray-900">Tu carrito</h2>
           <button
             onClick={closeCart}
-            className="text-ink-3 hover:text-ink"
+            className="text-gray-400 hover:text-gray-900"
             aria-label="Cerrar"
           >
             <X className="h-5 w-5" />
@@ -60,18 +60,18 @@ export function CartDrawer() {
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-            <ShoppingCart className="h-10 w-10 text-ink-4" />
-            <p className="text-sm text-ink-3">Tu carrito está vacío.</p>
+            <ShoppingCart className="h-10 w-10 text-gray-300" />
+            <p className="text-sm text-gray-500">Tu carrito está vacío.</p>
             <button
               onClick={closeCart}
-              className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:brightness-110"
+              className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
             >
               Seguir comprando
             </button>
           </div>
         ) : (
           <>
-            <ul className="flex-1 divide-y divide-line overflow-y-auto px-5">
+            <ul className="flex-1 divide-y divide-gray-100 overflow-y-auto px-5">
               {items.map((item) => (
                 <li key={item.key} className="flex gap-3 py-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -81,27 +81,27 @@ export function CartDrawer() {
                     className="h-16 w-16 rounded-lg object-cover"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-ink">
+                    <p className="truncate text-sm font-medium text-gray-900">
                       {item.name}
                     </p>
                     {variantLabel(item.color, item.size) && (
-                      <p className="text-xs text-ink-3">
+                      <p className="text-xs text-gray-400">
                         {variantLabel(item.color, item.size)}
                       </p>
                     )}
                     {item.modifiers && item.modifiers.length > 0 && (
-                      <p className="text-xs text-ink-3">
+                      <p className="text-xs text-gray-400">
                         {item.modifiers.map((m) => m.optionName).join(" · ")}
                       </p>
                     )}
-                    <p className="text-sm text-ink-3">
+                    <p className="text-sm text-gray-500">
                       {formatPrice(item.priceCents, currency)}
                     </p>
                     <div className="mt-1 flex items-center gap-2">
-                      <div className="flex items-center rounded-md border border-line-2">
+                      <div className="flex items-center rounded-md border border-gray-300">
                         <button
                           onClick={() => setQuantity(item.key, item.quantity - 1)}
-                          className="px-2 py-0.5 text-ink-2 hover:text-ink"
+                          className="px-2 py-0.5 text-gray-600 hover:text-gray-900"
                           aria-label="Menos"
                         >
                           −
@@ -111,7 +111,7 @@ export function CartDrawer() {
                         </span>
                         <button
                           onClick={() => setQuantity(item.key, item.quantity + 1)}
-                          className="px-2 py-0.5 text-ink-2 hover:text-ink"
+                          className="px-2 py-0.5 text-gray-600 hover:text-gray-900"
                           aria-label="Más"
                         >
                           +
@@ -119,40 +119,40 @@ export function CartDrawer() {
                       </div>
                       <button
                         onClick={() => remove(item.key)}
-                        className="text-xs text-ink-3 hover:text-bad-ink"
+                        className="text-xs text-gray-400 hover:text-red-500"
                       >
                         Quitar
                       </button>
                     </div>
                   </div>
-                  <div className="text-sm font-semibold text-ink">
+                  <div className="text-sm font-semibold text-gray-900">
                     {formatPrice(item.priceCents * item.quantity, currency)}
                   </div>
                 </li>
               ))}
             </ul>
 
-            <div className="border-t border-line p-5">
+            <div className="border-t border-gray-200 p-5">
               <div className="mb-3">
                 <FreeShippingNote />
               </div>
               <div className="mb-4 flex items-center justify-between">
-                <span className="text-ink-3">Total</span>
-                <span className="text-lg font-bold text-ink">
+                <span className="text-gray-500">Total</span>
+                <span className="text-lg font-bold text-gray-900">
                   {formatPrice(totalCents, currency)}
                 </span>
               </div>
               <Link
                 href={sh(`/checkout`)}
                 onClick={closeCart}
-                className="block w-full rounded-lg bg-brand px-4 py-3 text-center text-sm font-medium text-brand-ink hover:brightness-110"
+                className="block w-full rounded-lg bg-[var(--brand)] px-4 py-3 text-center text-sm font-medium text-white hover:brightness-110"
               >
                 Finalizar compra
               </Link>
               <Link
                 href={sh(`/cart`)}
                 onClick={closeCart}
-                className="mt-2 block text-center text-sm text-ink-3 hover:text-ink"
+                className="mt-2 block text-center text-sm text-gray-500 hover:text-gray-900"
               >
                 Ver carrito completo
               </Link>

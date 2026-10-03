@@ -12,7 +12,7 @@ export function VideoHero({
   subtitle?: string | null;
 }) {
   return (
-    <div className="relative mb-8 overflow-hidden rounded-2xl border border-line bg-black">
+    <div className="relative mb-8 overflow-hidden rounded-2xl border border-gray-200 bg-black">
       <video
         src={videoUrl}
         poster={poster ?? undefined}

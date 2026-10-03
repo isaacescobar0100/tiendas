@@ -26,7 +26,7 @@ export function ProductGallery({
 
   return (
     <div>
-      <div className="overflow-hidden rounded-2xl border border-line bg-surface-3">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={current.url}
@@ -48,8 +48,8 @@ export function ProductGallery({
               onClick={() => setActive(idx)}
               className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border transition ${
                 idx === active
-                  ? "border-ink ring-1 ring-ink"
-                  : "border-line hover:border-line-2"
+                  ? "border-gray-900 ring-1 ring-gray-900"
+                  : "border-gray-200 hover:border-gray-400"
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}

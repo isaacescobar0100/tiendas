@@ -139,19 +139,19 @@ export function ProductCard({
   };
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-line transition hover:shadow-md">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-200 transition hover:shadow-md">
       <div className="absolute right-2 top-2 z-10">
         <FavoriteButton item={favItem} size="sm" />
       </div>
 
       {onSale && (
-        <span className="absolute left-2 top-2 z-10 rounded-full bg-bad px-2 py-0.5 text-[11px] font-semibold text-white shadow">
+        <span className="absolute left-2 top-2 z-10 rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white shadow">
           -{pct}%
         </span>
       )}
 
       <Link href={sh(`/${product.slug}`)} className="block">
-        <div className="aspect-square overflow-hidden bg-surface-3">
+        <div className="aspect-square overflow-hidden bg-gray-100">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={imgRef}
@@ -168,15 +168,15 @@ export function ProductCard({
           />
         </div>
         <div className="p-3 pb-2">
-          <p className="truncate text-sm font-medium text-ink">
+          <p className="truncate text-sm font-medium text-gray-900">
             {product.name}
           </p>
           <div className="mt-1 flex items-baseline gap-2">
-            <p className="font-semibold text-ink">
+            <p className="font-semibold text-gray-900">
               {formatPrice(effectiveCents, currency)}
             </p>
             {onSale && (
-              <p className="text-xs text-ink-3 line-through">
+              <p className="text-xs text-gray-400 line-through">
                 {formatPrice(product.priceCents, currency)}
               </p>
             )}
@@ -187,7 +187,7 @@ export function ProductCard({
             </div>
           )}
           {freeShipping && (
-            <span className="mt-1 inline-block rounded-full bg-ok-soft px-2 py-0.5 text-[11px] font-medium text-ok-ink">
+            <span className="mt-1 inline-block rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
               Envío gratis
             </span>
           )}
@@ -215,10 +215,10 @@ export function ProductCard({
                       }}
                       className={`rounded border px-2 py-1 text-xs transition ${
                         active
-                          ? "border-ink bg-ink text-bg"
+                          ? "border-gray-900 bg-gray-900 text-white"
                           : out
-                            ? "cursor-not-allowed border-line text-ink-4 line-through"
-                            : "border-line-2 text-ink-2 hover:border-ink"
+                            ? "cursor-not-allowed border-gray-200 text-gray-300 line-through"
+                            : "border-gray-300 text-gray-700 hover:border-gray-900"
                       }`}
                     >
                       {c}
@@ -244,10 +244,10 @@ export function ProductCard({
                       }}
                       className={`min-w-8 rounded border px-2 py-1 text-xs transition ${
                         active
-                          ? "border-ink bg-ink text-bg"
+                          ? "border-gray-900 bg-gray-900 text-white"
                           : out || blocked
-                            ? "cursor-not-allowed border-line text-ink-4 line-through"
-                            : "border-line-2 text-ink-2 hover:border-ink"
+                            ? "cursor-not-allowed border-gray-200 text-gray-300 line-through"
+                            : "border-gray-300 text-gray-700 hover:border-gray-900"
                       }`}
                     >
                       {s}
@@ -256,14 +256,14 @@ export function ProductCard({
                 })}
               </div>
             )}
-            {warn && <p className="text-xs text-bad-ink">{warn}</p>}
+            {warn && <p className="text-xs text-red-500">{warn}</p>}
           </div>
         )}
 
         {!available ? (
           <button
             disabled
-            className="w-full cursor-not-allowed rounded-lg bg-surface-3 px-3 py-2 text-xs font-medium text-ink-3"
+            className="w-full cursor-not-allowed rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-400"
           >
             Agotado
           </button>
@@ -271,7 +271,7 @@ export function ProductCard({
           <button
             disabled
             title="Disponible solo en horario de atención"
-            className="w-full cursor-not-allowed rounded-lg bg-surface-3 px-3 py-2 text-xs font-medium text-ink-3"
+            className="w-full cursor-not-allowed rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-400"
           >
             Cerrado
           </button>
@@ -279,7 +279,7 @@ export function ProductCard({
           // Con adiciones/opciones: hay que elegir en la ficha del producto.
           <Link
             href={sh(`/${product.slug}`)}
-            className="block w-full rounded-lg bg-brand px-3 py-2 text-center text-xs font-medium text-brand-ink transition hover:brightness-110"
+            className="block w-full rounded-lg bg-[var(--brand)] px-3 py-2 text-center text-xs font-medium text-white transition hover:brightness-110"
           >
             Elegir opciones
           </Link>
@@ -290,7 +290,7 @@ export function ProductCard({
               if (!open) return setOpen(true); // primero desplegar opciones
               addVariant();
             }}
-            className="flex w-full items-center justify-center gap-1 rounded-lg bg-brand px-3 py-2 text-xs font-medium text-brand-ink transition hover:brightness-110"
+            className="flex w-full items-center justify-center gap-1 rounded-lg bg-[var(--brand)] px-3 py-2 text-xs font-medium text-white transition hover:brightness-110"
           >
             {added ? (
               <>

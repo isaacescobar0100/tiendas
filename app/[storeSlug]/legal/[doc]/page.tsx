@@ -57,22 +57,22 @@ export default async function LegalPage({
     <div className="mx-auto max-w-2xl">
       <Link
         href={sh()}
-        className="text-sm text-ink-3 hover:text-ink"
+        className="text-sm text-gray-500 hover:text-gray-900"
       >
         ← Volver a la tienda
       </Link>
-      <h1 className="mt-3 text-2xl font-bold text-ink">
+      <h1 className="mt-3 text-2xl font-bold text-gray-900">
         {DOCS[doc].title}
       </h1>
-      <p className="mt-1 text-sm text-ink-3">{store.name}</p>
+      <p className="mt-1 text-sm text-gray-400">{store.name}</p>
 
-      <div className="prose-legal mt-6 space-y-5 text-sm leading-relaxed text-ink-2">
+      <div className="prose-legal mt-6 space-y-5 text-sm leading-relaxed text-gray-600">
         {doc === "terminos" ? (
           <Terminos storeName={store.name} contacto={contacto} />
         ) : (
           <Privacidad storeName={store.name} contacto={contacto} />
         )}
-        <p className="border-t border-line pt-5 text-xs text-ink-3">
+        <p className="border-t border-gray-100 pt-5 text-xs text-gray-400">
           Última actualización: {today.format(new Date())}. Este documento es una
           referencia general; ante cualquier duda escríbenos a través de{" "}
           {contacto}.
@@ -83,7 +83,7 @@ export default async function LegalPage({
 }
 
 function H({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-base font-semibold text-ink">{children}</h2>;
+  return <h2 className="text-base font-semibold text-gray-900">{children}</h2>;
 }
 
 function Terminos({

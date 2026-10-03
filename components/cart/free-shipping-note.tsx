@@ -21,7 +21,7 @@ export function FreeShippingNote() {
     }
     const falta = freeShippingOverCents - totalCents;
     return (
-      <div className="flex items-center gap-1.5 rounded-lg bg-warn-soft px-3 py-2 text-xs font-medium text-warn-ink">
+      <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
         <Truck className="h-4 w-4 shrink-0" />
         Te faltan {formatPrice(falta, currency)} para el envío gratis
       </div>
@@ -34,7 +34,7 @@ export function FreeShippingNote() {
 
 function FreeBadge({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-lg bg-ok-soft px-3 py-2 text-xs font-medium text-ok-ink">
+    <div className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
       <Truck className="h-4 w-4 shrink-0" />
       {children}
     </div>

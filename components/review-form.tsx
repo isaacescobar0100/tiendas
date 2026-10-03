@@ -30,14 +30,14 @@ export function ReviewForm({
 
   if (!loggedIn) {
     return (
-      <div className="rounded-2xl border border-line bg-surface-2 p-5 text-sm">
-        <p className="font-medium text-ink">¿Compraste este producto?</p>
-        <p className="mt-1 text-ink-3">
+      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 text-sm">
+        <p className="font-medium text-gray-900">¿Compraste este producto?</p>
+        <p className="mt-1 text-gray-500">
           Inicia sesión con tu cuenta para dejar tu reseña.
         </p>
         <Link
           href={sh(`/cuenta`)}
-          className="mt-3 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:brightness-110"
+          className="mt-3 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
         >
           Iniciar sesión
         </Link>
@@ -48,13 +48,13 @@ export function ReviewForm({
   return (
     <form
       action={formAction}
-      className="space-y-3 rounded-2xl border border-line p-5"
+      className="space-y-3 rounded-2xl border border-gray-200 p-5"
     >
       <input type="hidden" name="storeSlug" value={storeSlug} />
       <input type="hidden" name="productId" value={productId} />
       <input type="hidden" name="rating" value={rating} />
 
-      <p className="text-sm font-medium text-ink">
+      <p className="text-sm font-medium text-gray-900">
         {existing ? "Edita tu reseña" : "Deja tu reseña"}
       </p>
 
@@ -73,7 +73,7 @@ export function ReviewForm({
             >
               <Star
                 className={`h-7 w-7 transition ${
-                  active ? "fill-warn text-warn-ink" : "text-ink-4"
+                  active ? "fill-amber-400 text-amber-400" : "text-gray-300"
                 }`}
               />
             </button>
@@ -86,16 +86,16 @@ export function ReviewForm({
         rows={3}
         defaultValue={existing?.comment ?? ""}
         placeholder="Cuéntanos qué te pareció (opcional)…"
-        className="w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
       />
 
       {state?.error && (
-        <p className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad-ink">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
           {state.error}
         </p>
       )}
       {state?.ok && (
-        <p className="flex items-center gap-1.5 rounded-lg bg-ok-soft px-3 py-2 text-sm text-ok-ink">
+        <p className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
           <Check className="h-4 w-4" /> ¡Gracias por tu reseña!
         </p>
       )}
@@ -103,7 +103,7 @@ export function ReviewForm({
       <button
         type="submit"
         disabled={pending || rating < 1}
-        className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink transition hover:brightness-110 disabled:opacity-60"
+        className="rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
       >
         {pending ? "Enviando…" : existing ? "Actualizar reseña" : "Enviar reseña"}
       </button>

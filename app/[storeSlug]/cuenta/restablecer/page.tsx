@@ -25,14 +25,14 @@ function CustomerResetForm() {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="text-2xl font-bold text-ink">Nueva contraseña</h1>
-      <p className="mt-1 text-sm text-ink-3">
+      <h1 className="text-2xl font-bold text-gray-900">Nueva contraseña</h1>
+      <p className="mt-1 text-sm text-gray-500">
         Escribe tu contraseña (mínimo 8 caracteres).
       </p>
 
       <div className="mt-6">
         {!token ? (
-          <p className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad-ink">
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
             Falta el enlace. Ábrelo desde el correo que te enviamos.
           </p>
         ) : (
@@ -40,7 +40,7 @@ function CustomerResetForm() {
             <input type="hidden" name="storeSlug" value={storeSlug} />
             <input type="hidden" name="token" value={token} />
             <div>
-              <label className="mb-1 block text-sm font-medium text-ink-2">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 Nueva contraseña
               </label>
               <input
@@ -49,11 +49,11 @@ function CustomerResetForm() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                className="w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-ink-2">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 Repite la contraseña
               </label>
               <input
@@ -62,18 +62,18 @@ function CustomerResetForm() {
                 required
                 minLength={8}
                 autoComplete="new-password"
-                className="w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
               />
             </div>
             {state?.error && (
-              <p className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad-ink">
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
                 {state.error}
               </p>
             )}
             <button
               type="submit"
               disabled={pending}
-              className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink transition hover:brightness-110 disabled:opacity-60"
+              className="w-full rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
             >
               {pending ? "Guardando…" : "Guardar contraseña"}
             </button>

@@ -161,7 +161,7 @@ export default async function ProductPage({
     <div>
       <Link
         href={sh()}
-        className="mb-6 inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink"
+        className="mb-6 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
       >
         <ArrowLeft className="h-4 w-4" /> Seguir comprando
       </Link>
@@ -187,12 +187,12 @@ export default async function ProductPage({
           {product.category && (
             <Link
               href={sh(`?cat=${product.category.slug}`)}
-              className="text-xs font-medium uppercase tracking-wide text-ink-3 hover:text-ink-2"
+              className="text-xs font-medium uppercase tracking-wide text-gray-400 hover:text-gray-600"
             >
               {product.category.name}
             </Link>
           )}
-          <h1 className="mt-2 text-3xl font-bold text-ink">
+          <h1 className="mt-2 text-3xl font-bold text-gray-900">
             {product.name}
           </h1>
           {reviewCount > 0 && (
@@ -204,15 +204,15 @@ export default async function ProductPage({
             </a>
           )}
           <div className="mt-3 flex flex-wrap items-baseline gap-3">
-            <p className="text-2xl font-semibold text-ink">
+            <p className="text-2xl font-semibold text-gray-900">
               {formatPrice(effectiveCents, store.currency)}
             </p>
             {onSale && (
               <>
-                <p className="text-lg text-ink-3 line-through">
+                <p className="text-lg text-gray-400 line-through">
                   {formatPrice(product.priceCents, store.currency)}
                 </p>
-                <span className="rounded-full bg-bad px-2 py-0.5 text-sm font-semibold text-white">
+                <span className="rounded-full bg-red-500 px-2 py-0.5 text-sm font-semibold text-white">
                   -{pct}%
                 </span>
               </>
@@ -228,20 +228,20 @@ export default async function ProductPage({
               return (
                 <div className="mt-4">
                   {totalStock > 0 ? (
-                    <span className="text-sm text-ok-ink">
+                    <span className="text-sm text-green-600">
                       {hasVariants
                         ? "Disponible"
                         : `En stock (${totalStock} disponibles)`}
                     </span>
                   ) : (
-                    <span className="text-sm text-bad-ink">Agotado</span>
+                    <span className="text-sm text-red-500">Agotado</span>
                   )}
                 </div>
               );
             })()}
 
           {product.description && (
-            <p className="mt-6 whitespace-pre-line text-ink-2">
+            <p className="mt-6 whitespace-pre-line text-gray-600">
               {product.description}
             </p>
           )}
@@ -274,7 +274,7 @@ export default async function ProductPage({
 
       <section id="resenas" className="mt-16">
         <div className="mb-6 flex flex-wrap items-center gap-3">
-          <h2 className="text-lg font-bold text-ink">Reseñas</h2>
+          <h2 className="text-lg font-bold text-gray-900">Reseñas</h2>
           {reviewCount > 0 && (
             <StarRating value={reviewAvg} count={reviewCount} size="md" />
           )}
@@ -283,20 +283,20 @@ export default async function ProductPage({
         <div className="grid gap-8 md:grid-cols-[1fr_360px]">
           <div className="space-y-5">
             {reviews.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-line-2 p-8 text-center text-sm text-ink-3">
+              <p className="rounded-2xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
                 Aún no hay reseñas. ¡Sé el primero en opinar!
               </p>
             ) : (
               reviews.map((r) => (
                 <div
                   key={r.id}
-                  className="border-b border-line pb-5 last:border-0"
+                  className="border-b border-gray-100 pb-5 last:border-0"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-ink">
+                    <span className="font-medium text-gray-900">
                       {r.customerName}
                     </span>
-                    <span className="text-xs text-ink-3">
+                    <span className="text-xs text-gray-400">
                       {reviewDateFmt.format(r.createdAt)}
                     </span>
                   </div>
@@ -304,7 +304,7 @@ export default async function ProductPage({
                     <StarRating value={r.rating} showCount={false} />
                   </div>
                   {r.comment && (
-                    <p className="mt-2 whitespace-pre-line text-sm text-ink-2">
+                    <p className="mt-2 whitespace-pre-line text-sm text-gray-600">
                       {r.comment}
                     </p>
                   )}
@@ -330,7 +330,7 @@ export default async function ProductPage({
 
       {related.length > 0 && (
         <section className="mt-16">
-          <h2 className="mb-6 text-lg font-bold text-ink">
+          <h2 className="mb-6 text-lg font-bold text-gray-900">
             También te puede gustar
           </h2>
           <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">

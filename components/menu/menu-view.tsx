@@ -82,11 +82,11 @@ export function MenuView({
   }, [selected, close]);
 
   return (
-    <div className="min-h-screen bg-bg pb-28">
+    <div className="min-h-screen bg-stone-100 pb-28">
       {/* Portada con el color de la marca */}
-      <header className="relative overflow-hidden bg-brand px-5 pb-16 pt-12 text-center text-brand-ink">
-        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-ink/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -right-20 h-80 w-80 rounded-full bg-brand-ink/10 blur-3xl" />
+      <header className="relative overflow-hidden bg-[var(--brand)] px-5 pb-16 pt-12 text-center text-white">
+        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -right-20 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/25" />
 
         <div className="relative">
@@ -95,14 +95,14 @@ export function MenuView({
             <img
               src={logoUrl}
               alt={storeName}
-              className="mx-auto h-24 w-24 rounded-[28px] bg-surface object-cover shadow-2xl ring-4 ring-brand-ink/20"
+              className="mx-auto h-24 w-24 rounded-[28px] bg-white object-cover shadow-2xl ring-4 ring-white/20"
             />
           ) : (
-            <span className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-brand-ink/15 shadow-2xl ring-4 ring-brand-ink/20">
+            <span className="mx-auto flex h-24 w-24 items-center justify-center rounded-[28px] bg-white/15 shadow-2xl ring-4 ring-white/20">
               <UtensilsCrossed className="h-10 w-10" />
             </span>
           )}
-          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-ink/75">
+          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/60">
             Menú digital
           </p>
           <h1 className="mt-1 text-[32px] font-extrabold leading-tight tracking-tight">
@@ -112,15 +112,15 @@ export function MenuView({
           {(location || open) && (
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-medium">
               {location && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-ink/15 px-3 py-1.5 backdrop-blur">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur">
                   <MapPin className="h-3.5 w-3.5" />
                   {location.name}
                 </span>
               )}
               {open && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-ink/15 px-3 py-1.5 backdrop-blur">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur">
                   <span
-                    className={`h-2 w-2 rounded-full ${open.isOpen ? "bg-ok shadow-[0_0_0_3px_rgba(52,211,153,0.3)]" : "bg-warn"}`}
+                    className={`h-2 w-2 rounded-full ${open.isOpen ? "bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.3)]" : "bg-amber-400"}`}
                   />
                   {open.isOpen ? "Abierto ahora" : "Cerrado"}
                   {open.message ? ` · ${open.message}` : ""}
@@ -129,21 +129,21 @@ export function MenuView({
             </div>
           )}
           {location?.address && (
-            <p className="mt-2 text-xs text-brand-ink/75">{location.address}</p>
+            <p className="mt-2 text-xs text-white/60">{location.address}</p>
           )}
         </div>
       </header>
 
       {/* Hoja que se monta sobre la portada */}
-      <div className="relative -mt-8 rounded-t-[32px] bg-bg pt-2">
+      <div className="relative -mt-8 rounded-t-[32px] bg-stone-100 pt-2">
         {sections.length === 0 ? (
-          <p className="px-6 py-20 text-center text-ink-3">
+          <p className="px-6 py-20 text-center text-gray-500">
             Estamos actualizando la carta. Pregunta a tu mesero.
           </p>
         ) : (
           <>
             {/* Pestañas de categoría */}
-            <div className="sticky top-0 z-20 bg-bg/90 backdrop-blur-md">
+            <div className="sticky top-0 z-20 bg-stone-100/90 backdrop-blur-md">
               <div
                 ref={navRef}
                 className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -161,8 +161,8 @@ export function MenuView({
                       }}
                       className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                         isActive
-                          ? "bg-brand text-brand-ink shadow-md"
-                          : "bg-surface text-ink-2 shadow-sm ring-1 ring-line/5 hover:text-ink"
+                          ? "bg-[var(--brand)] text-white shadow-md"
+                          : "bg-white text-gray-600 shadow-sm ring-1 ring-black/5 hover:text-gray-900"
                       }`}
                     >
                       {s.name}
@@ -176,10 +176,10 @@ export function MenuView({
               {visible.map((s) => (
                 <section key={s.id} id={s.id}>
                   <div className="mb-3 flex items-baseline gap-2 px-1">
-                    <h2 className="text-xl font-extrabold tracking-tight text-ink">
+                    <h2 className="text-xl font-extrabold tracking-tight text-gray-900">
                       {s.name}
                     </h2>
-                    <span className="text-sm font-medium text-ink-3">
+                    <span className="text-sm font-medium text-gray-400">
                       {s.items.length}
                     </span>
                   </div>
@@ -189,35 +189,35 @@ export function MenuView({
                         <button
                           type="button"
                           onClick={() => setSelected(p)}
-                          className="group flex h-full w-full gap-3 rounded-3xl bg-surface p-3 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] ring-1 ring-line/[0.04] transition hover:shadow-lg active:scale-[0.985]"
+                          className="group flex h-full w-full gap-3 rounded-3xl bg-white p-3 text-left shadow-[0_1px_3px_rgba(0,0,0,0.05)] ring-1 ring-black/[0.04] transition hover:shadow-lg active:scale-[0.985]"
                         >
                           <div className="flex min-w-0 flex-1 flex-col py-1 pl-1">
-                            <h3 className="text-[15px] font-bold leading-snug text-ink">
+                            <h3 className="text-[15px] font-bold leading-snug text-gray-900">
                               {p.name}
                             </h3>
                             {p.description && (
-                              <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-3">
+                              <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-gray-500">
                                 {p.description}
                               </p>
                             )}
                             <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1 pt-2">
-                              <span className="text-[15px] font-extrabold text-ink">
+                              <span className="text-[15px] font-extrabold text-gray-900">
                                 {p.price}
                               </span>
                               {p.oldPrice && (
-                                <span className="text-xs text-ink-3 line-through">
+                                <span className="text-xs text-gray-400 line-through">
                                   {p.oldPrice}
                                 </span>
                               )}
                               {p.groups.length > 0 && (
-                                <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[11px] font-medium text-ink-3">
+                                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
                                   Personalizable
                                 </span>
                               )}
                             </div>
                           </div>
                           {p.imageUrl && (
-                            <div className="relative h-[108px] w-[108px] shrink-0 overflow-hidden rounded-2xl bg-surface-3">
+                            <div className="relative h-[108px] w-[108px] shrink-0 overflow-hidden rounded-2xl bg-stone-100">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={p.imageUrl}
@@ -230,7 +230,7 @@ export function MenuView({
                                 }}
                               />
                               {p.discount && (
-                                <span className="absolute left-1.5 top-1.5 rounded-full bg-bad px-2 py-0.5 text-[11px] font-bold text-white shadow">
+                                <span className="absolute left-1.5 top-1.5 rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white shadow">
                                   -{p.discount}%
                                 </span>
                               )}
@@ -249,8 +249,8 @@ export function MenuView({
 
       {/* Recordatorio fijo: en el local se pide al mesero */}
       <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center px-4">
-        <div className="inline-flex items-center gap-2 rounded-full bg-ink/90 px-5 py-3 text-sm font-medium text-bg shadow-2xl backdrop-blur">
-          <ConciergeBell className="h-4 w-4 opacity-80" />
+        <div className="inline-flex items-center gap-2 rounded-full bg-gray-900/90 px-5 py-3 text-sm font-medium text-white shadow-2xl backdrop-blur">
+          <ConciergeBell className="h-4 w-4 text-amber-300" />
           Para pedir, llama a tu mesero
         </div>
       </div>
@@ -266,18 +266,18 @@ export function MenuView({
             aria-modal="true"
             aria-label={selected.name}
             onClick={(e) => e.stopPropagation()}
-            className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[32px] bg-surface shadow-2xl sm:rounded-[32px]"
+            className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[32px] bg-white shadow-2xl sm:rounded-[32px]"
           >
             <button
               type="button"
               onClick={close}
               aria-label="Cerrar"
-              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-surface/90 text-ink shadow-lg backdrop-blur"
+              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-900 shadow-lg backdrop-blur"
             >
               <X className="h-5 w-5" />
             </button>
             {selected.imageUrl && (
-              <div className="aspect-[4/3] w-full overflow-hidden bg-surface-3">
+              <div className="aspect-[4/3] w-full overflow-hidden bg-stone-100">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selected.imageUrl}
@@ -292,31 +292,31 @@ export function MenuView({
             )}
             <div className="p-6">
               <div className="flex items-start justify-between gap-4">
-                <h2 className="text-2xl font-extrabold leading-tight tracking-tight text-ink">
+                <h2 className="text-2xl font-extrabold leading-tight tracking-tight text-gray-900">
                   {selected.name}
                 </h2>
                 <div className="shrink-0 text-right">
-                  <p className="text-xl font-extrabold text-ink">{selected.price}</p>
+                  <p className="text-xl font-extrabold text-gray-900">{selected.price}</p>
                   {selected.oldPrice && (
-                    <p className="text-sm text-ink-3 line-through">{selected.oldPrice}</p>
+                    <p className="text-sm text-gray-400 line-through">{selected.oldPrice}</p>
                   )}
                 </div>
               </div>
               {selected.description && (
-                <p className="mt-3 leading-relaxed text-ink-2">{selected.description}</p>
+                <p className="mt-3 leading-relaxed text-gray-600">{selected.description}</p>
               )}
 
               {selected.groups.map((g) => (
                 <div key={g.name} className="mt-6">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-3">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
                     {g.name}
                   </p>
-                  <ul className="mt-2 divide-y divide-line rounded-2xl bg-surface-2 px-4">
+                  <ul className="mt-2 divide-y divide-gray-100 rounded-2xl bg-stone-50 px-4">
                     {g.options.map((o) => (
                       <li key={o.name} className="flex justify-between gap-3 py-2.5 text-sm">
-                        <span className="text-ink-2">{o.name}</span>
+                        <span className="text-gray-700">{o.name}</span>
                         {o.price && (
-                          <span className="font-semibold text-ink">+{o.price}</span>
+                          <span className="font-semibold text-gray-900">+{o.price}</span>
                         )}
                       </li>
                     ))}
@@ -327,7 +327,7 @@ export function MenuView({
               <button
                 type="button"
                 onClick={close}
-                className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-4 font-semibold text-brand-ink shadow-lg transition hover:brightness-110"
+                className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand)] py-4 font-semibold text-white shadow-lg transition hover:brightness-110"
               >
                 <ConciergeBell className="h-5 w-5" /> Pídelo a tu mesero
               </button>
