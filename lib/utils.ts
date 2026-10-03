@@ -59,8 +59,12 @@ const ZERO_DECIMAL_CURRENCIES = new Set([
   "VND",
 ]);
 
-/** Formatea un precio en céntimos a moneda legible. COP 5000000 -> "50.000 COP" */
+// Pesos colombianos como se escriben en Colombia: $4.000 / $18.500.
+const copFormat = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
+
+/** Formatea un precio en céntimos a moneda legible. COP 400000 -> "$4.000" */
 export function formatPrice(cents: number, currency = "COP"): string {
+  if (currency === "COP") return "$" + copFormat.format(Math.round(cents / 100));
   const zeroDecimals = ZERO_DECIMAL_CURRENCIES.has(currency);
   return new Intl.NumberFormat("es", {
     style: "currency",

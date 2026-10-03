@@ -15,12 +15,7 @@ export const metadata: Metadata = {
   robots: { index: false }, // la carta ya está en la tienda; evita duplicados
 };
 
-// Pesos colombianos como en la carta física ($18.000); otras monedas, el
-// formato general del sistema.
-const copFmt = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
-function menuPrice(cents: number, currency: string): string {
-  return currency === "COP" ? `$${copFmt.format(cents / 100)}` : formatPrice(cents, currency);
-}
+const menuPrice = formatPrice; // "$18.000" (mismo formato que toda la tienda)
 
 export default async function MenuPage({
   params,

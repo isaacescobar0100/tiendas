@@ -180,13 +180,13 @@ export default function CheckoutForm({
               <Field
                 label="Barrio"
                 name="neighborhood"
-                placeholder="El Poblado"
+                placeholder="Tu barrio"
                 required
               />
               <Field
                 label="Ciudad"
                 name="city"
-                placeholder="Medellín"
+                placeholder="Tu ciudad"
                 required
               />
               <div className="sm:col-span-2">
