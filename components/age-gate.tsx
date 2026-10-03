@@ -42,37 +42,37 @@ export function AgeGate({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-xl">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brand)] text-white">
+      <div className="w-full max-w-sm rounded-2xl bg-surface p-6 text-center shadow-xl">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-brand-ink">
           <Wine className="h-7 w-7" />
         </div>
         {status === "denied" ? (
           <>
-            <h2 className="text-lg font-bold text-gray-900">Lo sentimos</h2>
-            <p className="mt-2 text-sm text-gray-500">
+            <h2 className="text-lg font-bold text-ink">Lo sentimos</h2>
+            <p className="mt-2 text-sm text-ink-3">
               Debes ser mayor de 18 años para ver {storeName}. La venta de
               bebidas alcohólicas está prohibida a menores de edad.
             </p>
           </>
         ) : (
           <>
-            <h2 className="text-lg font-bold text-gray-900">
+            <h2 className="text-lg font-bold text-ink">
               ¿Eres mayor de 18 años?
             </h2>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-ink-3">
               {storeName} vende bebidas alcohólicas. Debes ser mayor de edad
               para entrar. El exceso de alcohol es perjudicial para la salud.
             </p>
             <div className="mt-5 flex gap-3">
               <button
                 onClick={() => setStatus("denied")}
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="flex-1 rounded-lg border border-line-2 px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2"
               >
                 No
               </button>
               <button
                 onClick={confirm}
-                className="flex-1 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110"
+                className="flex-1 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink hover:brightness-110"
               >
                 Sí, soy mayor de 18
               </button>

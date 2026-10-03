@@ -60,18 +60,18 @@ export default async function TrackOrderPage({
       : null;
 
   const inputCls =
-    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
+    "w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";
 
   return (
     <div className="mx-auto max-w-lg">
-      <h1 className="text-2xl font-bold text-gray-900">Rastrear pedido</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="text-2xl font-bold text-ink">Rastrear pedido</h1>
+      <p className="mt-1 text-sm text-ink-3">
         Escribe tu número de pedido y tu email para ver el estado.
       </p>
 
       <form method="get" className="mt-6 space-y-3">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-ink-2">
             Número de pedido
           </label>
           <input
@@ -85,7 +85,7 @@ export default async function TrackOrderPage({
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-ink-2">
             Email
           </label>
           <input
@@ -99,14 +99,14 @@ export default async function TrackOrderPage({
         </div>
         <button
           type="submit"
-          className="inline-flex items-center gap-2 rounded-lg bg-[var(--brand)] px-5 py-2.5 text-sm font-medium text-white transition hover:brightness-110"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-medium text-brand-ink transition hover:brightness-110"
         >
           <Search className="h-4 w-4" /> Buscar mi pedido
         </button>
       </form>
 
       {searched && !order && (
-        <p className="mt-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+        <p className="mt-6 rounded-lg bg-warn-soft px-4 py-3 text-sm text-warn-ink">
           {limited
             ? "Demasiadas búsquedas seguidas. Espera unos minutos e inténtalo de nuevo."
             : !validNum
@@ -116,13 +116,13 @@ export default async function TrackOrderPage({
       )}
 
       {order && (
-        <div className="mt-6 rounded-2xl border border-gray-200 p-5">
+        <div className="mt-6 rounded-2xl border border-line p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-ink">
                 Pedido #{order.id.slice(-8)}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-ink-3">
                 {dateFmt.format(order.createdAt)}
               </p>
             </div>
@@ -142,32 +142,32 @@ export default async function TrackOrderPage({
 
           <OrderProgress fulfillment={order.fulfillment} status={order.status} />
 
-          <ul className="mt-4 space-y-2 border-t border-gray-100 pt-4">
+          <ul className="mt-4 space-y-2 border-t border-line pt-4">
             {order.items.map((i) => (
               <li key={i.id} className="flex justify-between text-sm">
-                <span className="text-gray-600">
+                <span className="text-ink-2">
                   {i.name}
                   {variantLabel(i.color, i.size) && (
-                    <span className="text-gray-400">
+                    <span className="text-ink-3">
                       {" "}
                       ({variantLabel(i.color, i.size)})
                     </span>
                   )}{" "}
-                  <span className="text-gray-400">×{i.quantity}</span>
+                  <span className="text-ink-3">×{i.quantity}</span>
                 </span>
-                <span className="text-gray-900">
+                <span className="text-ink">
                   {formatPrice(i.priceCents * i.quantity, order.currency)}
                 </span>
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex justify-between border-t border-gray-100 pt-3">
-            <span className="font-medium text-gray-900">Total</span>
-            <span className="text-lg font-bold text-gray-900">
+          <div className="mt-3 flex justify-between border-t border-line pt-3">
+            <span className="font-medium text-ink">Total</span>
+            <span className="text-lg font-bold text-ink">
               {formatPrice(order.totalCents, order.currency)}
             </span>
           </div>
-          <p className="mt-4 text-center text-xs text-gray-400">
+          <p className="mt-4 text-center text-xs text-ink-3">
             El estado se actualiza cuando la tienda lo cambia. Vuelve a buscar
             para ver lo más reciente.
           </p>

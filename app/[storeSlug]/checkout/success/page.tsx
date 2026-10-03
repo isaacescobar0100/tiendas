@@ -121,33 +121,33 @@ export default async function OrderSuccessPage({
   const ui = {
     approved: {
       icon: <Check className="h-8 w-8" strokeWidth={3} />,
-      color: "bg-green-100 text-green-600",
+      color: "bg-ok-soft text-ok-ink",
       title: "¡Pago confirmado!",
       subtitle: "Hemos recibido tu pago. Prepararemos tu pedido enseguida.",
     },
     awaiting: {
       icon: <QrCode className="h-8 w-8" strokeWidth={2.5} />,
-      color: "bg-amber-100 text-amber-600",
+      color: "bg-warn-soft text-warn-ink",
       title: "¡Pedido recibido! Falta el pago",
       subtitle:
         "paga con alguna de las opciones de abajo y envíanos el comprobante.",
     },
     registered: {
       icon: <Check className="h-8 w-8" strokeWidth={3} />,
-      color: "bg-green-100 text-green-600",
+      color: "bg-ok-soft text-ok-ink",
       title: "¡Pedido confirmado!",
       subtitle: "Hemos recibido tu pedido.",
     },
     pending: {
       icon: <Clock className="h-8 w-8" strokeWidth={3} />,
-      color: "bg-amber-100 text-amber-600",
+      color: "bg-warn-soft text-warn-ink",
       title: "Pago en proceso",
       subtitle:
         "Tu pago se está procesando. Te avisaremos por email cuando se confirme.",
     },
     failed: {
       icon: <X className="h-8 w-8" strokeWidth={3} />,
-      color: "bg-red-100 text-red-600",
+      color: "bg-bad-soft text-bad-ink",
       title: "El pago no se completó",
       subtitle: "No pudimos confirmar el pago. Puedes intentarlo de nuevo.",
     },
@@ -215,24 +215,24 @@ export default async function OrderSuccessPage({
       >
         {ui.icon}
       </div>
-      <h1 className="text-2xl font-bold text-gray-900">{ui.title}</h1>
-      <p className="mt-2 text-gray-500">
+      <h1 className="text-2xl font-bold text-ink">{ui.title}</h1>
+      <p className="mt-2 text-ink-3">
         {order.customerName.split(" ")[0]}, {ui.subtitle}
       </p>
-      <p className="mt-1 text-sm text-gray-400">
+      <p className="mt-1 text-sm text-ink-3">
         Nº de pedido: <span className="font-mono">{order.id.slice(-8)}</span>
       </p>
 
       {awaiting && (
-        <div className="mt-6 rounded-2xl border border-gray-200 p-5 text-left">
-          <p className="text-sm font-semibold text-gray-900">
+        <div className="mt-6 rounded-2xl border border-line p-5 text-left">
+          <p className="text-sm font-semibold text-ink">
             1. Paga {formatPrice(order.totalCents, order.currency)}
           </p>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-ink-3">
             Desde la app de tu banco o billetera. Usa la opción que prefieras:
           </p>
           {transferAccounts.length === 0 ? (
-            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+            <p className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-sm text-warn-ink">
               La tienda te enviará los datos de pago por WhatsApp.
             </p>
           ) : (
@@ -240,12 +240,12 @@ export default async function OrderSuccessPage({
               {transferAccounts.map((a) => (
                 <li
                   key={a.id}
-                  className="rounded-xl border border-gray-200 bg-gray-50 p-3"
+                  className="rounded-xl border border-line bg-surface-2 p-3"
                 >
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-ink">
                     {TRANSFER_KIND_LABEL[a.kind]}
                     {a.holder && (
-                      <span className="font-normal text-gray-500">
+                      <span className="font-normal text-ink-3">
                         {" "}
                         · {a.holder}
                       </span>
@@ -256,12 +256,12 @@ export default async function OrderSuccessPage({
                     <img
                       src={a.qrUrl}
                       alt={`QR de pago ${TRANSFER_KIND_LABEL[a.kind]}`}
-                      className="mx-auto mt-2 w-full max-w-[220px] rounded-lg border border-gray-200 bg-white"
+                      className="mx-auto mt-2 w-full max-w-[220px] rounded-lg border border-line bg-surface"
                     />
                   )}
                   {a.value ? (
-                    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
-                      <span className="break-all font-mono text-sm text-gray-900">
+                    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-2">
+                      <span className="break-all font-mono text-sm text-ink">
                         {a.value}
                       </span>
                       <CopyButton text={a.value} />
@@ -275,31 +275,31 @@ export default async function OrderSuccessPage({
       )}
 
       {sedeWaHref && (
-        <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-5">
-          <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-gray-900">
-            <MessageCircle className="h-4 w-4 text-green-600" />
+        <div className="mt-6 rounded-2xl border border-ok/30 bg-ok-soft p-5">
+          <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-ink">
+            <MessageCircle className="h-4 w-4 text-ok-ink" />
             {awaiting ? "2. Envía el comprobante" : "Un último paso"}
           </p>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-ink-2">
             Tu pedido es <strong>oficial</strong> cuando lo envías a{" "}
             <strong>{order.locationName ?? order.store.name}</strong> por
             WhatsApp.
           </p>
           {awaiting && (
-            <ol className="mx-auto mt-3 max-w-xs space-y-2 text-left text-sm text-gray-700">
+            <ol className="mx-auto mt-3 max-w-xs space-y-2 text-left text-sm text-ink-2">
               <li className="flex items-start gap-2">
-                <Camera className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                <Camera className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" />
                 <span>
                   Toma una <strong>captura</strong> del pago en la app de tu
                   banco.
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" />
                 <span>Toca el botón verde: se abre el chat con tu pedido escrito.</span>
               </li>
               <li className="flex items-start gap-2">
-                <Paperclip className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+                <Paperclip className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" />
                 <span>
                   <strong>Adjunta la captura</strong> y envía.
                 </span>
@@ -310,7 +310,7 @@ export default async function OrderSuccessPage({
             href={sedeWaHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] px-6 py-3 text-sm font-semibold text-white hover:brightness-105"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ok px-6 py-3 text-sm font-semibold text-white hover:brightness-110"
           >
             <MessageCircle className="h-4 w-4" />
             {awaiting
@@ -318,7 +318,7 @@ export default async function OrderSuccessPage({
               : "Enviar mi pedido por WhatsApp"}
           </a>
           {awaiting && (
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-ink-3">
               Preparamos tu pedido en cuanto confirmemos el pago.
             </p>
           )}
@@ -328,46 +328,46 @@ export default async function OrderSuccessPage({
       {payment !== "failed" && (
         <Link
           href={sh(`/rastrear?n=${order.id.slice(-8)}&email=${encodeURIComponent(order.customerEmail)}`)}
-          className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+          className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-line-2 px-6 py-3 text-sm font-medium text-ink-2 transition hover:bg-surface-2"
         >
           <Search className="h-4 w-4" />
           Rastrear mi pedido
         </Link>
       )}
 
-      <div className="mt-8 rounded-2xl border border-gray-200 p-5 text-left">
+      <div className="mt-8 rounded-2xl border border-line p-5 text-left">
         <ul className="space-y-3">
           {order.items.map((i) => (
             <li key={i.id} className="flex justify-between text-sm">
-              <span className="text-gray-600">
+              <span className="text-ink-2">
                 {i.name}
                 {variantLabel(i.color, i.size) && (
-                  <span className="text-gray-400">
+                  <span className="text-ink-3">
                     {" "}
                     ({variantLabel(i.color, i.size)})
                   </span>
                 )}{" "}
-                <span className="text-gray-400">×{i.quantity}</span>
+                <span className="text-ink-3">×{i.quantity}</span>
                 {i.modifiers && (
-                  <span className="block text-xs text-gray-400">
+                  <span className="block text-xs text-ink-3">
                     {i.modifiers}
                   </span>
                 )}
               </span>
-              <span className="text-gray-900">
+              <span className="text-ink">
                 {formatPrice(i.priceCents * i.quantity, order.currency)}
               </span>
             </li>
           ))}
         </ul>
-        <div className="mt-4 space-y-1 border-t border-gray-100 pt-4 text-sm">
-          <div className="flex justify-between text-gray-600">
+        <div className="mt-4 space-y-1 border-t border-line pt-4 text-sm">
+          <div className="flex justify-between text-ink-2">
             <span>Subtotal</span>
             <span>
               {formatPrice(order.totalCents - order.shippingCents, order.currency)}
             </span>
           </div>
-          <div className="flex justify-between text-gray-600">
+          <div className="flex justify-between text-ink-2">
             <span>Envío</span>
             <span>
               {order.shippingCents > 0
@@ -376,14 +376,14 @@ export default async function OrderSuccessPage({
             </span>
           </div>
         </div>
-        <div className="mt-2 flex justify-between border-t border-gray-100 pt-3">
-          <span className="font-medium text-gray-900">Total</span>
-          <span className="text-lg font-bold text-gray-900">
+        <div className="mt-2 flex justify-between border-t border-line pt-3">
+          <span className="font-medium text-ink">Total</span>
+          <span className="text-lg font-bold text-ink">
             {formatPrice(order.totalCents, order.currency)}
           </span>
         </div>
         {payment !== "failed" && (
-          <p className="mt-4 text-xs text-gray-400">
+          <p className="mt-4 text-xs text-ink-3">
             Enviaremos una confirmación a {order.customerEmail}.
           </p>
         )}
@@ -398,16 +398,16 @@ export default async function OrderSuccessPage({
       )}
 
       {accountCta === "login" && (
-        <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-5 text-left">
-          <p className="font-semibold text-gray-900">
+        <div className="mt-8 rounded-2xl border border-line bg-surface-2 p-5 text-left">
+          <p className="font-semibold text-ink">
             Ya tienes una cuenta con este correo
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-ink-3">
             Inicia sesión para ver el estado de este y tus demás pedidos.
           </p>
           <Link
             href={sh(`/cuenta`)}
-            className="mt-3 inline-block rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110"
+            className="mt-3 inline-block rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink hover:brightness-110"
           >
             Iniciar sesión
           </Link>
@@ -417,14 +417,14 @@ export default async function OrderSuccessPage({
       {payment === "failed" ? (
         <Link
           href={sh(`/checkout`)}
-          className="mt-8 inline-block rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white hover:brightness-110"
+          className="mt-8 inline-block rounded-lg bg-brand px-6 py-3 text-sm font-medium text-brand-ink hover:brightness-110"
         >
           Intentar el pago de nuevo
         </Link>
       ) : (
         <Link
           href={sh()}
-          className="mt-8 inline-block rounded-lg bg-[var(--brand)] px-6 py-3 text-sm font-medium text-white hover:brightness-110"
+          className="mt-8 inline-block rounded-lg bg-brand px-6 py-3 text-sm font-medium text-brand-ink hover:brightness-110"
         >
           Seguir comprando
         </Link>

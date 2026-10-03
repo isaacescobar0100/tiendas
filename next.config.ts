@@ -37,6 +37,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Sin caché de Turbopack en `next build`: en Vercel (que restaura
+    // .next/cache) reutilizó un globals.css viejo y el CSS desplegado salió
+    // sin los tokens del tema. Builds algo más lentos, pero siempre fieles.
+    turbopackFileSystemCacheForBuild: false,
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

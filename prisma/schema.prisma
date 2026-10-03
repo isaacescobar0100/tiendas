@@ -91,6 +91,13 @@ model Store {
   notifyEmail    Boolean @default(true)
   notifyWhatsapp Boolean @default(false)
   themeColor  String     @default("#111827") // color de marca (botones/acentos)
+  // Tema de la tienda (Admin > Apariencia). Solo se guardan estos valores; el
+  // resto de colores (bordes, hover, texto atenuado…) se deriva en lib/theme.ts.
+  themeBg      String  @default("#ffffff") // fondo de la página
+  themeSurface String  @default("#ffffff") // tarjetas, cabecera, campos
+  themeInk     String  @default("#111827") // texto principal
+  themeMode    String  @default("light")   // light | dark
+  themeFont    String  @default("moderna") // combinación tipográfica curada
   currency    String     @default("COP")
   active      Boolean    @default(true)
   // Métodos de pago que ofrece la tienda (los controla el superadmin)

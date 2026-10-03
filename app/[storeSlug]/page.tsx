@@ -220,9 +220,9 @@ export default async function StorefrontPage({
         <>
           <BannerSlider slides={bannerSlides} />
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">{store.name}</h1>
+            <h1 className="text-3xl font-bold text-ink">{store.name}</h1>
             {store.description && (
-              <p className="mt-1 text-gray-500">{store.description}</p>
+              <p className="mt-1 text-ink-3">{store.description}</p>
             )}
           </div>
         </>
@@ -238,15 +238,15 @@ export default async function StorefrontPage({
             name="q"
             defaultValue={q ?? ""}
             placeholder="Buscar productos…"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+            className="w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink"
           />
-          <button className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white hover:brightness-110">
+          <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:brightness-110">
             Buscar
           </button>
         </form>
 
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-400">Ordenar:</span>
+          <span className="text-ink-3">Ordenar:</span>
           <SortLink href={mkHref({ sort: null })} active={!sort}>
             Destacados
           </SortLink>
@@ -293,13 +293,13 @@ export default async function StorefrontPage({
       )}
 
       {q && (
-        <p className="mb-4 text-sm text-gray-500">
+        <p className="mb-4 text-sm text-ink-3">
           {total} resultado{total === 1 ? "" : "s"} para &ldquo;{q}&rdquo;
         </p>
       )}
 
       {products.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-300 p-12 text-center text-gray-500">
+        <div className="rounded-2xl border border-dashed border-line-2 p-12 text-center text-ink-3">
           No hay productos{" "}
           {q
             ? "que coincidan con tu búsqueda"
@@ -345,12 +345,12 @@ export default async function StorefrontPage({
           {pageNum > 1 ? (
             <Link
               href={mkHref({ page: pageNum - 1 })}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex items-center gap-1 rounded-lg border border-line-2 px-3 py-2 text-sm text-ink-2 hover:bg-surface-2"
             >
               <ChevronLeft className="h-4 w-4" /> Anterior
             </Link>
           ) : (
-            <span className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300">
+            <span className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-ink-4">
               <ChevronLeft className="h-4 w-4" /> Anterior
             </span>
           )}
@@ -361,8 +361,8 @@ export default async function StorefrontPage({
               href={mkHref({ page: n })}
               className={`rounded-lg px-3 py-2 text-sm ${
                 n === pageNum
-                  ? "bg-gray-900 text-white"
-                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  ? "bg-ink text-bg"
+                  : "border border-line-2 text-ink-2 hover:bg-surface-2"
               }`}
             >
               {n}
@@ -372,12 +372,12 @@ export default async function StorefrontPage({
           {pageNum < totalPages ? (
             <Link
               href={mkHref({ page: pageNum + 1 })}
-              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex items-center gap-1 rounded-lg border border-line-2 px-3 py-2 text-sm text-ink-2 hover:bg-surface-2"
             >
               Siguiente <ChevronRight className="h-4 w-4" />
             </Link>
           ) : (
-            <span className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300">
+            <span className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-ink-4">
               Siguiente <ChevronRight className="h-4 w-4" />
             </span>
           )}
@@ -386,18 +386,18 @@ export default async function StorefrontPage({
 
       {locations.length > 0 && (
         <section className="mt-16">
-          <h2 className="mb-6 text-lg font-bold text-gray-900">Ubicaciones</h2>
+          <h2 className="mb-6 text-lg font-bold text-ink">Ubicaciones</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {locations.map((l, i) => (
               <div
                 key={`${i}-${l.name}`}
-                className="flex items-start gap-2 rounded-2xl border border-gray-200 p-5"
+                className="flex items-start gap-2 rounded-2xl border border-line p-5"
               >
-                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-[var(--brand)]" />
+                <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-brand-text" />
                 <div className="min-w-0">
-                  <p className="font-semibold text-gray-900">{l.name}</p>
+                  <p className="font-semibold text-ink">{l.name}</p>
                   {l.address && (
-                    <p className="mt-0.5 text-sm text-gray-500">{l.address}</p>
+                    <p className="mt-0.5 text-sm text-ink-3">{l.address}</p>
                   )}
                 </div>
               </div>
@@ -423,11 +423,11 @@ function FilterPill({
   const styles =
     tone === "sale"
       ? active
-        ? "border-red-600 bg-red-600 text-white"
-        : "border-red-300 text-red-600 hover:border-red-600"
+        ? "border-bad bg-bad text-white"
+        : "border-bad/30 text-bad-ink hover:border-bad"
       : active
-        ? "border-gray-900 bg-gray-900 text-white"
-        : "border-gray-300 text-gray-600 hover:border-gray-900";
+        ? "border-ink bg-ink text-bg"
+        : "border-line-2 text-ink-2 hover:border-ink";
   return (
     <Link
       href={href}
@@ -452,8 +452,8 @@ function SortLink({
       href={href}
       className={`rounded-md px-2 py-1 transition ${
         active
-          ? "bg-gray-900 text-white"
-          : "text-gray-600 hover:bg-gray-100"
+          ? "bg-ink text-bg"
+          : "text-ink-2 hover:bg-surface-3"
       }`}
     >
       {children}

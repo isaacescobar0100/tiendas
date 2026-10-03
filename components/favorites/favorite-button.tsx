@@ -29,8 +29,8 @@ export function FavoriteButton({
         size === "sm" ? "h-8 w-8 text-base" : "h-10 w-10 text-lg"
       } ${
         active
-          ? "bg-red-50 text-red-500"
-          : "bg-white/80 text-gray-400 hover:text-red-500"
+          ? "bg-bad-soft text-bad-ink"
+          : "bg-surface/80 text-ink-3 hover:text-bad-ink"
       } ${className}`}
     >
       <Heart
