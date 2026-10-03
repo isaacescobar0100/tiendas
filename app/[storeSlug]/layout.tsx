@@ -80,21 +80,12 @@ export default async function StoreLayout({
   const path = (await headers()).get("x-pathname") ?? "";
   if (path === `/${store.slug}/menu`) {
     return (
+      // La carta trae su propia portada: aquí solo el color de marca.
       <div
-        className="flex min-h-screen flex-col bg-white"
+        className="min-h-screen bg-stone-100"
         style={{ ["--brand" as string]: store.themeColor }}
       >
-        <header className="sticky top-0 z-10 border-b border-gray-100 bg-white/90 backdrop-blur">
-          <div className="mx-auto flex max-w-2xl items-center justify-center gap-2 px-4 py-4 text-sm font-semibold text-gray-900">
-            {store.name}
-          </div>
-        </header>
-        <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-          {children}
-        </main>
-        <footer className="py-6 text-center text-xs text-gray-400">
-          {store.name} · con tecnología de MiTienda
-        </footer>
+        {children}
         {isAgeRestricted(store.type) && (
           <AgeGate storeSlug={store.slug} storeName={store.name} />
         )}
