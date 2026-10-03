@@ -41,7 +41,19 @@ export async function getCurrentSede() {
       passwordHash: true,
       sessionVersion: true,
       store: {
-        select: { name: true, slug: true, currency: true, logoUrl: true },
+        select: {
+          name: true,
+          slug: true,
+          currency: true,
+          logoUrl: true,
+          // Apariencia de la tienda: el panel de la sede usa el mismo tema.
+          themeColor: true,
+          themeBg: true,
+          themeSurface: true,
+          themeInk: true,
+          themeMode: true,
+          themeFont: true,
+        },
       },
     },
   });

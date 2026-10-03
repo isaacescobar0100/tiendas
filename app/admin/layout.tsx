@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireAdminStore } from "@/lib/guards";
 import { billingOf, GRACE_DAYS } from "@/lib/billing";
-import { storeTheme, themeTokens } from "@/lib/theme";
+import { storeTheme, themeStyle } from "@/lib/theme";
+import { themeFontVars } from "@/lib/fonts";
 import { AdminNav } from "@/components/admin-nav";
 import { stopImpersonationAction } from "@/app/superadmin/actions";
 
@@ -39,54 +40,43 @@ export default async function AdminLayout({
             }
           : null;
 
-  // Acento de la marca en el panel (neutro): solo las variables de marca,
-  // calculadas sobre el fondo blanco del admin para que siempre se lean.
-  const brandTokens = themeTokens({
-    ...storeTheme(store),
-    bg: "#ffffff",
-    surface: "#ffffff",
-    ink: "#111827",
-    mode: "light",
-  });
-  const accent = Object.fromEntries(
-    ["--brand", "--brand-ink", "--brand-hover", "--brand-soft", "--brand-text"].map((k) => [k, brandTokens[k]]),
-  ) as React.CSSProperties;
-
+  // El panel usa la apariencia de la tienda (Admin > Apariencia): mismos
+  // colores, modo claro/oscuro y tipografía que su tienda.
   return (
-    <div className="min-h-screen bg-gray-50" style={accent}>
+    <div className={`store-theme ${themeFontVars} min-h-screen bg-bg`} style={themeStyle(storeTheme(store))}>
       <div className="h-1 bg-brand print:hidden" aria-hidden />
       {rentBanner && (
         <div
-          className={`px-4 py-2 text-center text-sm font-medium text-white ${
-            rentBanner.danger ? "bg-red-600" : "bg-amber-500"
+          className={`px-4 py-2 text-center text-sm font-medium ${
+            rentBanner.danger ? "bg-bad text-white" : "bg-warn-soft text-warn-ink"
           }`}
         >
           {rentBanner.text}
         </div>
       )}
       {impersonating && (
-        <div className="flex items-center justify-center gap-3 bg-amber-500 px-4 py-2 text-center text-sm font-medium text-white">
+        <div className="flex items-center justify-center gap-3 bg-warn-soft px-4 py-2 text-center text-sm font-medium text-warn-ink">
           <span>
             Estás viendo <strong>{store.name}</strong> como superadmin.
           </span>
           <form action={stopImpersonationAction}>
-            <button className="rounded-md bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30">
+            <button className="rounded-md bg-surface px-3 py-1 text-xs font-semibold text-ink ring-1 ring-line hover:bg-surface-2">
               Salir
             </button>
           </form>
         </div>
       )}
-      <header className="relative border-b border-gray-200 bg-white print:hidden">
+      <header className="relative border-b border-line bg-surface print:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 shrink-0 items-center gap-2.5">
             <Link
               prefetch={false}
               href="/admin"
-              className="flex min-w-0 items-center gap-2.5 font-semibold text-gray-900"
+              className="flex min-w-0 items-center gap-2.5 font-semibold text-ink"
             >
               {store.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={store.logoUrl} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover ring-1 ring-gray-200" />
+                <img src={store.logoUrl} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover ring-1 ring-line" />
               ) : (
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand text-sm font-bold text-brand-ink">
                   {store.name.slice(0, 1)}

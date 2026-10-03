@@ -23,8 +23,8 @@ export default async function ExportPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Exportar pedidos</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-ink">Exportar pedidos</h1>
+        <p className="text-sm text-ink-3">
           Descarga tus pedidos en CSV (se abre en Excel o Google Sheets) filtrando
           por día, mes o año.
         </p>
@@ -32,7 +32,7 @@ export default async function ExportPage() {
 
       <ExportForm defaults={defaults} />
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-ink-3">
         El archivo incluye fecha, cliente, contacto, dirección, estado de pago y
         envío, productos y los importes (subtotal, envío y total).
       </p>

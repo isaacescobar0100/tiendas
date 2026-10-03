@@ -45,7 +45,7 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
   return (
     <form
       onSubmit={keepFormSubmit(formAction)}
-      className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6"
+      className="space-y-5 rounded-2xl border border-line bg-surface p-6"
     >
       <input
         type="hidden"
@@ -53,25 +53,25 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
         value={serializeTransferAccounts(accounts)}
       />
       <div>
-        <h2 className="text-sm font-semibold text-gray-900">Métodos de pago</h2>
-        <p className="mt-1 text-xs text-gray-400">
+        <h2 className="text-sm font-semibold text-ink">Métodos de pago</h2>
+        <p className="mt-1 text-xs text-ink-3">
           Elige cómo pueden pagarte tus clientes. Puedes tener varios activos y
           el cliente escoge al hacer el pedido.
         </p>
       </div>
 
       <div className="space-y-3">
-        <label className="flex items-start gap-2 text-sm text-gray-700">
+        <label className="flex items-start gap-2 text-sm text-ink-2">
           <input
             type="checkbox"
             name="onlinePayment"
             defaultChecked={data.wompiReady && data.onlinePaymentEnabled}
             disabled={!data.wompiReady}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300"
+            className="mt-0.5 h-4 w-4 rounded border-line-2"
           />
           <span>
             <span className="font-medium">Pago en línea (Wompi)</span>
-            <span className="block text-xs text-gray-400">
+            <span className="block text-xs text-ink-3">
               {data.wompiReady
                 ? "Tarjeta, PSE, Nequi… El pago se confirma solo. Wompi cobra una comisión por cada pago."
                 : "Aún no está configurado. Pídeselo al administrador de la plataforma."}
@@ -79,34 +79,34 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
           </span>
         </label>
 
-        <label className="flex items-start gap-2 text-sm text-gray-700">
+        <label className="flex items-start gap-2 text-sm text-ink-2">
           <input
             type="checkbox"
             name="codPayment"
             defaultChecked={data.codEnabled}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300"
+            className="mt-0.5 h-4 w-4 rounded border-line-2"
           />
           <span>
             <span className="font-medium">Contra entrega</span>
-            <span className="block text-xs text-gray-400">
+            <span className="block text-xs text-ink-3">
               El cliente paga al recibir el pedido.
             </span>
           </span>
         </label>
 
-        <label className="flex items-start gap-2 text-sm text-gray-700">
+        <label className="flex items-start gap-2 text-sm text-ink-2">
           <input
             type="checkbox"
             name="transferPayment"
             checked={transfer}
             onChange={(e) => setTransfer(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300"
+            className="mt-0.5 h-4 w-4 rounded border-line-2"
           />
           <span>
             <span className="font-medium">
               Transferencia / QR (sin comisión)
             </span>
-            <span className="block text-xs text-gray-400">
+            <span className="block text-xs text-ink-3">
               El cliente paga directo a tu cuenta con tu QR, llave Bre-B, Nequi,
               Daviplata o cuenta bancaria, y te envía el comprobante. Tú (o la
               sede) revisas que llegó el dinero y marcas el pedido como
@@ -117,12 +117,12 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
       </div>
 
       {transfer && (
-        <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <p className="text-sm font-medium text-gray-900">
+        <div className="space-y-3 rounded-xl border border-line bg-surface-2 p-4">
+          <p className="text-sm font-medium text-ink">
             Tus cuentas para recibir pagos
           </p>
           {accounts.length === 0 && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-ink-3">
               Agrega al menos una: tu llave Bre-B, Nequi, Daviplata o cuenta
               bancaria. Si tienes el QR, súbelo como imagen.
             </p>
@@ -133,7 +133,7 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
             return (
               <div
                 key={a.id}
-                className="space-y-3 rounded-lg border border-gray-200 bg-white p-3"
+                className="space-y-3 rounded-lg border border-line bg-surface p-3"
               >
                 <div className="flex items-center gap-2">
                   <select
@@ -153,7 +153,7 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
                   <button
                     type="button"
                     onClick={() => remove(a.id)}
-                    className="rounded-lg border border-gray-300 p-2 text-gray-400 hover:text-red-500"
+                    className="rounded-lg border border-line-2 p-2 text-ink-3 hover:text-bad-ink"
                     aria-label="Quitar cuenta"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -196,7 +196,7 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
             type="button"
             onClick={add}
             disabled={accounts.length >= 6}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line-2 bg-surface px-3 py-2 text-sm font-medium text-ink-2 hover:bg-surface-2 disabled:opacity-50"
           >
             <Plus className="h-4 w-4" /> Agregar cuenta o QR
           </button>
@@ -204,12 +204,12 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
       )}
 
       {state?.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad-ink">
           {state.error}
         </p>
       )}
       {state?.ok && (
-        <p className="flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+        <p className="flex items-center gap-1.5 rounded-lg bg-ok-soft px-3 py-2 text-sm text-ok-ink">
           <Check className="h-4 w-4" /> Métodos de pago guardados
         </p>
       )}
@@ -217,7 +217,7 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+        className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink transition hover:bg-brand-hover disabled:opacity-60"
       >
         {pending ? "Guardando…" : "Guardar métodos de pago"}
       </button>
@@ -225,6 +225,6 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
   );
 }
 
-const labelCls = "mb-1 block text-sm font-medium text-gray-700";
+const labelCls = "mb-1 block text-sm font-medium text-ink-2";
 const inputCls =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
+  "w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";

@@ -150,14 +150,14 @@ export function ProductForm({
   return (
     <form
       onSubmit={keepFormSubmit(formAction)}
-      className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6"
+      className="space-y-5 rounded-2xl border border-line bg-surface p-6"
     >
       {defaults?.id && (
         <input type="hidden" name="id" value={defaults.id} />
       )}
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
+        <label className="mb-1 block text-sm font-medium text-ink-2">
           Nombre
         </label>
         <input
@@ -170,7 +170,7 @@ export function ProductForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
+        <label className="mb-1 block text-sm font-medium text-ink-2">
           Descripción
         </label>
         <textarea
@@ -184,7 +184,7 @@ export function ProductForm({
 
       <div className={showStock ? "grid grid-cols-2 gap-4" : ""}>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+          <label className="mb-1 block text-sm font-medium text-ink-2">
             Precio
           </label>
           <input
@@ -202,7 +202,7 @@ export function ProductForm({
         </div>
         {showStock && (
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-ink-2">
               {hasVariants ? "Stock total" : "Stock"}
             </label>
             {hasVariants ? (
@@ -212,7 +212,7 @@ export function ProductForm({
                 type="text"
                 readOnly
                 value={totalStock}
-                className={`${inputCls} bg-gray-100 text-gray-500`}
+                className={`${inputCls} bg-surface-3 text-ink-3`}
               />
             ) : (
               <input
@@ -224,7 +224,7 @@ export function ProductForm({
               />
             )}
             {hasVariants && (
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-ink-3">
                 Suma automática del stock de cada variante.
               </p>
             )}
@@ -233,7 +233,7 @@ export function ProductForm({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
+        <label className="mb-1 block text-sm font-medium text-ink-2">
           Precio de oferta (opcional)
         </label>
         <input
@@ -247,7 +247,7 @@ export function ProductForm({
           placeholder="Ej: 39900"
           className={inputCls}
         />
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-ink-3">
           Si lo rellenas (y es menor que el precio), el producto se muestra en
           oferta: precio normal tachado, precio rebajado y etiqueta de
           descuento. Déjalo vacío para quitar la oferta.
@@ -256,17 +256,17 @@ export function ProductForm({
 
       {/* Variantes (solo moda): colores y tallas que se combinan */}
       {showVariants && (
-      <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+      <div className="space-y-4 rounded-lg border border-line p-4">
         <input
           type="hidden"
           name="variants"
           value={JSON.stringify(cleanVariants)}
         />
         <div>
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-ink-2">
             Variantes (tallas y colores)
           </label>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-ink-3">
             ¿Tu producto viene en varias tallas o colores? Añádelos abajo y el
             sistema arma solas todas las combinaciones para que pongas el stock
             de cada una. Si no, deja esto vacío y usa el{" "}
@@ -293,12 +293,12 @@ export function ProductForm({
         />
 
         {combos.length === 0 ? (
-          <p className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">
+          <p className="rounded-md bg-surface-2 px-3 py-2 text-xs text-ink-3">
             Sin variantes: se usará el <strong>Stock</strong> de arriba.
           </p>
         ) : (
           <div>
-            <p className="mb-2 text-xs font-medium text-gray-600">
+            <p className="mb-2 text-xs font-medium text-ink-2">
               Stock por variante
             </p>
             <div className="space-y-2">
@@ -306,7 +306,7 @@ export function ProductForm({
                 const key = stockKey(color, size);
                 return (
                   <div key={key} className="flex items-center gap-3">
-                    <span className="flex-1 text-sm text-gray-800">
+                    <span className="flex-1 text-sm text-ink">
                       {variantLabel(color, size) || "Única"}
                     </span>
                     <input
@@ -321,7 +321,7 @@ export function ProductForm({
                     <button
                       type="button"
                       onClick={() => removeCombo(color, size)}
-                      className="rounded-md border border-red-200 px-2 py-2 text-red-600 hover:bg-red-50"
+                      className="rounded-md border border-bad/30 px-2 py-2 text-bad-ink hover:bg-bad-soft"
                       aria-label={`Quitar ${variantLabel(color, size) || "variante"}`}
                     >
                       <X className="h-3.5 w-3.5" />
@@ -340,7 +340,7 @@ export function ProductForm({
       )}
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
+        <label className="mb-1 block text-sm font-medium text-ink-2">
           Categoría
         </label>
         <select
@@ -370,18 +370,18 @@ export function ProductForm({
 
       <MultiImageUpload name="gallery" defaultItems={parseGallery(defaults)} />
 
-      <label className="flex items-center gap-2 text-sm text-gray-700">
+      <label className="flex items-center gap-2 text-sm text-ink-2">
         <input
           type="checkbox"
           name="active"
           defaultChecked={defaults?.active ?? true}
-          className="h-4 w-4 rounded border-gray-300"
+          className="h-4 w-4 rounded border-line-2"
         />
         Publicado (visible en la tienda)
       </label>
 
       {state?.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="rounded-lg bg-bad-soft px-3 py-2 text-sm text-bad-ink">
           {state.error}
         </p>
       )}
@@ -390,13 +390,13 @@ export function ProductForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:opacity-60"
+          className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink transition hover:bg-brand-hover disabled:opacity-60"
         >
           {pending ? "Guardando…" : submitLabel}
         </button>
         <Link
           href="/admin/products"
-          className="text-sm text-gray-500 hover:text-gray-900"
+          className="text-sm text-ink-3 hover:text-ink"
         >
           Cancelar
         </Link>
@@ -406,7 +406,7 @@ export function ProductForm({
 }
 
 const inputCls =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
+  "w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";
 
 // Campo de "etiquetas": escribes un valor y con Enter (o coma) lo añades como chip.
 function TagInput({
@@ -431,20 +431,20 @@ function TagInput({
   };
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700">
+      <label className="mb-1 block text-sm font-medium text-ink-2">
         {label}
       </label>
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-300 p-2 focus-within:border-gray-900 focus-within:ring-1 focus-within:ring-gray-900">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line-2 p-2 focus-within:border-ink focus-within:ring-1 focus-within:ring-ink">
         {values.map((v) => (
           <span
             key={v}
-            className="flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-sm text-gray-800"
+            className="flex items-center gap-1 rounded-full bg-surface-3 px-2.5 py-1 text-sm text-ink"
           >
             {v}
             <button
               type="button"
               onClick={() => onRemove(v)}
-              className="text-gray-400 hover:text-red-500"
+              className="text-ink-3 hover:text-bad-ink"
               aria-label={`Quitar ${v}`}
             >
               <X className="h-3 w-3" />
@@ -465,7 +465,7 @@ function TagInput({
           className="min-w-[10rem] flex-1 text-sm outline-none"
         />
       </div>
-      {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-ink-3">{hint}</p>}
     </div>
   );
 }

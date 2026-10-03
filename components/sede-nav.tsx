@@ -22,8 +22,8 @@ export function SedeNav() {
           prefetch={false} // panel privado: sin renders de más
           className={
             isActive(l.href, l.exact)
-              ? "font-medium text-gray-900"
-              : "text-gray-600 hover:text-gray-900"
+              ? "font-medium text-ink"
+              : "text-ink-2 hover:text-ink"
           }
         >
           {l.label}
@@ -33,7 +33,7 @@ export function SedeNav() {
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a
         href="/api/sede/export"
-        className="text-gray-600 hover:text-gray-900"
+        className="text-ink-2 hover:text-ink"
       >
         Exportar
       </a>

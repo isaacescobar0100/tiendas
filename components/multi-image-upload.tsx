@@ -56,7 +56,7 @@ export function MultiImageUpload({
 
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700">
+      <label className="mb-1 block text-sm font-medium text-ink-2">
         {label}
       </label>
       <input type="hidden" name={name} value={JSON.stringify(items)} />
@@ -76,7 +76,7 @@ export function MultiImageUpload({
               onClick={() =>
                 setItems((prev) => prev.filter((_, i) => i !== idx))
               }
-              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow hover:text-red-500"
+              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-line bg-surface text-ink-2 shadow hover:text-bad-ink"
               aria-label="Quitar imagen"
             >
               <X className="h-3.5 w-3.5" />
@@ -88,7 +88,7 @@ export function MultiImageUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="flex h-28 w-28 flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 text-xs text-gray-400 hover:border-gray-900 hover:text-gray-700 disabled:opacity-60"
+          className="flex h-28 w-28 flex-col items-center justify-center rounded-lg border border-dashed border-line-2 text-xs text-ink-3 hover:border-ink hover:text-ink-2 disabled:opacity-60"
         >
           {uploading ? "Subiendo…" : "+ Añadir"}
         </button>
@@ -104,11 +104,11 @@ export function MultiImageUpload({
           if (e.target.files?.length) handleFiles(e.target.files);
         }}
       />
-      <p className="mt-1 text-xs text-gray-400">
+      <p className="mt-1 text-xs text-ink-3">
         Se muestran junto a la principal. Arrastra cada una y usa −/+ para
         encuadrarla. Se optimizan solas al subir.
       </p>
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+      {error && <p className="mt-1 text-xs text-bad-ink">{error}</p>}
     </div>
   );
 }

@@ -27,13 +27,13 @@ export function PhotosForm({
   return (
     <form
       onSubmit={keepFormSubmit(formAction)}
-      className="mt-6 space-y-6 rounded-2xl border border-gray-200 bg-white p-5"
+      className="mt-6 space-y-6 rounded-2xl border border-line bg-surface p-5"
     >
       <div>
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
           <ImageIcon className="h-4 w-4" /> Fotos de fondo
         </h2>
-        <p className="mt-0.5 text-xs text-gray-500">
+        <p className="mt-0.5 text-xs text-ink-3">
           Tu local, tu equipo o tus platos como fondo. Arrastra la foto para elegir
           qué parte se ve. Encima va una capa oscura para que el texto se lea.
         </p>
@@ -41,7 +41,7 @@ export function PhotosForm({
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
-          <p className="mb-2 text-sm font-medium text-gray-800">Portada del menú QR</p>
+          <p className="mb-2 text-sm font-medium text-ink">Portada del menú QR</p>
           <ImageUpload
             name="menuBgUrl"
             label="Fondo detrás del logo del menú"
@@ -55,7 +55,7 @@ export function PhotosForm({
           />
         </div>
         <div>
-          <p className="mb-2 text-sm font-medium text-gray-800">Pantalla de acceso (login)</p>
+          <p className="mb-2 text-sm font-medium text-ink">Pantalla de acceso (login)</p>
           <ImageUpload
             name="loginBgUrl"
             label="Fondo del login del panel y de las sedes"
@@ -70,9 +70,9 @@ export function PhotosForm({
         </div>
       </div>
 
-      <div className="border-t border-gray-100 pt-5">
-        <p className="text-sm font-medium text-gray-800">Galería del negocio</p>
-        <p className="mt-0.5 text-xs text-gray-500">
+      <div className="border-t border-line pt-5">
+        <p className="text-sm font-medium text-ink">Galería del negocio</p>
+        <p className="mt-0.5 text-xs text-ink-3">
           Hasta 8 fotos: salen en la sección &ldquo;Nuestro lugar&rdquo; del inicio de tu tienda.
         </p>
         <div className="mt-3">
@@ -84,16 +84,16 @@ export function PhotosForm({
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center gap-2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-brand-ink hover:bg-brand-hover disabled:opacity-50"
         >
           <Check className="h-4 w-4" /> {pending ? "Guardando…" : "Guardar fotos"}
         </button>
         {state?.ok && (
-          <span role="status" className="text-sm text-green-700">
+          <span role="status" className="text-sm text-ok-ink">
             Fotos guardadas.
           </span>
         )}
-        {state?.error && <span className="text-sm text-red-600">{state.error}</span>}
+        {state?.error && <span className="text-sm text-bad-ink">{state.error}</span>}
       </div>
     </form>
   );

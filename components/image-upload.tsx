@@ -88,7 +88,7 @@ export function ImageUpload({
 
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700">
+      <label className="mb-1 block text-sm font-medium text-ink-2">
         {label}
       </label>
 
@@ -112,7 +112,7 @@ export function ImageUpload({
             }}
             onPointerMove={onPointerMove}
             onPointerUp={() => (drag.current = null)}
-            className="relative h-40 w-40 shrink-0 cursor-move touch-none select-none overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+            className="relative h-40 w-40 shrink-0 cursor-move touch-none select-none overflow-hidden rounded-lg border border-line bg-surface-2"
             title="Arrastra la foto para encajarla"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -133,7 +133,7 @@ export function ImageUpload({
           </div>
         ) : (
           <div
-            className={`overflow-hidden rounded-lg border border-gray-200 bg-gray-50 ${
+            className={`overflow-hidden rounded-lg border border-line bg-surface-2 ${
               aspect === "square" ? "h-24 w-24" : "h-16 w-28"
             }`}
           >
@@ -141,7 +141,7 @@ export function ImageUpload({
               // eslint-disable-next-line @next/next/no-img-element
               <img src={url} alt="" className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-gray-300">
+              <div className="flex h-full w-full items-center justify-center text-ink-4">
                 <ImageIcon className="h-7 w-7" />
               </div>
             )}
@@ -155,19 +155,19 @@ export function ImageUpload({
                 type="button"
                 onClick={() => setZoom((z) => clampZoom(z - 0.25))}
                 disabled={zoom <= 1}
-                className="rounded-lg border border-gray-300 p-1.5 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-lg border border-line-2 p-1.5 text-ink-2 hover:bg-surface-2 disabled:opacity-40"
                 aria-label="Alejar"
               >
                 <ZoomOut className="h-4 w-4" />
               </button>
-              <span className="w-12 text-center text-xs text-gray-500">
+              <span className="w-12 text-center text-xs text-ink-3">
                 {zoom.toFixed(2)}×
               </span>
               <button
                 type="button"
                 onClick={() => setZoom((z) => clampZoom(z + 0.25))}
                 disabled={zoom >= 3}
-                className="rounded-lg border border-gray-300 p-1.5 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+                className="rounded-lg border border-line-2 p-1.5 text-ink-2 hover:bg-surface-2 disabled:opacity-40"
                 aria-label="Acercar"
               >
                 <ZoomIn className="h-4 w-4" />
@@ -188,7 +188,7 @@ export function ImageUpload({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+            className="rounded-lg border border-line-2 px-3 py-2 text-sm font-medium text-ink-2 transition hover:bg-surface-2 disabled:opacity-60"
           >
             {uploading ? "Subiendo…" : url ? "Cambiar imagen" : "Subir imagen"}
           </button>
@@ -199,20 +199,20 @@ export function ImageUpload({
                 setUrl("");
                 onChange?.("");
               }}
-              className="ml-2 text-sm text-gray-400 hover:text-red-500"
+              className="ml-2 text-sm text-ink-3 hover:text-bad-ink"
             >
               Quitar
             </button>
           )}
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-ink-3">
             JPG, PNG, WEBP o GIF · se optimizan solas al subir
           </p>
           {showReposition && (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-ink-3">
               Arrastra la foto para encuadrarla y usa −/+ para acercar o alejar.
             </p>
           )}
-          {error && <p className="text-xs text-red-500">{error}</p>}
+          {error && <p className="text-xs text-bad-ink">{error}</p>}
         </div>
       </div>
     </div>

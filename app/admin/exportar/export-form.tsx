@@ -20,7 +20,7 @@ export function ExportForm({
   const ready = value.trim().length > 0;
 
   return (
-    <div className="max-w-lg space-y-5 rounded-2xl border border-gray-200 bg-white p-6">
+    <div className="max-w-lg space-y-5 rounded-2xl border border-line bg-surface p-6">
       <div>
         <label className={labelCls}>Agrupar por</label>
         <div className="flex gap-2">
@@ -37,8 +37,8 @@ export function ExportForm({
               onClick={() => setType(val)}
               className={`flex-1 rounded-lg border px-3 py-2 text-sm transition ${
                 type === val
-                  ? "border-gray-900 bg-gray-900 text-white"
-                  : "border-gray-300 text-gray-600 hover:border-gray-900"
+                  ? "border-ink bg-brand text-brand-ink"
+                  : "border-line-2 text-ink-2 hover:border-ink"
               }`}
             >
               {lbl}
@@ -82,10 +82,10 @@ export function ExportForm({
       <a
         href={ready ? href : undefined}
         aria-disabled={!ready}
-        className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition ${
+        className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
           ready
-            ? "bg-gray-900 hover:bg-gray-800"
-            : "pointer-events-none bg-gray-300"
+            ? "bg-brand text-brand-ink hover:bg-brand-hover"
+            : "pointer-events-none bg-line-2 text-ink-3"
         }`}
       >
         <Download className="h-4 w-4" /> Descargar CSV
@@ -94,6 +94,6 @@ export function ExportForm({
   );
 }
 
-const labelCls = "mb-1 block text-sm font-medium text-gray-700";
+const labelCls = "mb-1 block text-sm font-medium text-ink-2";
 const inputCls =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
+  "w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";

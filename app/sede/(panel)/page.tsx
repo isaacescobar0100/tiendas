@@ -68,8 +68,8 @@ export default async function SedeDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Resumen de tu sede</h1>
-        <p className="text-sm text-gray-500">Cómo va {sede.name}.</p>
+        <h1 className="text-2xl font-bold text-ink">Resumen de tu sede</h1>
+        <p className="text-sm text-ink-3">Cómo va {sede.name}.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -80,9 +80,9 @@ export default async function SedeDashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white lg:col-span-2">
-          <div className="border-b border-gray-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-gray-900">
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface lg:col-span-2">
+          <div className="border-b border-line px-5 py-3">
+            <h2 className="text-sm font-semibold text-ink">
               Ventas (últimos 14 días)
             </h2>
           </div>
@@ -90,9 +90,9 @@ export default async function SedeDashboard() {
             <SalesBars days={dayPoints} color="#111827" currency={currency} />
           </div>
         </div>
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-gray-900">
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <div className="border-b border-line px-5 py-3">
+            <h2 className="text-sm font-semibold text-ink">
               Estado de pedidos
             </h2>
           </div>
@@ -103,9 +103,9 @@ export default async function SedeDashboard() {
       </div>
 
       {top.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-gray-900">Más vendidos</h2>
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <div className="border-b border-line px-5 py-3">
+            <h2 className="text-sm font-semibold text-ink">Más vendidos</h2>
           </div>
           <div className="px-5 py-4">
             <HBars items={top} color="#111827" />
@@ -129,11 +129,11 @@ function Stat({
 }) {
   return (
     <div
-      className={`rounded-2xl border bg-white p-5 ${highlight ? "border-amber-300" : "border-gray-200"}`}
+      className={`rounded-2xl border bg-surface p-5 ${highlight ? "border-warn/30" : "border-line"}`}
     >
-      <div className="text-sm text-gray-500">{label}</div>
-      <div className="mt-1 text-2xl font-bold text-gray-900">{value}</div>
-      {sub && <div className="mt-0.5 text-xs text-gray-400">{sub}</div>}
+      <div className="text-sm text-ink-3">{label}</div>
+      <div className="mt-1 text-2xl font-bold text-ink">{value}</div>
+      {sub && <div className="mt-0.5 text-xs text-ink-3">{sub}</div>}
     </div>
   );
 }

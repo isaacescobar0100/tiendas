@@ -51,7 +51,7 @@ export function ImageFramer({
         }}
         onPointerMove={onMove}
         onPointerUp={() => (drag.current = null)}
-        className={`relative ${size} cursor-move touch-none select-none overflow-hidden rounded-lg border border-gray-200 bg-gray-50`}
+        className={`relative ${size} cursor-move touch-none select-none overflow-hidden rounded-lg border border-line bg-surface-2`}
         title="Arrastra la foto para encajarla"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -71,19 +71,19 @@ export function ImageFramer({
           type="button"
           onClick={() => onChange(position, clampZoom(zoom - 0.25))}
           disabled={zoom <= 1}
-          className="rounded border border-gray-300 p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+          className="rounded border border-line-2 p-1 text-ink-2 hover:bg-surface-2 disabled:opacity-40"
           aria-label="Alejar"
         >
           <ZoomOut className="h-3.5 w-3.5" />
         </button>
-        <span className="w-9 text-center text-[10px] text-gray-500">
+        <span className="w-9 text-center text-[10px] text-ink-3">
           {zoom.toFixed(2)}×
         </span>
         <button
           type="button"
           onClick={() => onChange(position, clampZoom(zoom + 0.25))}
           disabled={zoom >= 3}
-          className="rounded border border-gray-300 p-1 text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+          className="rounded border border-line-2 p-1 text-ink-2 hover:bg-surface-2 disabled:opacity-40"
           aria-label="Acercar"
         >
           <ZoomIn className="h-3.5 w-3.5" />

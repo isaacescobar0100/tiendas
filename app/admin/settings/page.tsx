@@ -18,8 +18,8 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Ajustes</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-ink">Ajustes</h1>
+        <p className="text-sm text-ink-3">
           Configura tu tienda y tu cuenta.
         </p>
       </div>

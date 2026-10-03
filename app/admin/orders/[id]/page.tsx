@@ -69,16 +69,16 @@ export default async function OrderDetailPage({
         <Link
           prefetch={false}
           href="/admin/orders"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink"
         >
           <ArrowLeft className="h-4 w-4" /> Todos los pedidos
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-ink">
               Pedido #{order.id.slice(-8)}
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-ink-3">
               {dateFmt.format(order.createdAt)}
             </p>
           </div>
@@ -100,11 +100,11 @@ export default async function OrderDetailPage({
       <div className="grid gap-6 md:grid-cols-[1fr_260px]">
         {/* Artículos */}
         <div className="space-y-6">
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-            <div className="border-b border-gray-100 px-5 py-3 text-sm font-semibold text-gray-900">
+          <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+            <div className="border-b border-line px-5 py-3 text-sm font-semibold text-ink">
               Artículos
             </div>
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-line">
               {order.items.map((i) => (
                 <li
                   key={i.id}
@@ -121,11 +121,11 @@ export default async function OrderDetailPage({
                     className="h-12 w-12 shrink-0 rounded-lg object-cover"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-gray-900">{i.name}</div>
+                    <div className="font-medium text-ink">{i.name}</div>
                     {i.modifiers && (
-                      <div className="text-xs text-gray-600">{i.modifiers}</div>
+                      <div className="text-xs text-ink-2">{i.modifiers}</div>
                     )}
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-ink-3">
                       {[
                         i.color && `Color: ${i.color}`,
                         i.size && `Talla: ${i.size}`,
@@ -135,14 +135,14 @@ export default async function OrderDetailPage({
                         .join("  ·  ")}
                     </div>
                   </div>
-                  <span className="shrink-0 text-gray-900">
+                  <span className="shrink-0 text-ink">
                     {formatPrice(i.priceCents * i.quantity, order.currency)}
                   </span>
                 </li>
               ))}
             </ul>
-            <div className="space-y-1 border-t border-gray-200 px-5 py-3 text-sm">
-              <div className="flex justify-between text-gray-600">
+            <div className="space-y-1 border-t border-line px-5 py-3 text-sm">
+              <div className="flex justify-between text-ink-2">
                 <span>Subtotal</span>
                 <span>
                   {formatPrice(
@@ -151,7 +151,7 @@ export default async function OrderDetailPage({
                   )}
                 </span>
               </div>
-              <div className="flex justify-between text-gray-600">
+              <div className="flex justify-between text-ink-2">
                 <span>Envío</span>
                 <span>
                   {order.shippingCents > 0
@@ -159,9 +159,9 @@ export default async function OrderDetailPage({
                     : "Gratis"}
                 </span>
               </div>
-              <div className="flex justify-between border-t border-gray-100 pt-2">
-                <span className="font-medium text-gray-900">Total</span>
-                <span className="text-lg font-bold text-gray-900">
+              <div className="flex justify-between border-t border-line pt-2">
+                <span className="font-medium text-ink">Total</span>
+                <span className="text-lg font-bold text-ink">
                   {formatPrice(order.totalCents, order.currency)}
                 </span>
               </div>
@@ -169,9 +169,9 @@ export default async function OrderDetailPage({
           </div>
 
           {/* Datos del cliente */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 text-sm">
-            <h2 className="mb-3 font-semibold text-gray-900">Cliente</h2>
-            <dl className="space-y-1.5 text-gray-600">
+          <div className="rounded-2xl border border-line bg-surface p-5 text-sm">
+            <h2 className="mb-3 font-semibold text-ink">Cliente</h2>
+            <dl className="space-y-1.5 text-ink-2">
               <Row label="Nombre" value={order.customerName} />
               <Row label="Email" value={order.customerEmail} />
               {order.customerPhone && (
@@ -190,12 +190,12 @@ export default async function OrderDetailPage({
           </div>
 
           {/* Dirección de envío */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 text-sm">
-            <h2 className="mb-3 font-semibold text-gray-900">
+          <div className="rounded-2xl border border-line bg-surface p-5 text-sm">
+            <h2 className="mb-3 font-semibold text-ink">
               Dirección de envío
             </h2>
             {order.street || order.city ? (
-              <dl className="space-y-1.5 text-gray-600">
+              <dl className="space-y-1.5 text-ink-2">
                 <Row label="Dirección" value={order.street ?? "—"} />
                 {order.neighborhood && (
                   <Row label="Barrio" value={order.neighborhood} />
@@ -211,31 +211,31 @@ export default async function OrderDetailPage({
               </dl>
             ) : (
               // Pedido antiguo: solo tiene el texto combinado
-              <p className="text-gray-800">{order.address}</p>
+              <p className="text-ink">{order.address}</p>
             )}
           </div>
         </div>
 
         {/* Cambiar estados (pago y envío por separado) */}
-        <div className="h-fit space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
+        <div className="h-fit space-y-4 rounded-2xl border border-line bg-surface p-5">
           <div>
-            <h2 className="mb-2 text-sm font-semibold text-gray-900">Pago</h2>
+            <h2 className="mb-2 text-sm font-semibold text-ink">Pago</h2>
             <PaymentSelect orderId={order.id} value={order.status} />
           </div>
-          <div className="border-t border-gray-100 pt-4">
-            <h2 className="mb-2 text-sm font-semibold text-gray-900">Estado del pedido</h2>
+          <div className="border-t border-line pt-4">
+            <h2 className="mb-2 text-sm font-semibold text-ink">Estado del pedido</h2>
             <FulfillmentSelect orderId={order.id} value={order.fulfillment} />
           </div>
         </div>
 
         {/* Avisar al cliente (canales según los ajustes de la tienda) */}
-        <div className="h-fit rounded-2xl border border-gray-200 bg-white p-5">
-          <h2 className="mb-3 text-sm font-semibold text-gray-900">
+        <div className="h-fit rounded-2xl border border-line bg-surface p-5">
+          <h2 className="mb-3 text-sm font-semibold text-ink">
             Avisar al cliente
           </h2>
 
           {cancelled ? (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-ink-3">
               El pedido está cancelado: no se envían avisos.
             </p>
           ) : store.notifyEmail || store.notifyWhatsapp ? (
@@ -245,7 +245,7 @@ export default async function OrderDetailPage({
                   const wa = waNotice(kind);
                   return (
                     <div key={kind}>
-                      <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                      <p className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-ink-2">
                         <Icon className="h-4 w-4" /> {label}
                       </p>
                       <div className="space-y-2">
@@ -264,19 +264,19 @@ export default async function OrderDetailPage({
                   );
                 })}
               </div>
-              <p className="mt-3 text-xs text-gray-400">
+              <p className="mt-3 text-xs text-ink-3">
                 Confirma antes o después del comprobante: el mensaje se ajusta
                 solo (pide el comprobante si el pago sigue pendiente). Al
                 avisar, el pedido pasa a ese estado.
               </p>
               {store.notifyWhatsapp && !hasWa && (
-                <p className="mt-2 text-xs text-amber-600">
+                <p className="mt-2 text-xs text-warn-ink">
                   El teléfono del cliente no es válido para WhatsApp; usa email.
                 </p>
               )}
             </>
           ) : (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-ink-3">
               Activa los avisos (email o WhatsApp) en{" "}
               <span className="font-medium">Ajustes</span>.
             </p>
@@ -290,8 +290,8 @@ export default async function OrderDetailPage({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex gap-2">
-      <dt className="w-24 shrink-0 text-gray-400">{label}</dt>
-      <dd className="text-gray-800">{value}</dd>
+      <dt className="w-24 shrink-0 text-ink-3">{label}</dt>
+      <dd className="text-ink">{value}</dd>
     </div>
   );
 }

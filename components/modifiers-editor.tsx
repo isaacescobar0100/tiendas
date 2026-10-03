@@ -67,14 +67,14 @@ export function ModifiersEditor({ initialJson }: { initialJson?: string }) {
     );
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+    <div className="space-y-4 rounded-lg border border-line p-4">
       <input type="hidden" name="modifiersJson" value={serializeModifiers(groups)} />
 
       <div>
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-sm font-medium text-ink-2">
           Adiciones y opciones (para comida)
         </label>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-ink-3">
           Crea grupos de opciones: por ejemplo <strong>Término</strong> (elegir
           uno), <strong>Adiciones</strong> (+queso $3.000) o{" "}
           <strong>Quitar</strong> (sin cebolla). Cada opción puede sumar un
@@ -83,9 +83,9 @@ export function ModifiersEditor({ initialJson }: { initialJson?: string }) {
       </div>
 
       {groups.map((g, gi) => (
-        <div key={g.id} className="rounded-lg border border-gray-200 bg-gray-50/60 p-3">
+        <div key={g.id} className="rounded-lg border border-line bg-surface-2/60 p-3">
           <div className="flex items-center gap-2">
-            <GripVertical className="h-4 w-4 shrink-0 text-gray-300" />
+            <GripVertical className="h-4 w-4 shrink-0 text-ink-4" />
             <input
               value={g.name}
               onChange={(e) => patchGroup(gi, { name: e.target.value })}
@@ -95,14 +95,14 @@ export function ModifiersEditor({ initialJson }: { initialJson?: string }) {
             <button
               type="button"
               onClick={() => removeGroup(gi)}
-              className="rounded-md border border-red-200 p-2 text-red-600 hover:bg-red-50"
+              className="rounded-md border border-bad/30 p-2 text-bad-ink hover:bg-bad-soft"
               aria-label="Quitar grupo"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="mt-2 flex flex-wrap gap-4 pl-6 text-xs text-gray-600">
+          <div className="mt-2 flex flex-wrap gap-4 pl-6 text-xs text-ink-2">
             <label className="flex items-center gap-1.5">
               <input
                 type="radio"
@@ -141,7 +141,7 @@ export function ModifiersEditor({ initialJson }: { initialJson?: string }) {
                   className={`${inputCls} flex-1`}
                 />
                 <div className="flex items-center gap-1">
-                  <span className="text-xs text-gray-400">+$</span>
+                  <span className="text-xs text-ink-3">+$</span>
                   <input
                     value={o.priceCents ? String(Math.round(o.priceCents / 100)) : ""}
                     onChange={(e) =>
@@ -159,7 +159,7 @@ export function ModifiersEditor({ initialJson }: { initialJson?: string }) {
                 <button
                   type="button"
                   onClick={() => removeOption(gi, oi)}
-                  className="rounded-md border border-gray-200 p-2 text-gray-500 hover:bg-gray-100"
+                  className="rounded-md border border-line p-2 text-ink-3 hover:bg-surface-3"
                   aria-label="Quitar opción"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -169,7 +169,7 @@ export function ModifiersEditor({ initialJson }: { initialJson?: string }) {
             <button
               type="button"
               onClick={() => addOption(gi)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900"
+              className="inline-flex items-center gap-1 text-xs font-medium text-ink-2 hover:text-ink"
             >
               <Plus className="h-3.5 w-3.5" /> Añadir opción
             </button>
@@ -180,7 +180,7 @@ export function ModifiersEditor({ initialJson }: { initialJson?: string }) {
       <button
         type="button"
         onClick={addGroup}
-        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        className="inline-flex items-center gap-1 rounded-lg border border-line-2 px-3 py-2 text-sm font-medium text-ink-2 hover:bg-surface-2"
       >
         <Plus className="h-4 w-4" /> Añadir grupo de opciones
       </button>
@@ -189,4 +189,4 @@ export function ModifiersEditor({ initialJson }: { initialJson?: string }) {
 }
 
 const inputCls =
-  "rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
+  "rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";

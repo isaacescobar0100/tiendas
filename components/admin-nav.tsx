@@ -48,8 +48,8 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
             prefetch={false}
             className={
               isActive(l.href)
-                ? "font-semibold text-gray-900 underline decoration-brand decoration-2 underline-offset-[10px]"
-                : "text-gray-600 hover:text-gray-900"
+                ? "font-semibold text-ink underline decoration-brand decoration-2 underline-offset-[10px]"
+                : "text-ink-2 hover:text-ink"
             }
           >
             {l.label}
@@ -59,12 +59,12 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
           href={`/${storeSlug}`}
           prefetch={false}
           target="_blank"
-          className="inline-flex items-center gap-1 text-gray-600 hover:text-gray-900"
+          className="inline-flex items-center gap-1 text-ink-2 hover:text-ink"
         >
           Ver tienda <ExternalLink className="h-3.5 w-3.5" />
         </Link>
         <form action={signOutAction}>
-          <button className="text-sm text-gray-500 transition hover:text-gray-900">
+          <button className="text-sm text-ink-3 transition hover:text-ink">
             Cerrar sesión
           </button>
         </form>
@@ -74,7 +74,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700 xl:hidden"
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-line-2 text-ink-2 xl:hidden"
         aria-label="Abrir menú"
         aria-expanded={open}
       >
@@ -96,16 +96,16 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
 
         {/* Panel */}
         <nav
-          className={`absolute right-0 top-0 flex h-full w-72 max-w-[80%] flex-col bg-white shadow-xl transition-transform ${
+          className={`absolute right-0 top-0 flex h-full w-72 max-w-[80%] flex-col bg-surface shadow-xl transition-transform ${
             open ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-            <span className="font-semibold text-gray-900">Menú</span>
+          <div className="flex items-center justify-between border-b border-line px-4 py-3">
+            <span className="font-semibold text-ink">Menú</span>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="text-gray-400 hover:text-gray-900"
+              className="text-ink-3 hover:text-ink"
               aria-label="Cerrar"
             >
               <X className="h-5 w-5" />
@@ -122,7 +122,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
                 className={`rounded-lg px-3 py-2.5 text-sm ${
                   isActive(l.href)
                     ? "bg-brand-soft font-semibold text-brand-text"
-                    : "text-gray-700 hover:bg-gray-50"
+                    : "text-ink-2 hover:bg-surface-2"
                 }`}
               >
                 {l.label}
@@ -133,15 +133,15 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
           prefetch={false}
               target="_blank"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-sm text-ink-2 hover:bg-surface-2"
             >
               Ver tienda <ExternalLink className="h-3.5 w-3.5" />
             </Link>
             <form
               action={signOutAction}
-              className="mt-auto border-t border-gray-100 pt-2"
+              className="mt-auto border-t border-line pt-2"
             >
-              <button className="w-full rounded-lg px-3 py-2.5 text-left text-sm text-gray-500 hover:bg-gray-50">
+              <button className="w-full rounded-lg px-3 py-2.5 text-left text-sm text-ink-3 hover:bg-surface-2">
                 Cerrar sesión
               </button>
             </form>

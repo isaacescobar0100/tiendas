@@ -11,8 +11,8 @@ import {
 export const dynamic = "force-dynamic";
 
 const inputCls =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
-const labelCls = "mb-1 block text-sm font-medium text-gray-700";
+  "w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";
+const labelCls = "mb-1 block text-sm font-medium text-ink-2";
 
 type LinkOption = { value: string; label: string };
 
@@ -52,8 +52,8 @@ export default async function PromotionsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Promociones (banner)</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-ink">Promociones (banner)</h1>
+        <p className="text-sm text-ink-3">
           Cada promoción es una diapositiva del banner de tu tienda. Si hay más
           de una activa, el banner rota entre ellas. Si no hay ninguna, se
           muestra tu banner con el nombre de la tienda.
@@ -74,7 +74,7 @@ export default async function PromotionsPage() {
       {/* Existentes */}
       {promotions.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-gray-900">
+          <h2 className="text-sm font-semibold text-ink">
             Promociones creadas ({promotions.length})
           </h2>
           {promotions.map((p) => (
@@ -125,9 +125,9 @@ function PromotionForm({
   const customLink = current && !known.has(current) ? current : "";
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6">
+    <div className="rounded-2xl border border-line bg-surface p-6">
       {title && (
-        <h2 className="mb-4 text-sm font-semibold text-gray-900">{title}</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{title}</h2>
       )}
       <form action={action} className="space-y-4">
         {promotion && <input type="hidden" name="id" value={promotion.id} />}
@@ -201,37 +201,37 @@ function PromotionForm({
               </optgroup>
             )}
           </select>
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-ink-3">
             Elige a dónde lleva la promoción: la página de ofertas, una categoría
             o un producto. No necesitas copiar ninguna dirección.
           </p>
         </div>
 
         {/* Destinos: dónde se muestra esta promoción */}
-        <div className="rounded-lg border border-gray-200 p-4">
-          <p className="mb-2 text-sm font-medium text-gray-700">
+        <div className="rounded-lg border border-line p-4">
+          <p className="mb-2 text-sm font-medium text-ink-2">
             ¿Dónde se muestra?
           </p>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 text-sm text-ink-2">
             <input
               type="checkbox"
               name="showOnBanner"
               defaultChecked={promotion ? promotion.showOnBanner : true}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-line-2"
             />
             En el banner de inicio
           </label>
-          <label className="mt-2 flex items-center gap-2 text-sm text-gray-700">
+          <label className="mt-2 flex items-center gap-2 text-sm text-ink-2">
             <input
               type="checkbox"
               name="showOnOffers"
               defaultChecked={promotion ? promotion.showOnOffers : false}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-line-2"
             />
             En la página de Ofertas
           </label>
           <div className="mt-3">
-            <label className="mb-1 block text-sm text-gray-700">
+            <label className="mb-1 block text-sm text-ink-2">
               En una categoría (opcional)
             </label>
             <select
@@ -259,12 +259,12 @@ function PromotionForm({
               className={inputCls}
             />
           </div>
-          <label className="flex items-center gap-2 pb-2 text-sm text-gray-700">
+          <label className="flex items-center gap-2 pb-2 text-sm text-ink-2">
             <input
               type="checkbox"
               name="active"
               defaultChecked={promotion ? promotion.active : true}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-line-2"
             />
             Activa (visible en la tienda)
           </label>
@@ -272,7 +272,7 @@ function PromotionForm({
 
         <button
           type="submit"
-          className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+          className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink transition hover:bg-brand-hover"
         >
           {submitLabel}
         </button>
@@ -281,7 +281,7 @@ function PromotionForm({
       {promotion && (
         <form action={deletePromotionAction} className="mt-3">
           <input type="hidden" name="id" value={promotion.id} />
-          <button className="rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">
+          <button className="rounded-md border border-bad/30 px-3 py-1.5 text-xs text-bad-ink hover:bg-bad-soft">
             Borrar promoción
           </button>
         </form>

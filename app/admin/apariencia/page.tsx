@@ -15,8 +15,8 @@ export default async function AppearancePage() {
   return (
     <div className={themeFontVars}>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Apariencia</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-ink">Apariencia</h1>
+        <p className="mt-1 text-sm text-ink-3">
           Los colores y la letra de tu tienda, tu menú QR y tu carrito. Elige
           una paleta y ajústala; la vista previa muestra cómo queda.
         </p>

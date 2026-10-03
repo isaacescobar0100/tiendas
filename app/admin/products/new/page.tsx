@@ -20,11 +20,11 @@ export default async function NewProductPage() {
       <Link
         prefetch={false}
         href="/admin/products"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" /> Volver
       </Link>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Nuevo producto</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">Nuevo producto</h1>
       <ProductForm
         action={createProductAction}
         categories={categories}

@@ -72,10 +72,10 @@ function StatusSelect({
           setVal(e.target.value);
           e.currentTarget.form?.requestSubmit();
         }}
-        className={`cursor-pointer rounded-full border-0 px-2.5 py-1 text-xs font-medium outline-none focus:ring-2 focus:ring-gray-300 ${badges[val] ?? ""}`}
+        className={`cursor-pointer rounded-full border-0 px-2.5 py-1 text-xs font-medium outline-none focus:ring-2 focus:ring-line-2 ${badges[val] ?? ""}`}
       >
         {options.map((s) => (
-          <option key={s} value={s} className="bg-white text-gray-900">
+          <option key={s} value={s} className="bg-surface text-ink">
             {labels[s]}
           </option>
         ))}

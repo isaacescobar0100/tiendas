@@ -39,21 +39,21 @@ export default async function OrdersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Pedidos</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-ink">Pedidos</h1>
+        <p className="text-sm text-ink-3">
           {orders.length} pedido{orders.length === 1 ? "" : "s"} ·{" "}
           {formatPrice(revenue, store.currency)} facturado
         </p>
       </div>
 
       {orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center text-gray-500">
+        <div className="rounded-2xl border border-dashed border-line-2 bg-surface p-12 text-center text-ink-3">
           Todavía no has recibido pedidos.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
           <table className="w-full min-w-[720px] text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50 text-left text-xs uppercase text-gray-500">
+            <thead className="border-b border-line bg-surface-2 text-left text-xs uppercase text-ink-3">
               <tr>
                 <th className="px-4 py-3 font-medium">Pedido</th>
                 <th className="px-4 py-3 font-medium">Cliente</th>
@@ -65,38 +65,38 @@ export default async function OrdersPage() {
                 <th className="px-4 py-3 font-medium">Envío</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-line">
               {orders.map((o) => (
-                <tr key={o.id} className="hover:bg-gray-50">
+                <tr key={o.id} className="hover:bg-surface-2">
                   <td className="px-4 py-3">
                     <Link
                       prefetch={false}
                       href={`/admin/orders/${o.id}`}
-                      className="font-mono text-gray-900 hover:underline"
+                      className="font-mono text-ink hover:underline"
                     >
                       #{o.id.slice(-8)}
                     </Link>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="text-gray-900">{o.customerName}</div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-ink">{o.customerName}</div>
+                    <div className="text-xs text-ink-3">
                       {o.customerEmail}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-ink-2">
                     {o.city ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-ink-2">
                     {dateFmt.format(o.createdAt)}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{o._count.items}</td>
-                  <td className="px-4 py-3 font-medium text-gray-900">
+                  <td className="px-4 py-3 text-ink-2">{o._count.items}</td>
+                  <td className="px-4 py-3 font-medium text-ink">
                     {formatPrice(o.totalCents, o.currency)}
                   </td>
                   <td className="px-4 py-3">
                     <PaymentSelect orderId={o.id} value={o.status} />
                     {o.paymentMethod && (
-                      <p className="mt-1 text-xs text-gray-400">
+                      <p className="mt-1 text-xs text-ink-3">
                         {paymentMethodLabel(o.paymentMethod)}
                       </p>
                     )}

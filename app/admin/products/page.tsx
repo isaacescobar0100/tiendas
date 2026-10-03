@@ -64,15 +64,15 @@ export default async function ProductsPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-ink">Productos</h1>
+          <p className="text-sm text-ink-3">
             {totalCount} producto{totalCount === 1 ? "" : "s"} en tu catálogo.
           </p>
         </div>
         <Link
           prefetch={false}
           href="/admin/products/new"
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+          className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink transition hover:bg-brand-hover"
         >
           + Nuevo producto
         </Link>
@@ -85,9 +85,9 @@ export default async function ProductsPage({
           name="q"
           defaultValue={q ?? ""}
           placeholder="Buscar producto por nombre…"
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
+          className="w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink"
         />
-        <button className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+        <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:bg-brand-hover">
           Buscar
         </button>
       </form>
@@ -110,8 +110,8 @@ export default async function ProductsPage({
       </div>
 
       {products.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center">
-          <p className="text-gray-500">
+        <div className="rounded-2xl border border-dashed border-line-2 bg-surface p-12 text-center">
+          <p className="text-ink-3">
             {hasFilter
               ? "No hay productos que coincidan con el filtro."
               : "Todavía no tienes productos."}
@@ -120,7 +120,7 @@ export default async function ProductsPage({
             <Link
               prefetch={false}
               href="/admin/products"
-              className="mt-3 inline-block text-sm font-medium text-gray-900 underline"
+              className="mt-3 inline-block text-sm font-medium text-ink underline"
             >
               Quitar filtros
             </Link>
@@ -128,16 +128,16 @@ export default async function ProductsPage({
             <Link
               prefetch={false}
               href="/admin/products/new"
-              className="mt-3 inline-block text-sm font-medium text-gray-900 underline"
+              className="mt-3 inline-block text-sm font-medium text-ink underline"
             >
               Añade el primero
             </Link>
           )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
           <table className="w-full min-w-[640px] text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50 text-left text-xs uppercase text-gray-500">
+            <thead className="border-b border-line bg-surface-2 text-left text-xs uppercase text-ink-3">
               <tr>
                 <th className="px-4 py-3 font-medium">Producto</th>
                 <th className="px-4 py-3 font-medium">Categoría</th>
@@ -146,7 +146,7 @@ export default async function ProductsPage({
                 <th className="px-4 py-3 font-medium">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-line">
               {products.map((p) => (
                 <tr key={p.id}>
                   <td className="px-4 py-3">
@@ -163,21 +163,21 @@ export default async function ProductsPage({
                         decoding="async"
                         className="h-10 w-10 rounded-md object-cover"
                       />
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-ink">
                         {p.name}
                       </span>
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-ink-2">
                     {p.category?.name ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-gray-900">
+                  <td className="px-4 py-3 text-ink">
                     {isOnSale(p) ? (
                       <span className="flex flex-col">
-                        <span className="font-medium text-red-600">
+                        <span className="font-medium text-bad-ink">
                           {formatPrice(p.salePriceCents!, store.currency)}
                         </span>
-                        <span className="text-xs text-gray-400 line-through">
+                        <span className="text-xs text-ink-3 line-through">
                           {formatPrice(p.priceCents, store.currency)}
                         </span>
                       </span>
@@ -185,14 +185,14 @@ export default async function ProductsPage({
                       formatPrice(p.priceCents, store.currency)
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{stockOf(p)}</td>
+                  <td className="px-4 py-3 text-ink-2">{stockOf(p)}</td>
                   <td className="px-4 py-3">
                     {p.active ? (
-                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <span className="rounded-full bg-ok-soft px-2 py-0.5 text-xs font-medium text-ok-ink">
                         Publicado
                       </span>
                     ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                      <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs font-medium text-ink-3">
                         Oculto
                       </span>
                     )}
@@ -222,8 +222,8 @@ function Pill({
       href={href}
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
         active
-          ? "border-gray-900 bg-gray-900 text-white"
-          : "border-gray-300 text-gray-600 hover:border-gray-900"
+          ? "border-ink bg-brand text-brand-ink"
+          : "border-line-2 text-ink-2 hover:border-ink"
       }`}
     >
       {children}
@@ -233,6 +233,6 @@ function Pill({
 
 function Count({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-black/10 px-1.5 text-xs">{children}</span>
+    <span className="rounded-full bg-ink/10 px-1.5 text-xs">{children}</span>
   );
 }

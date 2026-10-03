@@ -92,8 +92,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Resumen</h1>
-        <p className="text-sm text-gray-500">Cómo va {store.name}.</p>
+        <h1 className="text-2xl font-bold text-ink">Resumen</h1>
+        <p className="text-sm text-ink-3">Cómo va {store.name}.</p>
       </div>
 
       {/* Métricas */}
@@ -135,7 +135,7 @@ export default async function DashboardPage() {
             action={{ href: "/admin/orders", label: "Ver pedidos" }}
           >
             <div className="px-5 py-4">
-              <div className="mb-3 text-2xl font-bold text-gray-900">
+              <div className="mb-3 text-2xl font-bold text-ink">
                 {formatPrice(revenue14, store.currency)}
               </div>
               <SalesChart days={days} color={brand} currency={store.currency} />
@@ -159,19 +159,19 @@ export default async function DashboardPage() {
           {recentOrders.length === 0 ? (
             <Empty>Aún no hay pedidos.</Empty>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-line">
               {recentOrders.map((o) => (
                 <li key={o.id}>
                   <Link
                     prefetch={false}
                     href={`/admin/orders/${o.id}`}
-                    className="flex items-center justify-between gap-3 px-5 py-3 text-sm hover:bg-gray-50"
+                    className="flex items-center justify-between gap-3 px-5 py-3 text-sm hover:bg-surface-2"
                   >
                     <div className="min-w-0">
-                      <div className="truncate font-medium text-gray-900">
+                      <div className="truncate font-medium text-ink">
                         {o.customerName}
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-ink-3">
                         {dateFmt.format(o.createdAt)} · #{o.id.slice(-6)}
                       </div>
                     </div>
@@ -181,7 +181,7 @@ export default async function DashboardPage() {
                       >
                         {PAYMENT_LABEL[o.status]}
                       </span>
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-ink">
                         {formatPrice(o.totalCents, o.currency)}
                       </span>
                     </div>
@@ -204,12 +204,12 @@ export default async function DashboardPage() {
                 return (
                   <div key={name}>
                     <div className="mb-1 flex items-center justify-between text-sm">
-                      <span className="truncate pr-2 text-gray-800">{name}</span>
-                      <span className="shrink-0 font-medium text-gray-900">
+                      <span className="truncate pr-2 text-ink">{name}</span>
+                      <span className="shrink-0 font-medium text-ink">
                         {qty} ud.
                       </span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                    <div className="h-2 overflow-hidden rounded-full bg-surface-3">
                       <div
                         className="h-full rounded-full"
                         style={{ width: `${w}%`, backgroundColor: brand }}
@@ -229,15 +229,15 @@ export default async function DashboardPage() {
           title="Productos con stock bajo"
           action={{ href: "/admin/products", label: "Gestionar" }}
         >
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-line">
             {lowStock.slice(0, 6).map((p) => (
               <li
                 key={p.id}
                 className="flex items-center justify-between px-5 py-3 text-sm"
               >
-                <span className="text-gray-800">{p.name}</span>
+                <span className="text-ink">{p.name}</span>
                 <span
-                  className={`font-medium ${p.stock === 0 ? "text-red-500" : "text-amber-600"}`}
+                  className={`font-medium ${p.stock === 0 ? "text-bad-ink" : "text-warn-ink"}`}
                 >
                   {p.stock === 0 ? "Agotado" : `${p.stock} uds.`}
                 </span>
@@ -277,7 +277,7 @@ function SalesChart({
                 className="w-full rounded-t transition-opacity hover:opacity-80"
                 style={{
                   height: `${h}%`,
-                  backgroundColor: d.cents > 0 ? color : "#e5e7eb",
+                  backgroundColor: d.cents > 0 ? color : "var(--line)",
                   minHeight: d.cents > 0 ? 3 : 2,
                 }}
               />
@@ -285,7 +285,7 @@ function SalesChart({
           );
         })}
       </div>
-      <div className="mt-2 flex justify-between text-[10px] text-gray-400">
+      <div className="mt-2 flex justify-between text-[10px] text-ink-3">
         <span>{dayMonthFmt.format(days[0].date)}</span>
         <span>Hoy</span>
       </div>
@@ -310,7 +310,7 @@ function StatusDonut({
 
   if (total === 0) {
     return (
-      <p className="py-10 text-center text-sm text-gray-400">
+      <p className="py-10 text-center text-sm text-ink-3">
         Aún no hay pedidos.
       </p>
     );
@@ -336,7 +336,7 @@ function StatusDonut({
               cy={cy}
               r={r}
               fill="none"
-              stroke="#f3f4f6"
+              stroke="var(--surface-3)"
               strokeWidth={stroke}
             />
             {arcs.map((a) => (
@@ -355,8 +355,8 @@ function StatusDonut({
           </g>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-gray-900">{total}</span>
-          <span className="text-[11px] text-gray-400">pedidos</span>
+          <span className="text-2xl font-bold text-ink">{total}</span>
+          <span className="text-[11px] text-ink-3">pedidos</span>
         </div>
       </div>
 
@@ -366,14 +366,14 @@ function StatusDonut({
             key={s.label}
             className="flex items-center justify-between text-sm"
           >
-            <span className="flex items-center gap-2 text-gray-600">
+            <span className="flex items-center gap-2 text-ink-2">
               <span
                 className="h-3 w-3 rounded-full"
                 style={{ backgroundColor: s.color }}
               />
               {s.label}
             </span>
-            <span className="font-medium text-gray-900">{s.value}</span>
+            <span className="font-medium text-ink">{s.value}</span>
           </li>
         ))}
       </ul>
@@ -382,10 +382,10 @@ function StatusDonut({
 }
 
 const TINTS: Record<string, string> = {
-  green: "bg-green-50 text-green-600",
-  blue: "bg-blue-50 text-blue-600",
-  amber: "bg-amber-50 text-amber-600",
-  gray: "bg-gray-100 text-gray-500",
+  green: "bg-ok-soft text-ok-ink",
+  blue: "bg-info-soft text-info-ink",
+  amber: "bg-warn-soft text-warn-ink",
+  gray: "bg-surface-3 text-ink-3",
 };
 
 function StatCard({
@@ -405,12 +405,12 @@ function StatCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border bg-white p-5 ${
-        highlight ? "border-amber-300" : "border-gray-200"
+      className={`rounded-2xl border bg-surface p-5 ${
+        highlight ? "border-warn/30" : "border-line"
       }`}
     >
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">{label}</div>
+        <div className="text-sm text-ink-3">{label}</div>
         {icon && (
           <span
             className={`flex h-8 w-8 items-center justify-center rounded-lg ${TINTS[tint]}`}
@@ -419,8 +419,8 @@ function StatCard({
           </span>
         )}
       </div>
-      <div className="mt-2 text-2xl font-bold text-gray-900">{value}</div>
-      {sub && <div className="mt-0.5 text-xs text-gray-400">{sub}</div>}
+      <div className="mt-2 text-2xl font-bold text-ink">{value}</div>
+      {sub && <div className="mt-0.5 text-xs text-ink-3">{sub}</div>}
     </div>
   );
 }
@@ -435,14 +435,14 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-      <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+    <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+      <div className="flex items-center justify-between border-b border-line px-5 py-3">
+        <h2 className="text-sm font-semibold text-ink">{title}</h2>
         {action && (
           <Link
             prefetch={false}
             href={action.href}
-            className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900"
+            className="inline-flex items-center gap-1 text-xs font-medium text-ink-3 hover:text-ink"
           >
             {action.label} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -454,5 +454,5 @@ function Panel({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="px-5 py-8 text-center text-sm text-gray-400">{children}</p>;
+  return <p className="px-5 py-8 text-center text-sm text-ink-3">{children}</p>;
 }

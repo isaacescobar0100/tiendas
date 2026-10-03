@@ -30,7 +30,7 @@ export function SalesBars({
                 className="w-full rounded-t transition-opacity hover:opacity-80"
                 style={{
                   height: `${h}%`,
-                  backgroundColor: d.cents > 0 ? color : "#e5e7eb",
+                  backgroundColor: d.cents > 0 ? color : "var(--line)",
                   minHeight: 2,
                 }}
               />
@@ -39,7 +39,7 @@ export function SalesBars({
         })}
       </div>
       {days.length > 0 && (
-        <div className="mt-2 flex justify-between text-[10px] text-gray-400">
+        <div className="mt-2 flex justify-between text-[10px] text-ink-3">
           <span>{days[0].label}</span>
           <span>{days[days.length - 1].label}</span>
         </div>
@@ -69,7 +69,7 @@ export function Donut({
 
   if (total === 0) {
     return (
-      <p className="py-10 text-center text-sm text-gray-400">Sin datos aún.</p>
+      <p className="py-10 text-center text-sm text-ink-3">Sin datos aún.</p>
     );
   }
 
@@ -92,7 +92,7 @@ export function Donut({
               cy={cy}
               r={r}
               fill="none"
-              stroke="#f3f4f6"
+              stroke="var(--surface-3)"
               strokeWidth={stroke}
             />
             {arcs.map((a) => (
@@ -111,8 +111,8 @@ export function Donut({
           </g>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-gray-900">{total}</span>
-          <span className="text-[11px] text-gray-400">{centerLabel}</span>
+          <span className="text-2xl font-bold text-ink">{total}</span>
+          <span className="text-[11px] text-ink-3">{centerLabel}</span>
         </div>
       </div>
       <ul className="w-full space-y-2">
@@ -121,14 +121,14 @@ export function Donut({
             key={s.label}
             className="flex items-center justify-between text-sm"
           >
-            <span className="flex items-center gap-2 text-gray-600">
+            <span className="flex items-center gap-2 text-ink-2">
               <span
                 className="h-3 w-3 rounded-full"
                 style={{ backgroundColor: s.color }}
               />
               {s.label}
             </span>
-            <span className="font-medium text-gray-900">{s.value}</span>
+            <span className="font-medium text-ink">{s.value}</span>
           </li>
         ))}
       </ul>
@@ -141,7 +141,7 @@ export type BarItem = { label: string; value: number; display: string };
 /** Ranking con barras horizontales. */
 export function HBars({ items, color }: { items: BarItem[]; color: string }) {
   if (items.length === 0) {
-    return <p className="py-6 text-center text-sm text-gray-400">Sin datos.</p>;
+    return <p className="py-6 text-center text-sm text-ink-3">Sin datos.</p>;
   }
   const max = Math.max(1, ...items.map((i) => i.value));
   return (
@@ -149,12 +149,12 @@ export function HBars({ items, color }: { items: BarItem[]; color: string }) {
       {items.map((it) => (
         <div key={it.label}>
           <div className="mb-1 flex items-center justify-between text-sm">
-            <span className="truncate pr-2 text-gray-800">{it.label}</span>
-            <span className="shrink-0 font-medium text-gray-900">
+            <span className="truncate pr-2 text-ink">{it.label}</span>
+            <span className="shrink-0 font-medium text-ink">
               {it.display}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+          <div className="h-2 overflow-hidden rounded-full bg-surface-3">
             <div
               className="h-full rounded-full"
               style={{

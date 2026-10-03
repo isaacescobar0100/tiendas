@@ -26,7 +26,7 @@ export function SedeFulfillmentSelect({
           setVal(e.target.value);
           e.currentTarget.form?.requestSubmit();
         }}
-        className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs outline-none focus:border-gray-900"
+        className="rounded-lg border border-line-2 bg-surface px-2 py-1 text-xs outline-none focus:border-ink"
       >
         {FULFILLMENT_STATUSES.map((s) => (
           <option key={s} value={s}>

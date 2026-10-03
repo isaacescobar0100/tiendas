@@ -10,8 +10,8 @@ import {
 export const dynamic = "force-dynamic";
 
 const inputCls =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900";
-const labelCls = "mb-1 block text-sm font-medium text-gray-700";
+  "w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink";
+const labelCls = "mb-1 block text-sm font-medium text-ink-2";
 
 export default async function SedesPage() {
   const { store } = await requireAdminStore();
@@ -30,17 +30,17 @@ export default async function SedesPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Sedes</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-ink">Sedes</h1>
+        <p className="text-sm text-ink-3">
           Si tu negocio tiene varias sedes, agrégalas aquí con su WhatsApp. En el
           checkout el cliente elige la sede, y al confirmar puede enviarte el
           pedido por WhatsApp a esa sede para que lo prepares.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+      <div className="rounded-2xl border border-info/30 bg-info-soft p-4 text-sm text-info-ink">
         <p className="font-medium">Acceso por sede</p>
-        <p className="mt-1 text-blue-700">
+        <p className="mt-1 text-info-ink">
           Dale a cada sede un <strong>correo y contraseña</strong> abajo. Cada
           sede entra en <span className="font-mono">{loginUrl}</span> y ve{" "}
           <strong>solo los pedidos de su sede</strong>. Tú (admin) sigues viendo
@@ -48,15 +48,15 @@ export default async function SedesPage() {
         </p>
       </div>
 
-      <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm">
-        <span className="text-gray-600">Sedes de tu plan</span>
-        <span className="font-semibold text-gray-900">
+      <div className="flex items-center justify-between rounded-2xl border border-line bg-surface px-4 py-3 text-sm">
+        <span className="text-ink-2">Sedes de tu plan</span>
+        <span className="font-semibold text-ink">
           {locations.length} de {maxLocations}
         </span>
       </div>
 
       {full ? (
-        <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <p className="rounded-2xl border border-warn/30 bg-warn-soft p-4 text-sm text-warn-ink">
           Ya usas todas las sedes de tu plan. Para abrir otra sede, pide que
           amplíen tu plan.
         </p>
@@ -66,7 +66,7 @@ export default async function SedesPage() {
 
       {locations.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-gray-900">
+          <h2 className="text-sm font-semibold text-ink">
             Sedes ({locations.length})
           </h2>
           {locations.map((l) => (
@@ -95,9 +95,9 @@ function LocationForm({
   title?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6">
+    <div className="rounded-2xl border border-line bg-surface p-6">
       {title && (
-        <h2 className="mb-4 text-sm font-semibold text-gray-900">{title}</h2>
+        <h2 className="mb-4 text-sm font-semibold text-ink">{title}</h2>
       )}
       <form action={action} className="space-y-4">
         {location && <input type="hidden" name="id" value={location.id} />}
@@ -130,7 +130,7 @@ function LocationForm({
               placeholder="300 123 4567"
               className={inputCls}
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-ink-3">
               Al confirmar el pedido, el cliente podrá enviártelo por WhatsApp a
               este número para que lo prepares.
             </p>
@@ -147,11 +147,11 @@ function LocationForm({
         </div>
 
         {/* Acceso propio de la sede */}
-        <div className="rounded-lg border border-gray-200 p-4">
+        <div className="rounded-lg border border-line p-4">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-700">Acceso de la sede</p>
+            <p className="text-sm font-medium text-ink-2">Acceso de la sede</p>
             {location?.email && (
-              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+              <span className="rounded-full bg-ok-soft px-2 py-0.5 text-xs font-medium text-ok-ink">
                 Con acceso
               </span>
             )}
@@ -182,7 +182,7 @@ function LocationForm({
               />
             </div>
           </div>
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-xs text-ink-3">
             Con esto, la sede entra en{" "}
             <span className="font-mono">/sede/login</span> y ve solo sus pedidos.
             Si cambias el correo o la contraseña, se cierran las sesiones
@@ -192,7 +192,7 @@ function LocationForm({
 
         <button
           type="submit"
-          className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+          className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink transition hover:bg-brand-hover"
         >
           {submitLabel}
         </button>
@@ -201,7 +201,7 @@ function LocationForm({
       {location && (
         <form action={deleteLocationAction} className="mt-3">
           <input type="hidden" name="id" value={location.id} />
-          <button className="rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50">
+          <button className="rounded-md border border-bad/30 px-3 py-1.5 text-xs text-bad-ink hover:bg-bad-soft">
             Borrar sede
           </button>
         </form>

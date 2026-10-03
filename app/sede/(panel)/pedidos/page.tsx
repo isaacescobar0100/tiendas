@@ -41,17 +41,17 @@ export default async function SedeOrders() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Pedidos de tu sede</h1>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-ink">Pedidos de tu sede</h1>
+        <p className="text-sm text-ink-3">
           {orders.length} pedido{orders.length === 1 ? "" : "s"} · {pending} por
           atender.
         </p>
       </div>
 
       {orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center">
-          <PackageSearch className="mx-auto h-9 w-9 text-gray-300" />
-          <p className="mt-3 text-gray-500">
+        <div className="rounded-2xl border border-dashed border-line-2 bg-surface p-12 text-center">
+          <PackageSearch className="mx-auto h-9 w-9 text-ink-4" />
+          <p className="mt-3 text-ink-3">
             Aún no hay pedidos para esta sede.
           </p>
         </div>
@@ -60,14 +60,14 @@ export default async function SedeOrders() {
           {orders.map((o) => (
             <div
               key={o.id}
-              className="rounded-2xl border border-gray-200 bg-white p-5"
+              className="rounded-2xl border border-line bg-surface p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-semibold text-ink">
                     #{o.id.slice(-8)} · {o.customerName}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-ink-3">
                     {dateFmt.format(o.createdAt)}
                     {o.customerPhone ? ` · ${o.customerPhone}` : ""}
                     {o.paymentMethod
@@ -76,11 +76,11 @@ export default async function SedeOrders() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-1 text-xs text-gray-400">
+                  <label className="flex items-center gap-1 text-xs text-ink-3">
                     Pago
                     <SedePaymentSelect orderId={o.id} current={o.status} />
                   </label>
-                  <label className="flex items-center gap-1 text-xs text-gray-400">
+                  <label className="flex items-center gap-1 text-xs text-ink-3">
                     Estado
                     <SedeFulfillmentSelect
                       orderId={o.id}
@@ -92,36 +92,36 @@ export default async function SedeOrders() {
 
               <SedeNotice order={o} storeName={storeName} />
 
-              <ul className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 text-sm">
+              <ul className="mt-3 space-y-1.5 border-t border-line pt-3 text-sm">
                 {o.items.map((i) => (
                   <li key={i.id} className="flex justify-between">
-                    <span className="text-gray-600">
+                    <span className="text-ink-2">
                       {i.name}
                       {variantLabel(i.color, i.size) && (
-                        <span className="text-gray-400">
+                        <span className="text-ink-3">
                           {" "}
                           ({variantLabel(i.color, i.size)})
                         </span>
                       )}{" "}
-                      <span className="text-gray-400">×{i.quantity}</span>
+                      <span className="text-ink-3">×{i.quantity}</span>
                       {i.modifiers && (
-                        <span className="block text-xs text-gray-400">
+                        <span className="block text-xs text-ink-3">
                           {i.modifiers}
                         </span>
                       )}
                     </span>
-                    <span className="text-gray-900">
+                    <span className="text-ink">
                       {formatPrice(i.priceCents * i.quantity, o.currency)}
                     </span>
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-2 flex items-center justify-between border-t border-gray-100 pt-2">
-                <span className="text-xs text-gray-400">
+              <div className="mt-2 flex items-center justify-between border-t border-line pt-2">
+                <span className="text-xs text-ink-3">
                   Entrega: {o.address}
                 </span>
-                <span className="font-bold text-gray-900">
+                <span className="font-bold text-ink">
                   {formatPrice(o.totalCents, o.currency)}
                 </span>
               </div>
@@ -166,7 +166,7 @@ function SedeNotice({
         kind={kind}
         panel="sede"
         label={kind === "confirmed" ? "Confirmar por WhatsApp" : "Avisar: va en camino"}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-green-700"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-ok px-3 py-1.5 text-xs font-medium text-white transition hover:brightness-110"
       />
     </div>
   );

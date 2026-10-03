@@ -13,7 +13,7 @@ export function WhatsappNoticeButton({
   kind,
   panel = "admin",
   label = "WhatsApp",
-  className = "flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700",
+  className = "flex w-full items-center justify-center gap-1.5 rounded-lg bg-ok px-3 py-2 text-sm font-medium text-white transition hover:brightness-110",
 }: {
   href: string;
   orderId: string;
