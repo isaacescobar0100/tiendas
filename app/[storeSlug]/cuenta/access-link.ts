@@ -10,7 +10,13 @@ import { storeOrigin } from "@/lib/store-path";
  * es suyo; si no, el dominio principal configurado), nunca un host arbitrario.
  */
 export async function sendAccessLink(
-  store: { slug: string; name: string; customDomain?: string | null },
+  store: {
+    slug: string;
+    name: string;
+    customDomain?: string | null;
+    themeColor?: string | null;
+    logoUrl?: string | null;
+  },
   customer: { id: string; email: string; name: string },
   purpose: "welcome" | "reset",
 ) {
@@ -21,6 +27,7 @@ export async function sendAccessLink(
     name: customer.name,
     resetUrl: url,
     brandName: store.name,
+    brand: { name: store.name, color: store.themeColor, logoUrl: store.logoUrl },
     purpose,
   });
 }

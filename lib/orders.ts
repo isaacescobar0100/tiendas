@@ -98,6 +98,7 @@ export async function markOrderPaid(
     reference: order.reference,
     paymentLabel: "Pagado en línea",
     adminEmail: order.store.owner?.email,
+    brand: { name: order.store.name, color: order.store.themeColor, logoUrl: order.store.logoUrl },
     totalCents: order.totalCents,
     shippingCents: order.shippingCents,
     items: order.items.map((i) => ({

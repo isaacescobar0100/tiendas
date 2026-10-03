@@ -355,6 +355,7 @@ export async function placeOrderAction(
     await sendOrderEmails({
       orderId: order.id,
       storeName: store.name,
+      brand: { name: store.name, color: store.themeColor, logoUrl: store.logoUrl },
       currency: store.currency,
       customerName: d.customerName,
       customerEmail: d.customerEmail,

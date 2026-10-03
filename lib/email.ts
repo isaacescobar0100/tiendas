@@ -1,5 +1,6 @@
 import { formatPrice, variantLabel } from "./utils";
 import { GRACE_DAYS } from "@/lib/billing";
+import { isHex, readableOn } from "@/lib/theme";
 
 // Envío de correos por Brevo (API HTTP). Funciona en Vercel (a diferencia del
 // SMTP de Gmail). Si no está configurado, el envío se omite sin romper nada.
@@ -33,6 +34,7 @@ export type OrderEmailData = {
   totalCents: number; // incluye el envío
   shippingCents?: number;
   items: OrderEmailItem[];
+  brand?: EmailBrand; // color y logo de la tienda para el correo
 };
 
 // Escapa texto para evitar romper el HTML del correo con datos del cliente
@@ -46,8 +48,34 @@ function esc(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-const wrap = (inner: string) =>
-  `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:auto;color:#222">${inner}</div>`;
+/** Marca del correo: la tienda (su color y logo) o, si no hay, la plataforma. */
+export type EmailBrand = { name: string; color?: string | null; logoUrl?: string | null };
+
+// Correo con cabecera en el color de la marca. Solo estilos en línea (los
+// clientes de correo ignoran las hojas de estilo). El texto de la cabecera
+// es blanco o negro según el color (mismo criterio que el tema de la tienda).
+function wrap(inner: string, brand?: EmailBrand): string {
+  const color = brand?.color && isHex(brand.color) ? brand.color : "#111827";
+  const ink = readableOn(color);
+  const name = esc(brand?.name ?? "MiTienda");
+  const logo =
+    brand?.logoUrl && brand.logoUrl.startsWith("https://")
+      ? `<img src="${esc(brand.logoUrl)}" alt="" width="40" height="40" style="border-radius:10px;vertical-align:middle;margin-right:10px;background:#fff">`
+      : "";
+  return `<div style="background:#f4f4f5;padding:24px 12px;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+  <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e4e4e7">
+    <div style="background:${color};color:${ink};padding:18px 24px;font-size:17px;font-weight:700">${logo}<span style="vertical-align:middle">${name}</span></div>
+    <div style="padding:24px;color:#1f2937;font-size:15px;line-height:1.55">${inner}</div>
+  </div>
+  <p style="text-align:center;color:#71717a;font-size:12px;margin:14px 0 0">${brand ? `${name} · ` : ""}con tecnología de MiTienda</p>
+</div>`;
+}
+
+/** Botón del correo con el color de la marca. */
+function button(href: string, label: string, brand?: EmailBrand): string {
+  const color = brand?.color && isHex(brand.color) ? brand.color : "#111827";
+  return `<a href="${esc(href)}" style="background:${color};color:${readableOn(color)};padding:13px 22px;border-radius:10px;text-decoration:none;display:inline-block;font-weight:600">${esc(label)}</a>`;
+}
 const section = (title: string, body: string) =>
   `<h3 style="margin:22px 0 6px;font-size:15px">${title}</h3>${body}`;
 
@@ -168,8 +196,8 @@ export async function sendOrderEmails(
         <p style="color:#555;margin:0">Pedido <strong>#${shortId}</strong> en ${esc(data.storeName)}.</p>
         ${section("Tu pedido", itemsTable(data))}
         ${section("Envío a", customerBlock(data))}
-        <p style="color:#888;font-size:12px;margin-top:22px">Te avisaremos cuando se envíe. ¿Dudas? Responde a este correo.</p>
-      `),
+        <p style="color:#71717a;font-size:13px;margin-top:22px">La tienda te confirmará el pedido y te avisará cuando vaya en camino. ¿Dudas? Responde a este correo.</p>
+      `, data.brand),
     });
 
     // 2) Aviso al admin de la tienda (con datos para poder enviar el pedido)
@@ -183,7 +211,7 @@ export async function sendOrderEmails(
           <h2 style="margin:0 0 4px">Nuevo pedido #${shortId}</h2>
           ${section("Artículos", itemsTable(data))}
           ${section("Cliente y envío", customerBlock(data))}
-        `),
+        `, data.brand),
       });
     }
   } catch (e) {
@@ -201,6 +229,7 @@ export async function sendStatusEmail(opts: {
   storeName: string;
   title: string;
   lines: string[];
+  brand?: EmailBrand;
 }): Promise<boolean> {
   if (!BREVO_API_KEY || !SENDER_EMAIL) return false;
 
@@ -212,7 +241,7 @@ export async function sendStatusEmail(opts: {
       to: opts.to,
       senderName: opts.storeName,
       subject: `${opts.title} - ${opts.storeName}`,
-      html: wrap(body),
+      html: wrap(body, opts.brand ?? { name: opts.storeName }),
     });
     return true;
   } catch (e) {
@@ -284,6 +313,7 @@ export async function sendPasswordResetEmail(opts: {
   brandName: string;
   // "welcome": crear la cuenta (primer acceso). "reset": recuperar la clave.
   purpose?: "reset" | "welcome";
+  brand?: EmailBrand; // color y logo de la tienda (clientes); sin él, la plataforma
 }): Promise<boolean> {
   const welcome = opts.purpose === "welcome";
   if (!BREVO_API_KEY || !SENDER_EMAIL) {
@@ -293,7 +323,7 @@ export async function sendPasswordResetEmail(opts: {
   const body = `<h2 style="margin:0 0 8px">${welcome ? "Activa tu cuenta" : "Restablecer tu contraseña"}</h2>
     <p>Hola ${esc(opts.name)}, ${welcome ? `para activar tu cuenta en ${esc(opts.brandName)} y ver tus pedidos, crea tu contraseña con este botón.` : `recibimos una solicitud para restablecer la contraseña de tu cuenta en ${esc(opts.brandName)}.`}</p>
     <p style="margin:20px 0">
-      <a href="${esc(opts.resetUrl)}" style="background:#111827;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">${welcome ? "Crear mi contraseña" : "Crear nueva contraseña"}</a>
+      ${button(opts.resetUrl, welcome ? "Crear mi contraseña" : "Crear nueva contraseña", opts.brand)}
     </p>
     <p style="color:#555;font-size:13px">Este enlace caduca en 1 hora y solo puede usarse una vez. Si no fuiste tú, ignora este correo: no se hará ningún cambio.</p>`;
   try {
@@ -301,7 +331,7 @@ export async function sendPasswordResetEmail(opts: {
       to: opts.to,
       senderName: opts.brandName,
       subject: welcome ? `Activa tu cuenta en ${opts.brandName}` : "Restablecer tu contraseña",
-      html: wrap(body),
+      html: wrap(body, opts.brand ?? { name: opts.brandName }),
     });
     return true;
   } catch (e) {

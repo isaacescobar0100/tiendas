@@ -6,8 +6,7 @@ import {
   ArrowUp,
   ChevronLeft,
   ChevronRight,
-  MapPin,
-} from "lucide-react";
+  MapPin, Search } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isMerchProduct } from "@/lib/store-hours";
@@ -219,8 +218,10 @@ export default async function StorefrontPage({
       ) : (
         <>
           <BannerSlider slides={bannerSlides} />
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-ink">{store.name}</h1>
+          {/* Si la portada ya muestra el nombre, el título queda solo para
+              lectores de pantalla y buscadores (no se repite en pantalla). */}
+          <div className={bannerSlides[0]?.title === store.name ? "sr-only" : "mb-8"}>
+            <h1 className="text-3xl font-bold tracking-tight text-ink">{store.name}</h1>
             {store.description && (
               <p className="mt-1 text-ink-3">{store.description}</p>
             )}
@@ -229,24 +230,27 @@ export default async function StorefrontPage({
       )}
 
       {/* Búsqueda + orden */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <form method="get" className="flex w-full gap-2 sm:max-w-sm">
+      <div className="mb-4 mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <form method="get" role="search" className="relative flex w-full sm:max-w-md">
           {cat && <input type="hidden" name="cat" value={cat} />}
           {sort && <input type="hidden" name="sort" value={sort} />}
           {offers && <input type="hidden" name="offers" value="1" />}
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-4" aria-hidden />
           <input
             name="q"
+            type="search"
             defaultValue={q ?? ""}
-            placeholder="Buscar productos…"
-            className="w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+            placeholder="Buscar en el menú…"
+            aria-label="Buscar productos"
+            className="w-full rounded-full border border-line-2 bg-surface py-3 pl-12 pr-28 text-[15px] text-ink outline-none transition placeholder:text-ink-4 focus:border-brand focus:ring-4 focus:ring-brand/15"
           />
-          <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:brightness-110">
+          <button className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-brand-ink transition hover:bg-brand-hover">
             Buscar
           </button>
         </form>
 
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-ink-3">Ordenar:</span>
+        <div className="flex items-center gap-1 self-start rounded-full bg-surface-2 p-1 text-sm ring-1 ring-line sm:self-auto" aria-label="Ordenar">
+          <span className="px-2 text-ink-3">Ordenar</span>
           <SortLink href={mkHref({ sort: null })} active={!sort}>
             Destacados
           </SortLink>
@@ -267,7 +271,8 @@ export default async function StorefrontPage({
       </div>
 
       {(store.categories.length > 0 || hasOffers) && (
-        <div className="mb-8 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden">
+        // Una sola fila deslizable que queda fija bajo la cabecera al bajar.
+        <nav aria-label="Categorías" className="sticky top-[57px] z-[5] -mx-4 mb-6 flex gap-2 overflow-x-auto bg-bg/90 px-4 py-3 backdrop-blur-md [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <FilterPill href={mkHref({ cat: null, offers: null })} active={!cat && !offers}>
             Todos
           </FilterPill>
@@ -289,7 +294,7 @@ export default async function StorefrontPage({
               {c.name}
             </FilterPill>
           ))}
-        </div>
+        </nav>
       )}
 
       {q && (
@@ -426,12 +431,13 @@ function FilterPill({
         ? "border-bad bg-bad text-white"
         : "border-bad/30 text-bad-ink hover:border-bad"
       : active
-        ? "border-ink bg-ink text-bg"
-        : "border-line-2 text-ink-2 hover:border-ink";
+        ? "border-brand bg-brand text-brand-ink shadow-sm"
+        : "border-line bg-surface text-ink-2 hover:border-line-2 hover:text-ink";
   return (
     <Link
       href={href}
-      className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm transition ${styles}`}
+      className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition ${styles}`}
+      aria-current={active ? "page" : undefined}
     >
       {children}
     </Link>
@@ -450,10 +456,11 @@ function SortLink({
   return (
     <Link
       href={href}
-      className={`rounded-md px-2 py-1 transition ${
+      aria-current={active ? "true" : undefined}
+      className={`rounded-full px-3 py-1.5 font-medium transition ${
         active
-          ? "bg-ink text-bg"
-          : "text-ink-2 hover:bg-surface-3"
+          ? "bg-surface text-ink shadow-sm ring-1 ring-line"
+          : "text-ink-3 hover:text-ink"
       }`}
     >
       {children}

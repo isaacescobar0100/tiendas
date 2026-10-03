@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, ImageOff } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { StarRating } from "@/components/star-rating";
@@ -139,7 +139,7 @@ export function ProductCard({
   };
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-line transition hover:shadow-md">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-surface ring-1 ring-line transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
       <div className="absolute right-2 top-2 z-10">
         <FavoriteButton item={favItem} size="sm" />
       </div>
@@ -152,10 +152,18 @@ export function ProductCard({
 
       <Link href={sh(`/${product.slug}`)} className="block">
         <div className="aspect-square overflow-hidden bg-surface-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* El acercamiento al pasar el mouse va aquí: la foto ya trae su encuadre. */}
+          <div className="h-full w-full transition duration-500 group-hover:scale-105">
+          {!product.imageUrl ? (
+            // Sin foto: reemplazo con la marca (sin depender de imágenes externas).
+            <div className="flex h-full w-full items-center justify-center bg-brand-soft text-brand-text">
+              <ImageOff className="h-10 w-10" aria-hidden />
+            </div>
+          ) : (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             ref={imgRef}
-            src={product.imageUrl || "https://placehold.co/400x400?text=Producto"}
+            src={product.imageUrl}
             alt={product.name}
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
@@ -164,15 +172,17 @@ export function ProductCard({
               objectPosition: product.imagePosition ?? "50% 50%",
               transform: `scale(${product.imageZoom ?? 1})`,
             }}
-            className="h-full w-full object-cover transition"
+            className="h-full w-full object-cover"
           />
+          )}
+          </div>
         </div>
         <div className="p-3 pb-2">
-          <p className="truncate text-sm font-medium text-ink">
+          <p className="truncate text-[15px] font-semibold text-ink">
             {product.name}
           </p>
           <div className="mt-1 flex items-baseline gap-2">
-            <p className="font-semibold text-ink">
+            <p className="text-base font-extrabold text-ink">
               {formatPrice(effectiveCents, currency)}
             </p>
             {onSale && (

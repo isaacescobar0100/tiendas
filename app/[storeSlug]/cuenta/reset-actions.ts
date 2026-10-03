@@ -19,7 +19,7 @@ export type ResetState = { error?: string; ok?: boolean } | undefined;
 async function storeBySlug(slug: string) {
   return prisma.store.findFirst({
     where: { slug, active: true },
-    select: { id: true, slug: true, name: true, customDomain: true },
+    select: { id: true, slug: true, name: true, customDomain: true, themeColor: true, logoUrl: true },
   });
 }
 

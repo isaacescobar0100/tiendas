@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Clock, MessageCircle, Truck, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
-import { isMerchProduct } from "@/lib/store-hours";
+import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
 import { tracksStock } from "@/lib/store-type";
 import { parseModifiers } from "@/lib/modifiers";
 import { getCurrentCustomer } from "@/lib/customer-auth";
@@ -157,6 +157,21 @@ export default async function ProductPage({
     : null;
   const reviewDateFmt = new Intl.DateTimeFormat("es", { timeZone: TZ, dateStyle: "medium" });
 
+  // Datos para "Cómo comprar" (todo sale de la configuración real de la tienda).
+  const openState = getStoreOpenState(store.hoursJson);
+  const sedes = await prisma.storeLocation.count({ where: { storeId: store.id } });
+  const payMethods = [
+    store.transferEnabled && "Transferencia / QR",
+    store.codEnabled && "Contra entrega",
+    store.onlinePaymentEnabled && "Tarjeta o PSE",
+  ].filter(Boolean) as string[];
+  const shippingText =
+    store.shippingCents === 0
+      ? "Envío gratis"
+      : `Envío ${formatPrice(store.shippingCents, store.currency)}${
+          store.freeShippingOverCents ? ` · gratis desde ${formatPrice(store.freeShippingOverCents, store.currency)}` : ""
+        }`;
+
   return (
     <div>
       <Link
@@ -183,7 +198,7 @@ export default async function ProductPage({
           <ProductGallery alt={product.name} items={galleryItems} />
         </div>
 
-        <div>
+        <div className="md:sticky md:top-24 md:self-start">
           {product.category && (
             <Link
               href={sh(`?cat=${product.category.slug}`)}
@@ -192,7 +207,7 @@ export default async function ProductPage({
               {product.category.name}
             </Link>
           )}
-          <h1 className="mt-2 text-3xl font-bold text-ink">
+          <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl">
             {product.name}
           </h1>
           {reviewCount > 0 && (
@@ -204,7 +219,7 @@ export default async function ProductPage({
             </a>
           )}
           <div className="mt-3 flex flex-wrap items-baseline gap-3">
-            <p className="text-2xl font-semibold text-ink">
+            <p className="text-3xl font-extrabold text-ink">
               {formatPrice(effectiveCents, store.currency)}
             </p>
             {onSale && (
@@ -269,6 +284,25 @@ export default async function ProductPage({
               ),
             }}
           />
+
+          <ul className="mt-8 divide-y divide-line overflow-hidden rounded-2xl bg-surface ring-1 ring-line">
+            {openState.enforced && (
+              <InfoRow icon={Clock} title={openState.isOpen ? "Abierto ahora" : "Cerrado ahora"}>
+                {openState.isOpen ? "Puedes pedir ya." : (openState.message ?? "Vuelve en el horario de atención.")}
+              </InfoRow>
+            )}
+            {payMethods.length > 0 && (
+              <InfoRow icon={Wallet} title="Formas de pago">
+                {payMethods.join(" · ")}
+              </InfoRow>
+            )}
+            <InfoRow icon={Truck} title={shippingText}>
+              {sedes > 1 ? `Te atendemos desde ${sedes} sedes; eliges la tuya al pagar.` : "Lo recibes en la dirección que indiques."}
+            </InfoRow>
+            <InfoRow icon={MessageCircle} title="Confirmación por WhatsApp">
+              La tienda confirma tu pedido y te avisa cuando va en camino.
+            </InfoRow>
+          </ul>
         </div>
       </div>
 
@@ -362,5 +396,27 @@ export default async function ProductPage({
         </section>
       )}
     </div>
+  );
+}
+
+function InfoRow({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: React.ElementType;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="flex gap-3.5 p-4">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-text">
+        <Icon className="h-5 w-5" aria-hidden />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-ink">{title}</span>
+        <span className="block text-sm text-ink-3">{children}</span>
+      </span>
+    </li>
   );
 }

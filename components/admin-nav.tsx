@@ -40,7 +40,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
   return (
     <>
       {/* Escritorio */}
-      <nav className="hidden items-center gap-5 text-sm sm:flex">
+      <nav className="hidden items-center gap-4 whitespace-nowrap text-sm xl:flex">
         {LINKS.map((l) => (
           <Link
             key={l.href}
@@ -48,7 +48,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
             prefetch={false}
             className={
               isActive(l.href)
-                ? "font-medium text-gray-900"
+                ? "font-semibold text-gray-900 underline decoration-brand decoration-2 underline-offset-[10px]"
                 : "text-gray-600 hover:text-gray-900"
             }
           >
@@ -74,7 +74,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700 sm:hidden"
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 text-gray-700 xl:hidden"
         aria-label="Abrir menú"
         aria-expanded={open}
       >
@@ -83,7 +83,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
 
       {/* Panel lateral (móvil) */}
       <div
-        className={`fixed inset-0 z-50 sm:hidden ${open ? "" : "pointer-events-none"}`}
+        className={`fixed inset-0 z-50 xl:hidden ${open ? "" : "pointer-events-none"}`}
         inert={!open}
       >
         {/* Fondo */}
@@ -121,7 +121,7 @@ export function AdminNav({ storeSlug }: { storeSlug: string }) {
                 onClick={() => setOpen(false)}
                 className={`rounded-lg px-3 py-2.5 text-sm ${
                   isActive(l.href)
-                    ? "bg-gray-100 font-medium text-gray-900"
+                    ? "bg-brand-soft font-semibold text-brand-text"
                     : "text-gray-700 hover:bg-gray-50"
                 }`}
               >

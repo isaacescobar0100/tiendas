@@ -39,6 +39,7 @@ export async function notifyByEmailAction(
   const ok = await sendStatusEmail({
     to: order.customerEmail,
     storeName: store.name,
+    brand: { name: store.name, color: store.themeColor, logoUrl: store.logoUrl },
     ...noticeText(kind.data, order, store.name),
   });
   if (!ok) {
