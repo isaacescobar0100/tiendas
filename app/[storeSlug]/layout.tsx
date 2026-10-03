@@ -116,7 +116,7 @@ export default async function StoreLayout({
     >
       {/* Tema de la tienda: todos los colores y fuentes salen de aquí */}
       <div className={themeCls} style={themeCss}>
-      <div className="flex min-h-screen flex-col bg-surface">
+      <div className="flex min-h-screen flex-col bg-bg">
         <header className="sticky top-0 z-10 border-b border-line bg-surface/90 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
             <div className="flex items-center gap-3">
