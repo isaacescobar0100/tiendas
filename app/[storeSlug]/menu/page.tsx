@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice, safePosition } from "@/lib/utils";
 import { parseModifiers } from "@/lib/modifiers";
 import { getStoreOpenState } from "@/lib/store-hours";
+import { parseStorePhotos } from "@/lib/store-photos";
 import { MenuView, type MenuItem, type MenuSection } from "@/components/menu/menu-view";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ export default async function MenuPage({
       logoUrl: true,
       currency: true,
       hoursJson: true,
+      photosJson: true,
       categories: { orderBy: { name: "asc" }, select: { id: true, name: true, slug: true } },
       products: {
         where: { active: true },
@@ -123,6 +125,7 @@ export default async function MenuPage({
           : null
       }
       sections={sections}
+      photos={parseStorePhotos(store.photosJson)}
     />
   );
 }

@@ -13,12 +13,29 @@ export function rootDomain(): string {
 /** Host sin puerto y en minúsculas. */
 export const cleanHost = (host: string) => host.split(":")[0].toLowerCase();
 
+/**
+ * Dirección propia del panel de la plataforma (superadmin), p. ej.
+ * "panel.acordemusic.com". Nunca se toma como tienda. "" si no hay.
+ */
+export function platformHost(): string {
+  // Acepta "panel.midominio.com" o una URL completa ("https://panel.midominio.com/").
+  let v = (process.env.PLATFORM_HOST ?? "").trim();
+  const scheme = v.indexOf("://");
+  if (scheme >= 0) v = v.slice(scheme + 3);
+  return cleanHost(v.split("/")[0]);
+}
+
+export function isPlatformHost(host: string): boolean {
+  const p = platformHost();
+  return !!p && cleanHost(host) === p;
+}
+
 /** Slug de tienda si el host es <slug>.<dominio raíz>; si no, null. */
 export function subdomainSlug(host: string): string | null {
   const root = rootDomain();
   if (!root) return null;
   const h = cleanHost(host);
-  if (h === root || !h.endsWith(`.${root}`)) return null;
+  if (h === root || !h.endsWith(`.${root}`) || isPlatformHost(h)) return null;
   const sub = h.slice(0, -(root.length + 1));
   // Un solo nivel, formato de slug y nunca un nombre reservado (admin, api,
   // sede…): así un subdominio no puede saltarse la protección de los paneles.

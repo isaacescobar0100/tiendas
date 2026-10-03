@@ -9,6 +9,8 @@ import {
   MapPin, Search } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { parseStorePhotos } from "@/lib/store-photos";
+import { StorePhotoImg } from "@/components/store-photo";
 import { isMerchProduct } from "@/lib/store-hours";
 import { tracksStock } from "@/lib/store-type";
 import { parseModifiers } from "@/lib/modifiers";
@@ -206,6 +208,8 @@ export default async function StorefrontPage({
   });
 
 
+  const photos = parseStorePhotos(store.photosJson);
+
   return (
     <div>
       {store.bannerVideoUrl ? (
@@ -387,6 +391,25 @@ export default async function StorefrontPage({
             </span>
           )}
         </div>
+      )}
+
+      {/* Nuestro lugar: fotos del negocio (Admin > Apariencia), solo en el inicio */}
+      {isHome && photos.length > 0 && (
+        <section className="mt-16" aria-labelledby="nuestro-lugar">
+          <h2 id="nuestro-lugar" className="mb-6 text-lg font-bold text-ink">
+            Nuestro lugar
+          </h2>
+          <div className="grid auto-rows-[10rem] grid-cols-2 gap-3 sm:auto-rows-[12rem] md:grid-cols-4">
+            {photos.map((ph, i) => (
+              <StorePhotoImg
+                key={ph.url}
+                photo={ph}
+                alt={`Foto de ${store.name}`}
+                className={`rounded-2xl ring-1 ring-line ${i === 0 ? "col-span-2 row-span-2" : ""}`}
+              />
+            ))}
+          </div>
+        </section>
       )}
 
       {locations.length > 0 && (

@@ -5,7 +5,7 @@
 import "server-only";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { cleanHost, isRootHost, subdomainSlug } from "@/lib/store-host";
+import { cleanHost, isPlatformHost, isRootHost, subdomainSlug } from "@/lib/store-host";
 
 const SELECT = {
   name: true,
@@ -18,11 +18,12 @@ const SELECT = {
   themeInk: true,
   themeMode: true,
   themeFont: true,
+  photosJson: true,
 } as const;
 
 export async function storeForHost() {
   const host = cleanHost((await headers()).get("host") ?? "");
-  if (!host) return null;
+  if (!host || isPlatformHost(host)) return null;
   const slug = subdomainSlug(host);
   if (slug) {
     return prisma.store.findFirst({ where: { slug, active: true }, select: SELECT });

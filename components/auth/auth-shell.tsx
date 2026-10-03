@@ -15,6 +15,8 @@ import {
 import { storeForHost } from "@/lib/host-store";
 import { DEFAULT_THEME, storeTheme, themeStyle } from "@/lib/theme";
 import { themeFontVars } from "@/lib/fonts";
+import { parseStorePhotos } from "@/lib/store-photos";
+import { StorePhotoImg } from "@/components/store-photo";
 
 export type AuthVariant = "admin" | "sede" | "recover" | "reset";
 
@@ -84,6 +86,9 @@ export async function AuthShell({
   const theme = store ? storeTheme(store) : DEFAULT_THEME;
   const c = copy(variant, store?.name ?? null);
   const name = store?.name ?? "MiTienda";
+  // Fotos del negocio (Apariencia): mosaico bajo los beneficios, nunca detrás
+  // del texto (así el contraste del texto no depende de la foto).
+  const photos = store ? parseStorePhotos(store.photosJson).slice(0, 3) : [];
 
   return (
     <div
@@ -120,6 +125,21 @@ export async function AuthShell({
               </li>
             ))}
           </ul>
+          {photos.length > 0 && (
+            <div
+              className={`mt-10 grid h-44 gap-3 ${photos.length === 1 ? "grid-cols-1" : photos.length === 2 ? "grid-cols-2" : "grid-cols-3 grid-rows-2"}`}
+            >
+              {photos.map((ph, i) => (
+                <StorePhotoImg
+                  key={ph.url}
+                  photo={ph}
+                  alt={`Foto de ${name}`}
+                  eager
+                  className={`rounded-2xl shadow-xl ring-2 ring-brand-ink/15 ${photos.length === 3 && i === 0 ? "col-span-2 row-span-2" : photos.length === 3 ? "row-span-1" : ""}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         <p className="relative text-xs font-medium">

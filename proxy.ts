@@ -4,6 +4,8 @@ import { authConfig } from "@/auth.config";
 import {
   subdomainSlug,
   isRootHost,
+  isPlatformHost,
+  platformHost,
   cleanHost,
   STORE_HOST_HEADER,
 } from "@/lib/store-host";
@@ -57,7 +59,7 @@ async function storeOfHost(req: NextRequest): Promise<string | null> {
   const host = cleanHost(req.headers.get("host") ?? "");
   const fromSubdomain = subdomainSlug(host);
   if (fromSubdomain) return fromSubdomain;
-  if (isMainHost(host) || isRootHost(host)) return null;
+  if (isMainHost(host) || isRootHost(host) || isPlatformHost(host)) return null;
   return resolveSlug(host, req.nextUrl.origin);
 }
 
@@ -91,6 +93,14 @@ async function mapStoreHost(req: NextRequest): Promise<NextResponse | null> {
 }
 
 export default auth(async (req) => {
+  // 0) Con la plataforma en su propia dirección (PLATFORM_HOST), el
+  //    superadmin no se abre desde la dirección de una tienda: se lleva allá.
+  const p = req.nextUrl.pathname;
+  const ph = platformHost();
+  if (ph && (p === "/superadmin" || p.startsWith("/superadmin/")) && (await storeOfHost(req))) {
+    return NextResponse.redirect(`https://${ph}${p}${req.nextUrl.search}`, 307);
+  }
+
   // 1) Host de una tienda → reescribe a /slug (antes de la auth).
   const rewrite = await mapStoreHost(req);
   if (rewrite) return rewrite;

@@ -11,6 +11,7 @@ import {
   getCurrentSede,
 } from "@/lib/sede-auth";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { storeForHost } from "@/lib/host-store";
 import { setOrderPaymentStatus, advanceFulfillment } from "@/lib/orders";
 import { NOTICE_STATE } from "@/lib/order-messages";
 import {
@@ -56,6 +57,15 @@ export async function sedeLoginAction(
   }
   if (await isLocked("sede", sede.id)) {
     return { error: `Acceso bloqueado por seguridad. Inténtalo en ${LOCK_MIN} min.` };
+  }
+  // Desde la dirección de una tienda solo entran SUS sedes (mismo mensaje).
+  const hostStore = await storeForHost();
+  if (hostStore) {
+    const own = await prisma.store.findFirst({
+      where: { id: sede.storeId, slug: hostStore.slug },
+      select: { id: true },
+    });
+    if (!own) return fail;
   }
   await clearFailures("sede", sede.id);
 

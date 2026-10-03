@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const ALL = "__todos__";
 import { ConciergeBell, MapPin, UtensilsCrossed, X } from "lucide-react";
+import type { StorePhoto } from "@/lib/store-photos";
+import { StorePhotoImg } from "@/components/store-photo";
 
 // Carta digital de SOLO LECTURA (QR de las mesas). Portada con la marca,
 // filtro por categoría ("Todos" o una sola) y detalle del plato al tocarlo.
@@ -30,12 +32,14 @@ export function MenuView({
   location,
   open,
   sections,
+  photos = [],
 }: {
   storeName: string;
   logoUrl: string | null;
   location: { name: string; address: string | null } | null;
   open: { isOpen: boolean; message: string | null } | null;
   sections: MenuSection[];
+  photos?: StorePhoto[];
 }) {
   const [active, setActive] = useState(ALL);
   const [selected, setSelected] = useState<MenuItem | null>(null);
@@ -136,6 +140,24 @@ export function MenuView({
 
       {/* Hoja que se monta sobre la portada */}
       <div className="relative -mt-8 rounded-t-[32px] bg-bg pt-2">
+        {/* Conócenos: fotos del local, el equipo o los dueños (Apariencia) */}
+        {photos.length > 0 && (
+          <section aria-label="Conócenos" className="mx-auto max-w-6xl px-4 pt-4">
+            <h2 className="mb-3 px-1 text-xs font-bold uppercase tracking-[0.2em] text-ink-3">
+              Conócenos
+            </h2>
+            <div className="flex snap-x gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {photos.map((ph) => (
+                <StorePhotoImg
+                  key={ph.url}
+                  photo={ph}
+                  alt={`Foto de ${storeName}`}
+                  className="h-40 w-60 shrink-0 snap-start rounded-2xl ring-1 ring-line sm:h-52 sm:w-80"
+                />
+              ))}
+            </div>
+          </section>
+        )}
         {sections.length === 0 ? (
           <p className="px-6 py-20 text-center text-ink-3">
             Estamos actualizando la carta. Pregunta a tu mesero.
@@ -146,7 +168,7 @@ export function MenuView({
             <div className="sticky top-0 z-20 bg-bg/90 backdrop-blur-md">
               <div
                 ref={navRef}
-                className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {tabs.map((s) => {
                   const isActive = s.id === active;
@@ -172,7 +194,7 @@ export function MenuView({
               </div>
             </div>
 
-            <div ref={listRef} className="mx-auto max-w-3xl space-y-9 px-4 pt-4">
+            <div ref={listRef} className="mx-auto max-w-6xl space-y-9 px-4 pt-4">
               {visible.map((s) => (
                 <section key={s.id} id={s.id}>
                   <div className="mb-3 flex items-baseline gap-2 px-1">
@@ -183,7 +205,7 @@ export function MenuView({
                       {s.items.length}
                     </span>
                   </div>
-                  <ul className="grid gap-3 sm:grid-cols-2">
+                  <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {s.items.map((p) => (
                       <li key={p.id}>
                         <button

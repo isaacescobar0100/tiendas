@@ -98,6 +98,9 @@ model Store {
   themeInk     String  @default("#111827") // texto principal
   themeMode    String  @default("light")   // light | dark
   themeFont    String  @default("moderna") // combinación tipográfica curada
+  // Fotos del negocio (local, equipo, dueños): JSON [{url, position, zoom}].
+  // Se muestran en el login, el menú QR y la tienda (Admin > Apariencia).
+  photosJson   String  @default("[]")
   currency    String     @default("COP")
   active      Boolean    @default(true)
   // Métodos de pago que ofrece la tienda (los controla el superadmin)

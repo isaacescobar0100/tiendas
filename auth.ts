@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { storeForHost } from "@/lib/host-store";
+import { platformHost } from "@/lib/store-host";
 import {
   isLocked,
   registerFailure,
@@ -61,6 +63,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
         // Un bloqueo puesto por intentos simultáneos también frena este acierto.
         if (await isLocked("user", user.id)) return null;
+
+        // Cada quien entra por su puerta. Desde la dirección de una tienda:
+        // - un admin solo si es SU tienda;
+        // - el superadmin no, en cuanto la plataforma tenga su propia dirección
+        //   (PLATFORM_HOST). Antes de configurarla se le permite, para no
+        //   dejarlo sin acceso.
+        // Mismo resultado que una clave errada: no revela que la cuenta existe.
+        const hostStore = await storeForHost();
+        if (hostStore) {
+          const allowed =
+            user.role === "ADMIN"
+              ? user.store?.slug === hostStore.slug
+              : !platformHost();
+          if (!allowed) return null;
+        }
         await clearFailures("user", user.id);
 
         return {
