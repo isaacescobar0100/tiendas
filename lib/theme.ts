@@ -233,13 +233,17 @@ export function themeTokens(input: ThemeInput): Record<string, string> {
   const t = normalizeTheme(input);
   const { bg, surface, ink, brand } = t;
   const dark = t.mode === "dark";
-  const textBgs = [bg, surface];
+  const surface2 = mix(surface, ink, dark ? 0.06 : 0.035);
+  const surface3 = mix(surface, ink, dark ? 0.11 : 0.07);
+  // El texto puede ir sobre el fondo, las tarjetas o las píldoras grises:
+  // los atenuados cumplen AA sobre todos ellos.
+  const textBgs = [bg, surface, surface2, surface3];
 
   const tokens: Record<string, string> = {
     "--bg": bg,
     "--surface": surface,
-    "--surface-2": mix(surface, ink, dark ? 0.06 : 0.035),
-    "--surface-3": mix(surface, ink, dark ? 0.11 : 0.07),
+    "--surface-2": surface2,
+    "--surface-3": surface3,
     "--ink": ink,
     // Textos atenuados: siempre AA (4.5:1) sobre fondo y tarjetas.
     "--ink-2": ensureContrast(mix(ink, bg, 0.22), textBgs, 4.5),

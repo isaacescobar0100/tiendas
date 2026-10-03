@@ -350,7 +350,7 @@ export default async function StorefrontPage({
               <ChevronLeft className="h-4 w-4" /> Anterior
             </Link>
           ) : (
-            <span className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-ink-4">
+            <span aria-disabled="true" className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-ink-4">
               <ChevronLeft className="h-4 w-4" /> Anterior
             </span>
           )}
@@ -377,7 +377,7 @@ export default async function StorefrontPage({
               Siguiente <ChevronRight className="h-4 w-4" />
             </Link>
           ) : (
-            <span className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-ink-4">
+            <span aria-disabled="true" className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-ink-4">
               Siguiente <ChevronRight className="h-4 w-4" />
             </span>
           )}
