@@ -102,7 +102,7 @@ export function MenuView({
               <UtensilsCrossed className="h-10 w-10" />
             </span>
           )}
-          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-ink/75">
+          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-ink">
             Menú digital
           </p>
           <h1 className="mt-1 text-[32px] font-extrabold leading-tight tracking-tight">
@@ -129,7 +129,7 @@ export function MenuView({
             </div>
           )}
           {location?.address && (
-            <p className="mt-2 text-xs text-brand-ink/75">{location.address}</p>
+            <p className="mt-2 text-xs text-brand-ink">{location.address}</p>
           )}
         </div>
       </header>
