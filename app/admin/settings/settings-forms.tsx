@@ -331,7 +331,10 @@ function HoursEditor({ initialJson }: { initialJson: string }) {
         Limitar pedidos a mi horario de atención
       </label>
 
+      {/* Desactivado: atenuado e inerte (no se puede enfocar ni editar). */}
       <div
+        inert={!enabled}
+        aria-disabled={!enabled}
         className={`mt-4 space-y-2 ${enabled ? "" : "pointer-events-none opacity-50"}`}
       >
         {DAY_ORDER.map(({ idx, label }) => {
