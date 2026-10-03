@@ -163,6 +163,7 @@ export default async function DashboardPage() {
               {recentOrders.map((o) => (
                 <li key={o.id}>
                   <Link
+                    prefetch={false}
                     href={`/admin/orders/${o.id}`}
                     className="flex items-center justify-between gap-3 px-5 py-3 text-sm hover:bg-gray-50"
                   >
@@ -439,6 +440,7 @@ function Panel({
         <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
         {action && (
           <Link
+            prefetch={false}
             href={action.href}
             className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900"
           >

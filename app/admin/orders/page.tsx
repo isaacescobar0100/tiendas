@@ -70,8 +70,8 @@ export default async function OrdersPage() {
                 <tr key={o.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <Link
-                      href={`/admin/orders/${o.id}`}
                       prefetch={false}
+                      href={`/admin/orders/${o.id}`}
                       className="font-mono text-gray-900 hover:underline"
                     >
                       #{o.id.slice(-8)}

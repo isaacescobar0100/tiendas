@@ -139,6 +139,7 @@ export default async function SuperadminHome() {
             <Download className="h-4 w-4" /> Exportar todo
           </a>
           <Link
+            prefetch={false}
             href="/superadmin/stores/new"
             className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
           >
@@ -196,6 +197,7 @@ export default async function SuperadminHome() {
         <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center">
           <p className="text-gray-500">Aún no hay tiendas.</p>
           <Link
+            prefetch={false}
             href="/superadmin/stores/new"
             className="mt-3 inline-block text-sm font-medium text-gray-900 underline"
           >
@@ -221,6 +223,7 @@ export default async function SuperadminHome() {
                 <tr key={store.id}>
                   <td className="px-4 py-3">
                     <Link
+                      prefetch={false}
                       href={`/superadmin/stores/${store.id}`}
                       className="font-medium text-gray-900 hover:underline"
                     >
@@ -284,6 +287,7 @@ export default async function SuperadminHome() {
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <Link
+                        prefetch={false}
                         href={`/superadmin/stores/${store.id}/edit`}
                         className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
                       >

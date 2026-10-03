@@ -16,6 +16,7 @@ export default async function SuperadminLayout({
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link
+              prefetch={false}
               href="/superadmin"
               className="flex items-center gap-2 font-semibold text-gray-900"
             >
@@ -31,6 +32,7 @@ export default async function SuperadminLayout({
               {user.email}
             </span>
             <Link
+              prefetch={false}
               href="/superadmin/account"
               className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
             >

@@ -67,6 +67,7 @@ export default async function OrderDetailPage({
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <Link
+          prefetch={false}
           href="/admin/orders"
           className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
         >

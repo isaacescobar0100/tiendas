@@ -97,6 +97,7 @@ export default async function SuperadminStoreDetail({
   return (
     <div className="space-y-8">
       <Link
+        prefetch={false}
         href="/superadmin"
         className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
       >
@@ -126,6 +127,7 @@ export default async function SuperadminStoreDetail({
             <Download className="h-4 w-4" /> Exportar CSV
           </a>
           <Link
+            prefetch={false}
             href={`/superadmin/stores/${store.id}/edit`}
             className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
           >

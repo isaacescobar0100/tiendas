@@ -70,6 +70,7 @@ export default async function ProductsPage({
           </p>
         </div>
         <Link
+          prefetch={false}
           href="/admin/products/new"
           className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
         >
@@ -117,6 +118,7 @@ export default async function ProductsPage({
           </p>
           {hasFilter ? (
             <Link
+              prefetch={false}
               href="/admin/products"
               className="mt-3 inline-block text-sm font-medium text-gray-900 underline"
             >
@@ -124,6 +126,7 @@ export default async function ProductsPage({
             </Link>
           ) : (
             <Link
+              prefetch={false}
               href="/admin/products/new"
               className="mt-3 inline-block text-sm font-medium text-gray-900 underline"
             >
@@ -148,6 +151,7 @@ export default async function ProductsPage({
                 <tr key={p.id}>
                   <td className="px-4 py-3">
                     <Link
+                      prefetch={false}
                       href={`/admin/products/${p.id}/edit`}
                       className="flex items-center gap-3 hover:underline"
                     >
@@ -214,6 +218,7 @@ function Pill({
 }) {
   return (
     <Link
+      prefetch={false}
       href={href}
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
         active
