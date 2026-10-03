@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { UserPlus } from "lucide-react";
 import { registerAction, type AccountState } from "../cuenta/actions";
+import { keepFormSubmit } from "@/components/keep-form";
 
 // Bloque en la pantalla de "¡Pedido confirmado!": invita a crear la cuenta
 // con el mismo correo del pedido para poder rastrearlo (no bloquea la compra).
@@ -31,7 +32,7 @@ export function PostOrderAccount({
         quieras. Te enviaremos un enlace para crear tu contraseña.
       </p>
 
-      <form action={formAction} className="mt-4 space-y-3">
+      <form onSubmit={keepFormSubmit(formAction)} className="mt-4 space-y-3">
         <input type="hidden" name="storeSlug" value={storeSlug} />
         <input type="hidden" name="name" value={name} />
         <input type="hidden" name="email" value={email} />

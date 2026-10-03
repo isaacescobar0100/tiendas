@@ -8,6 +8,7 @@ import {
   type ReviewState,
 } from "@/app/[storeSlug]/[productSlug]/review-actions";
 import { useStoreHref } from "@/components/store-base";
+import { keepFormSubmit } from "@/components/keep-form";
 
 export function ReviewForm({
   storeSlug,
@@ -47,7 +48,7 @@ export function ReviewForm({
 
   return (
     <form
-      action={formAction}
+      onSubmit={keepFormSubmit(formAction)}
       className="space-y-3 rounded-2xl border border-line p-5"
     >
       <input type="hidden" name="storeSlug" value={storeSlug} />

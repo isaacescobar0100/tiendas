@@ -6,6 +6,7 @@ import { updateStoreConfigAction, type ActionState } from "../../../actions";
 import { STORE_TYPE_OPTIONS } from "@/lib/store-type";
 import { GRACE_DAYS } from "@/lib/billing";
 import type { StoreType } from "@prisma/client";
+import { keepFormSubmit } from "@/components/keep-form";
 
 type StoreCfg = {
   id: string;
@@ -38,7 +39,7 @@ export function EditStoreForm({ store }: { store: StoreCfg }) {
 
   return (
     <form
-      action={formAction}
+      onSubmit={keepFormSubmit(formAction)}
       className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6"
     >
       <input type="hidden" name="storeId" value={store.id} />

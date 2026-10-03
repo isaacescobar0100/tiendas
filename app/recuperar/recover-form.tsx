@@ -1,16 +1,19 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Mail } from "lucide-react";
 import { requestAdminResetAction, type ResetState } from "./actions";
 import { AuthHeading, Field, Notice, SubmitButton } from "@/components/auth/fields";
+import { keepFormSubmit } from "@/components/keep-form";
 
 export function RecoverForm() {
   const [state, formAction, pending] = useActionState<ResetState, FormData>(
     requestAdminResetAction,
     undefined,
   );
+  // React limpia el formulario tras cada envío: el correo se conserva si falla.
+  const [email, setEmail] = useState("");
 
   return (
     <>
@@ -24,7 +27,7 @@ export function RecoverForm() {
           la de spam o promociones).
         </Notice>
       ) : (
-        <form action={formAction} className="space-y-5">
+        <form onSubmit={keepFormSubmit(formAction)} className="space-y-5">
           <Field
             id="email"
             name="email"
@@ -36,6 +39,8 @@ export function RecoverForm() {
             autoComplete="email"
             inputMode="email"
             placeholder="tu@correo.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           {state?.error && <Notice kind="error">{state.error}</Notice>}
           <SubmitButton pending={pending} pendingText="Enviando…">

@@ -1,21 +1,24 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Lock, Mail } from "lucide-react";
 import { loginAction, type LoginState } from "./actions";
 import { AuthHeading, Field, Notice, PasswordField, SubmitButton } from "@/components/auth/fields";
+import { keepFormSubmit } from "@/components/keep-form";
 
 export function LoginForm() {
   const params = useSearchParams();
   const callbackUrl = params.get("callbackUrl") ?? "";
   const [state, formAction, pending] = useActionState<LoginState, FormData>(loginAction, undefined);
+  // React limpia el formulario tras cada envío: el correo se conserva si falla.
+  const [email, setEmail] = useState("");
 
   return (
     <>
       <AuthHeading title="Bienvenido de nuevo" subtitle="Entra a tu panel de administración." />
-      <form action={formAction} className="space-y-5">
+      <form onSubmit={keepFormSubmit(formAction)} className="space-y-5">
         {(params.get("changed") || params.get("reset")) && (
           <Notice kind="success">
             Contraseña actualizada. Por seguridad cerramos las sesiones abiertas: entra con tu
@@ -34,6 +37,8 @@ export function LoginForm() {
           autoComplete="email"
           inputMode="email"
           placeholder="tu@correo.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <PasswordField
           id="password"

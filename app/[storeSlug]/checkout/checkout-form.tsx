@@ -9,6 +9,7 @@ import { formatPrice, variantLabel } from "@/lib/utils";
 import { computeShipping } from "@/lib/shipping";
 import { placeOrderAction, type CheckoutState } from "./actions";
 import { useStoreHref } from "@/components/store-base";
+import { keepFormSubmit } from "@/components/keep-form";
 
 type Method = "online" | "cod" | "transfer";
 
@@ -121,7 +122,7 @@ export default function CheckoutForm({
 
       <div className="grid gap-8 md:grid-cols-[1fr_360px]">
         {/* Formulario de datos */}
-        <form action={formAction} className="space-y-5">
+        <form onSubmit={keepFormSubmit(formAction)} className="space-y-5">
           <input type="hidden" name="storeSlug" value={storeSlug} />
           <input type="hidden" name="items" value={itemsPayload} />
 

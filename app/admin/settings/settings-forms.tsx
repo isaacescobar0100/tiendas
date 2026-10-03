@@ -17,6 +17,7 @@ import {
   changePasswordAction,
   type SettingsState,
 } from "./actions";
+import { keepFormSubmit } from "@/components/keep-form";
 
 type StoreData = {
   name: string;
@@ -51,7 +52,7 @@ export function StoreForm({
 
   return (
     <form
-      action={formAction}
+      onSubmit={keepFormSubmit(formAction)}
       className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6"
     >
       <h2 className="text-sm font-semibold text-gray-900">Datos de la tienda</h2>
@@ -385,7 +386,7 @@ export function PasswordForm() {
 
   return (
     <form
-      action={formAction}
+      onSubmit={keepFormSubmit(formAction)}
       className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6"
     >
       <h2 className="text-sm font-semibold text-gray-900">Cambiar contraseña</h2>

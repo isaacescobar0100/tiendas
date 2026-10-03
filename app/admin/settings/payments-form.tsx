@@ -10,6 +10,7 @@ import {
   type TransferKind,
 } from "@/lib/payment-methods";
 import { updatePaymentsAction, type SettingsState } from "./actions";
+import { keepFormSubmit } from "@/components/keep-form";
 
 type PaymentsData = {
   wompiReady: boolean; // el superadmin configuró las llaves de Wompi
@@ -43,7 +44,7 @@ export function PaymentsForm({ data }: { data: PaymentsData }) {
 
   return (
     <form
-      action={formAction}
+      onSubmit={keepFormSubmit(formAction)}
       className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6"
     >
       <input

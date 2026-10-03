@@ -1,21 +1,24 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Lock, Mail } from "lucide-react";
 import { sedeLoginAction, type SedeLoginState } from "../actions";
 import { AuthHeading, Field, Notice, PasswordField, SubmitButton } from "@/components/auth/fields";
+import { keepFormSubmit } from "@/components/keep-form";
 
 export function SedeLoginForm() {
   const [state, formAction, pending] = useActionState<SedeLoginState, FormData>(
     sedeLoginAction,
     undefined,
   );
+  // React limpia el formulario tras cada envío: el correo se conserva si falla.
+  const [email, setEmail] = useState("");
 
   return (
     <>
       <AuthHeading title="Entra a tu sede" subtitle="Verás y atenderás solo los pedidos de tu sede." />
-      <form action={formAction} className="space-y-5">
+      <form onSubmit={keepFormSubmit(formAction)} className="space-y-5">
         <Field
           id="email"
           name="email"
@@ -27,6 +30,8 @@ export function SedeLoginForm() {
           autoComplete="email"
           inputMode="email"
           placeholder="sede@tutienda.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <PasswordField
           id="password"

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createStoreAction, type ActionState } from "../../actions";
 import { STORE_TYPE_OPTIONS } from "@/lib/store-type";
+import { keepFormSubmit } from "@/components/keep-form";
 
 export default function NewStorePage() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
@@ -27,7 +28,7 @@ export default function NewStorePage() {
       </p>
 
       <form
-        action={formAction}
+        onSubmit={keepFormSubmit(formAction)}
         className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6"
       >
         <fieldset className="space-y-4">

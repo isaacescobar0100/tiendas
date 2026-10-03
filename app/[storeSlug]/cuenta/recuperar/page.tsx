@@ -8,6 +8,7 @@ import {
   type ResetState,
 } from "../reset-actions";
 import { useStoreHref } from "@/components/store-base";
+import { keepFormSubmit } from "@/components/keep-form";
 
 export default function CustomerRecoverPage() {
   const sh = useStoreHref();
@@ -31,7 +32,7 @@ export default function CustomerRecoverPage() {
             restablecer la contraseña. Revisa tu bandeja (y spam).
           </div>
         ) : (
-          <form action={formAction} className="space-y-4">
+          <form onSubmit={keepFormSubmit(formAction)} className="space-y-4">
             <input type="hidden" name="storeSlug" value={storeSlug} />
             <div>
               <label className="mb-1 block text-sm font-medium text-ink-2">

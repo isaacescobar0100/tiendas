@@ -13,6 +13,7 @@ import { ModifiersEditor } from "@/components/modifiers-editor";
 import { variantLabel } from "@/lib/utils";
 import { usesVariants, usesModifiers, tracksStock } from "@/lib/store-type";
 import type { StoreType } from "@prisma/client";
+import { keepFormSubmit } from "@/components/keep-form";
 
 type Category = { id: string; name: string };
 
@@ -148,7 +149,7 @@ export function ProductForm({
 
   return (
     <form
-      action={formAction}
+      onSubmit={keepFormSubmit(formAction)}
       className="space-y-5 rounded-2xl border border-gray-200 bg-white p-6"
     >
       {defaults?.id && (

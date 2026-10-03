@@ -5,6 +5,7 @@ import { Heart, Lock, Mail, PackageSearch, User, Zap } from "lucide-react";
 import { loginAction, registerAction, type AccountState } from "./actions";
 import { useStoreHref } from "@/components/store-base";
 import { Field, Notice, PasswordField, SubmitButton } from "@/components/auth/fields";
+import { keepFormSubmit } from "@/components/keep-form";
 
 // Acceso del cliente de la tienda: a la izquierda para qué sirve la cuenta, a
 // la derecha iniciar sesión o crearla. Todo con el tema de la tienda.
@@ -76,10 +77,12 @@ export function AccountForms({ storeSlug, storeName }: { storeSlug: string; stor
 function LoginForm({ storeSlug }: { storeSlug: string }) {
   const sh = useStoreHref();
   const [state, formAction, pending] = useActionState<AccountState, FormData>(loginAction, undefined);
+  // React limpia el formulario tras cada envío: el correo se conserva si falla.
+  const [email, setEmail] = useState("");
   return (
-    <form action={formAction} className="space-y-5">
+    <form onSubmit={keepFormSubmit(formAction)} className="space-y-5">
       <input type="hidden" name="storeSlug" value={storeSlug} />
-      <Field id="email" name="email" type="email" label="Correo" icon={Mail} required autoComplete="email" inputMode="email" placeholder="tu@correo.com" />
+      <Field id="email" name="email" type="email" label="Correo" icon={Mail} required autoComplete="email" inputMode="email" placeholder="tu@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} />
       <PasswordField
         id="password"
         name="password"
@@ -104,11 +107,14 @@ function LoginForm({ storeSlug }: { storeSlug: string }) {
 
 function RegisterForm({ storeSlug }: { storeSlug: string }) {
   const [state, formAction, pending] = useActionState<AccountState, FormData>(registerAction, undefined);
+  // Se conservan si el registro falla (React limpia el formulario al enviar).
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   return (
-    <form action={formAction} className="space-y-5">
+    <form onSubmit={keepFormSubmit(formAction)} className="space-y-5">
       <input type="hidden" name="storeSlug" value={storeSlug} />
-      <Field id="name" name="name" label="Nombre" icon={User} required autoComplete="name" placeholder="Tu nombre" />
-      <Field id="reg-email" name="email" type="email" label="Correo" icon={Mail} required autoComplete="email" inputMode="email" placeholder="tu@correo.com" />
+      <Field id="name" name="name" label="Nombre" icon={User} required autoComplete="name" placeholder="Tu nombre" value={name} onChange={(e) => setName(e.target.value)} />
+      <Field id="reg-email" name="email" type="email" label="Correo" icon={Mail} required autoComplete="email" inputMode="email" placeholder="tu@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} />
       {state?.error && <Notice kind="error">{state.error}</Notice>}
       {state?.ok ? (
         <Notice kind="success">
