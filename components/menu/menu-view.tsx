@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+
+const ALL = "__todos__";
 import { ConciergeBell, MapPin, UtensilsCrossed, X } from "lucide-react";
 
 // Carta digital de SOLO LECTURA (QR de las mesas). Portada con la marca,
-// pestañas de categoría que siguen el scroll y detalle del plato al tocarlo.
+// filtro por categoría ("Todos" o una sola) y detalle del plato al tocarlo.
 // No hay carrito ni compra: en el local se pide al mesero.
 
 export type MenuItem = {
@@ -35,31 +37,14 @@ export function MenuView({
   open: { isOpen: boolean; message: string | null } | null;
   sections: MenuSection[];
 }) {
-  const [active, setActive] = useState(sections[0]?.id ?? "");
+  const [active, setActive] = useState(ALL);
   const [selected, setSelected] = useState<MenuItem | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
-  const pillRefs = useRef(new Map<string, HTMLAnchorElement>());
-  // Mientras saltamos con una pestaña, el scroll no debe cambiar la activa.
-  const jumping = useRef(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  const pillRefs = useRef(new Map<string, HTMLButtonElement>());
 
-  // Pestaña activa según la sección visible.
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (jumping.current) return;
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]) setActive(visible[0].target.id);
-      },
-      { rootMargin: "-120px 0px -60% 0px" },
-    );
-    sections.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
-  }, [sections]);
+  const visible = active === ALL ? sections : sections.filter((s) => s.id === active);
+  const tabs = [{ id: ALL, name: "Todos" }, ...sections.map((s) => ({ id: s.id, name: s.name }))];
 
   // Mantiene visible la pestaña activa dentro de la barra.
   useEffect(() => {
@@ -72,14 +57,13 @@ export function MenuView({
     });
   }, [active]);
 
-  const jumpTo = (id: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    const el = document.getElementById(id);
-    if (!el) return;
-    jumping.current = true;
+  // Al cambiar de filtro, si ya se había bajado, vuelve al inicio de la lista.
+  const pick = (id: string) => {
     setActive(id);
-    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 76, behavior: "smooth" });
-    window.setTimeout(() => (jumping.current = false), 700);
+    const list = listRef.current;
+    if (list && list.getBoundingClientRect().top < 0) {
+      window.scrollTo({ top: list.getBoundingClientRect().top + window.scrollY - 70, behavior: "smooth" });
+    }
   };
 
   const close = useCallback(() => setSelected(null), []);
@@ -164,13 +148,14 @@ export function MenuView({
                 ref={navRef}
                 className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
-                {sections.map((s) => {
+                {tabs.map((s) => {
                   const isActive = s.id === active;
                   return (
-                    <a
+                    <button
                       key={s.id}
-                      href={`#${s.id}`}
-                      onClick={jumpTo(s.id)}
+                      type="button"
+                      onClick={() => pick(s.id)}
+                      aria-pressed={isActive}
                       ref={(el) => {
                         if (el) pillRefs.current.set(s.id, el);
                       }}
@@ -181,15 +166,15 @@ export function MenuView({
                       }`}
                     >
                       {s.name}
-                    </a>
+                    </button>
                   );
                 })}
               </div>
             </div>
 
-            <div className="mx-auto max-w-3xl space-y-9 px-4 pt-4">
-              {sections.map((s) => (
-                <section key={s.id} id={s.id} className="scroll-mt-24">
+            <div ref={listRef} className="mx-auto max-w-3xl space-y-9 px-4 pt-4">
+              {visible.map((s) => (
+                <section key={s.id} id={s.id}>
                   <div className="mb-3 flex items-baseline gap-2 px-1">
                     <h2 className="text-xl font-extrabold tracking-tight text-gray-900">
                       {s.name}
