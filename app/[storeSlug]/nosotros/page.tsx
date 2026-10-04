@@ -366,7 +366,14 @@ export default async function AboutPage({
                             {isToday && <span className="ml-1.5 text-xs font-medium text-brand-text">hoy</span>}
                           </dt>
                           <dd className="text-right lg:text-left">
-                            {d.closed || !d.open || !d.close ? "Cerrado" : `${hour12(d.open)} – ${hour12(d.close)}`}
+                            {d.closed || !d.open || !d.close ? (
+                              "Cerrado"
+                            ) : (
+                              <>
+                                <span className="whitespace-nowrap">{hour12(d.open)}</span> –{" "}
+                                <span className="whitespace-nowrap">{hour12(d.close)}</span>
+                              </>
+                            )}
                           </dd>
                         </div>
                       );
