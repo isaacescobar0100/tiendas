@@ -19,19 +19,21 @@ export function SeoForm({
   storeName,
   url,
   storeType,
+  autoKeywords,
   autoDescription,
 }: {
   initial: { seoTitle: string; seoDescription: string; seoCity: string; seoKeywords: string };
   storeName: string;
   url: string;
   storeType: StoreType;
+  autoKeywords: string; // de las categorías, si no escriben «lo que vendes»
   autoDescription: string;
 }) {
   const [state, action, pending] = useActionState<SeoState, FormData>(saveSeoAction, undefined);
   const [v, setV] = useState(initial);
   // Mismo título automático que usan las páginas de la tienda.
   const autoTitle = (x: { city: string; keywords: string }) =>
-    seoHomeTitle({ slug: "", name: storeName, type: storeType, seoCity: x.city.trim() || null, seoKeywords: x.keywords });
+    seoHomeTitle({ slug: "", name: storeName, type: storeType, seoCity: x.city.trim() || null, seoKeywords: x.keywords.trim() || autoKeywords });
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setV({ ...v, [k]: e.target.value });
 
   const title = v.seoTitle.trim() || autoTitle({ city: v.seoCity, keywords: v.seoKeywords });
@@ -55,7 +57,7 @@ export function SeoForm({
         </label>
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-ink-2">Lo que vendes (separado por comas)</span>
-          <input name="seoKeywords" value={v.seoKeywords} onChange={set("seoKeywords")} maxLength={300} placeholder="Hamburguesas, desgranados, salchipapas" className={inputCls} />
+          <input name="seoKeywords" value={v.seoKeywords} onChange={set("seoKeywords")} maxLength={300} placeholder={autoKeywords ? `Vacío = sus categorías: ${autoKeywords}` : "Hamburguesas, desgranados, salchipapas"} className={inputCls} />
         </label>
       </div>
       <label className="block">

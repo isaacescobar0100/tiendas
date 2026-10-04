@@ -7,12 +7,14 @@ import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { fillGrid } from "@/lib/grid-fill";
 import { storeUrl, sedeSlug, seoTagline, clip, breadcrumbJsonLd, locationJsonLd } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
+import { withAutoKeywords } from "@/lib/seo-data";
 
 async function getStore(slug: string) {
-  return prisma.store.findFirst({
+  const store = await prisma.store.findFirst({
     where: { slug, active: true },
     include: { locations: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] } },
   });
+  return store ? withAutoKeywords(store) : null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {

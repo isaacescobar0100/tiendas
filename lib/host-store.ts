@@ -10,7 +10,7 @@ import { cleanHost, isPlatformHost, isRootHost, subdomainSlug } from "@/lib/stor
 const SELECT = {
   id: true,
   type: true,
-  customDomain: true,
+  customDomain: true, domainActive: true,
   updatedAt: true,
   hoursJson: true,
   seoTitle: true,

@@ -5,6 +5,7 @@ import { aboutIsLive, parseAbout } from "@/lib/about";
 import { parseStoreHours, DAY_ORDER } from "@/lib/store-hours";
 import { parseTransferAccounts, TRANSFER_KIND_LABEL } from "@/lib/payment-methods";
 import { formatPrice } from "@/lib/utils";
+import { withAutoKeywords } from "@/lib/seo-data";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,8 @@ export const dynamic = "force-dynamic";
  * lo publica en su propia dirección (/llms.txt).
  */
 export async function GET() {
-  const host = await storeForHost();
+  const found = await storeForHost();
+  const host = found ? await withAutoKeywords(found) : null;
   const headers = { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" };
   if (!host) {
     return new Response("# MiTienda\n\n> Plataforma para crear tiendas en línea con marca propia.\n", { headers });

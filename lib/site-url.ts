@@ -13,15 +13,18 @@ export function getBaseUrl(): string {
 
 /**
  * Dirección pública de una tienda, en orden de preferencia:
- * dominio propio (surenos.com) → subdominio del dominio puente
- * (surenos.<STORE_ROOT_DOMAIN>) → dominio principal con la ruta (/surenos).
+ * dominio propio (surenos.com) SOLO si ya está activo (comprobado) →
+ * subdominio del dominio puente (surenos.<STORE_ROOT_DOMAIN>) → dominio
+ * principal con la ruta (/surenos). Así un dominio recién escrito pero aún
+ * sin configurar no rompe los enlaces ni el SEO.
  * Solo en el servidor (lee variables de entorno).
  */
 export function storePublicUrl(store: {
   slug: string;
   customDomain?: string | null;
+  domainActive?: boolean | null;
 }): string {
-  if (store.customDomain) return `https://${store.customDomain}`;
+  if (store.customDomain && store.domainActive) return `https://${store.customDomain}`;
   const root = (process.env.STORE_ROOT_DOMAIN ?? "").trim().toLowerCase();
   if (root) return `https://${store.slug}.${root}`;
   return `${getBaseUrl()}/${store.slug}`;

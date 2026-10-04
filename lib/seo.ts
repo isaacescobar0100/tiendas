@@ -6,7 +6,7 @@ import { storePublicUrl } from "@/lib/site-url";
 import { slugify } from "@/lib/utils";
 import { parseStoreHours } from "@/lib/store-hours";
 
-type StoreLike = { slug: string; customDomain?: string | null };
+type StoreLike = { slug: string; customDomain?: string | null; domainActive?: boolean | null };
 
 /** Dirección absoluta de una página de la tienda (su dominio o subdominio). */
 export function storeUrl(store: StoreLike, path = ""): string {

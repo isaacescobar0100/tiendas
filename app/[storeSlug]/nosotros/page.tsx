@@ -34,7 +34,7 @@ async function getStore(slug: string) {
       id: true,
       name: true,
       slug: true,
-      customDomain: true,
+      customDomain: true, domainActive: true,
       seoCity: true,
       type: true,
       description: true,

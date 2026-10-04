@@ -75,6 +75,9 @@ model Store {
   slug        String     @unique
   type        StoreType  @default(FASHION) // tipo de negocio (lo fija el superadmin)
   customDomain String?   @unique // dominio propio (ej. yoswill.com) → mapea a esta tienda
+  // El dominio propio ya funciona (comprobado al guardar): es la dirección
+  // principal (Google, enlaces) y el subdominio redirige a él.
+  domainActive Boolean  @default(false)
   description String?
   logoUrl     String?
   bannerUrl   String?    // imagen de banner (portada) en la página de la tienda

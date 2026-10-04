@@ -20,6 +20,7 @@ import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 import { aboutIsLive, parseAbout, SOCIAL_KEYS, type StoreAbout } from "@/lib/about";
 import { seoHomeTitle, seoHomeDescription, seoKeywords, storeUrl, storeJsonLd, sedeSlug } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
+import { withAutoKeywords } from "@/lib/seo-data";
 import { fillGrid } from "@/lib/grid-fill";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
@@ -41,8 +42,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { storeSlug } = await params;
   const { cat } = await searchParams;
-  const store = await getStore(storeSlug);
-  if (!store) return { title: "Tienda no encontrada" };
+  const raw = await getStore(storeSlug);
+  if (!raw) return { title: "Tienda no encontrada" };
+  const store = await withAutoKeywords(raw);
 
   // Título y descripción para Google con la ciudad y lo que vende (SEO local).
   const category = cat ? store.categories.find((c) => c.slug === cat) : null;
@@ -94,8 +96,9 @@ export default async function StorefrontPage({
   const sh = (p = "") => joinStorePath(storeBase, p);
   const { cat, q, sort, page, offers } = await searchParams;
 
-  const store = await getStore(storeSlug);
-  if (!store) notFound();
+  const found = await getStore(storeSlug);
+  if (!found) notFound();
+  const store = await withAutoKeywords(found);
 
   // Producto "en oferta": tiene precio de oferta válido (0 < oferta < precio).
   // Usa referencia de campo de Prisma para comparar dos columnas.

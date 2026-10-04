@@ -14,10 +14,7 @@ import { setTempPasswordFlash, clearTempPasswordFlash } from "@/lib/flash";
 import { sendRentEmail } from "@/lib/email";
 import { signOut } from "@/auth";
 
-const createStoreSchema = z.object({
-  storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
-  type: z.enum(["FASHION", "FOOD", "LIQUOR"]).default("FASHION"),
-  currency: z.string().min(3).max(3).default("COP"),
+const adminSchema = z.object({
   adminName: z.string().min(2, "El nombre del admin es muy corto."),
   adminEmail: z.string().email("Email inválido."),
   adminPassword: z.string().min(8, "La contraseña debe tener 8+ caracteres."),
@@ -37,56 +34,6 @@ async function uniqueStoreSlug(name: string): Promise<string> {
   return slug;
 }
 
-export async function createStoreAction(
-  _prev: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  await requireSuperadmin();
-
-  const parsed = createStoreSchema.safeParse({
-    storeName: formData.get("storeName"),
-    type: (formData.get("type") as string) || "FASHION",
-    currency: (formData.get("currency") as string)?.toUpperCase() || "COP",
-    adminName: formData.get("adminName"),
-    adminEmail: formData.get("adminEmail"),
-    adminPassword: formData.get("adminPassword"),
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
-  }
-  const data = parsed.data;
-  const email = data.adminEmail.toLowerCase();
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return { error: "Ya existe un usuario con ese email." };
-  }
-
-  const slug = await uniqueStoreSlug(data.storeName);
-  const passwordHash = await bcrypt.hash(data.adminPassword, 10);
-
-  // Crea el usuario admin y su tienda de forma atómica
-  await prisma.user.create({
-    data: {
-      email,
-      name: data.adminName,
-      passwordHash,
-      role: "ADMIN",
-      store: {
-        create: {
-          name: data.storeName,
-          slug,
-          type: data.type,
-          currency: data.currency,
-        },
-      },
-    },
-  });
-
-  revalidatePath("/superadmin");
-  redirect("/superadmin");
-}
-
 /** Normaliza un dominio: minúsculas, sin protocolo, sin ruta ni puerto. */
 function normalizeDomain(raw?: string): string | null {
   const d = (raw ?? "")
@@ -97,11 +44,26 @@ function normalizeDomain(raw?: string): string | null {
   return d || null;
 }
 
+/**
+ * ¿El dominio ya abre ESTA tienda? Se pide su llms.txt (lo responde la propia
+ * tienda según el dominio) y se compara el nombre. Evita activar un dominio
+ * cuyo DNS o Vercel aún no está listo (rompería los enlaces y el SEO).
+ */
+async function domainServesStore(domain: string, storeName: string): Promise<boolean> {
+  try {
+    const res = await fetch(`https://${domain}/llms.txt`, { signal: AbortSignal.timeout(7000), cache: "no-store" });
+    if (!res.ok) return false;
+    return (await res.text()).startsWith(`# ${storeName}`);
+  } catch {
+    return false;
+  }
+}
+
 const configSchema = z.object({
-  storeId: z.string().min(1),
   storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
-  slug: z.string().min(2, "El slug es muy corto."),
-  type: z.enum(["FASHION", "FOOD", "LIQUOR"]).optional(),
+  slug: z.string().optional(),
+  type: z.enum(["FASHION", "FOOD", "LIQUOR"]),
+  currency: z.string().optional(),
   customDomain: z.string().optional(),
   plan: z.enum(["SALE", "RENT"]).optional(),
   paidUntil: z.string().optional(),
@@ -110,62 +72,165 @@ const configSchema = z.object({
     .int("Las sedes deben ser un número entero.")
     .min(1, "El plan incluye al menos 1 sede.")
     .max(50, "Máximo 50 sedes."),
+  seoCity: z.string().max(60).optional(),
+  seoKeywords: z.string().max(300).optional(),
   wompiPublicKey: z.string().optional(),
   wompiPrivateKey: z.string().optional(),
   wompiIntegritySecret: z.string().optional(),
   wompiEventsSecret: z.string().optional(),
 });
 
-/** El superadmin edita la URL (slug), el dominio propio y las llaves de Wompi. */
+type CurrentStore = { id: string; slug: string; name: string; customDomain: string | null; domainActive: boolean; paidUntil: Date | null };
+
+/**
+ * Lee y valida la configuración de una tienda: la MISMA al crearla
+ * (current = null) y al editarla. Devuelve los datos listos para guardar.
+ */
+async function readStoreConfig(formData: FormData, current: CurrentStore | null) {
+  const parsed = configSchema.safeParse({
+    storeName: formData.get("storeName"),
+    slug: formData.get("slug") ?? "",
+    type: (formData.get("type") as string) || "FOOD",
+    currency: (formData.get("currency") as string) ?? "",
+    customDomain: formData.get("customDomain") ?? "",
+    plan: (formData.get("plan") as string) || "SALE",
+    paidUntil: formData.get("paidUntil") ?? "",
+    maxLocations: formData.get("maxLocations") ?? 1,
+    seoCity: formData.get("seoCity") ?? "",
+    seoKeywords: formData.get("seoKeywords") ?? "",
+    wompiPublicKey: formData.get("wompiPublicKey") ?? "",
+    wompiPrivateKey: formData.get("wompiPrivateKey") ?? "",
+    wompiIntegritySecret: formData.get("wompiIntegritySecret") ?? "",
+    wompiEventsSecret: formData.get("wompiEventsSecret") ?? "",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message } as const;
+  const d = parsed.data;
+  const s = (v?: string) => {
+    const t = (v ?? "").trim();
+    return t.length ? t : null;
+  };
+
+  // URL corta: la escrita o, al crear sin escribirla, una a partir del nombre.
+  let slug = slugify(d.slug ?? "");
+  if (!slug) {
+    if (current) return { error: "Slug inválido." } as const;
+    slug = await uniqueStoreSlug(d.storeName);
+  } else {
+    if (isReservedSlug(slug)) return { error: "Ese slug está reservado por el sistema. Elige otro." } as const;
+    if (await prisma.store.findFirst({ where: { slug, ...(current ? { id: { not: current.id } } : {}) } })) {
+      return { error: "Ese slug ya está en uso por otra tienda." } as const;
+    }
+  }
+
+  const customDomain = normalizeDomain(d.customDomain);
+  if (customDomain && (await prisma.store.findFirst({ where: { customDomain, ...(current ? { id: { not: current.id } } : {}) } }))) {
+    return { error: "Ese dominio ya está asignado a otra tienda." } as const;
+  }
+  // Dominio activo: solo si ya abre esta tienda (se comprueba al activarlo).
+  let domainActive = false;
+  if (current && customDomain && formData.get("domainActive") === "on") {
+    const already = current.domainActive && current.customDomain === customDomain;
+    if (!already && !(await domainServesStore(customDomain, current.name))) {
+      return {
+        error: `El dominio ${customDomain} todavía no abre esta tienda. Revisa que esté en Vercel → Domains y que el DNS apunte bien; luego vuelve a activarlo.`,
+      } as const;
+    }
+    domainActive = true;
+  }
+
+  const paidUntil = d.paidUntil ? new Date(`${d.paidUntil}T23:59:59-05:00`) : null;
+  if (paidUntil && Number.isNaN(paidUntil.getTime())) return { error: "Fecha de pago inválida." } as const;
+
+  const onlinePaymentEnabled = formData.get("onlinePayment") === "on";
+  const codEnabled = formData.get("codPayment") === "on";
+  const transferEnabled = formData.get("transferPayment") === "on";
+  if (!onlinePaymentEnabled && !codEnabled && !transferEnabled) {
+    return { error: "Debe quedar al menos un método de pago activo." } as const;
+  }
+
+  const keywords =
+    s(d.seoKeywords)
+      ?.split(",")
+      .map((k) => k.trim())
+      .filter(Boolean)
+      .slice(0, 12)
+      .join(", ") || null;
+
+  return {
+    data: {
+      name: d.storeName.trim(),
+      slug,
+      type: d.type,
+      customDomain,
+      domainActive,
+      plan: d.plan === "RENT" ? ("RENT" as const) : ("SALE" as const),
+      paidUntil,
+      maxLocations: d.maxLocations,
+      onlinePaymentEnabled,
+      codEnabled,
+      transferEnabled,
+      seoCity: s(d.seoCity),
+      seoKeywords: keywords,
+      wompiPublicKey: s(d.wompiPublicKey),
+      wompiPrivateKey: s(d.wompiPrivateKey),
+      wompiIntegritySecret: s(d.wompiIntegritySecret),
+      wompiEventsSecret: s(d.wompiEventsSecret),
+    },
+    currency: (s(d.currency) ?? "COP").toUpperCase().slice(0, 3),
+  } as const;
+}
+
+/** Crea la tienda YA configurada (igual que «Configurar tienda») y su admin. */
+export async function createStoreAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireSuperadmin();
+
+  const admin = adminSchema.safeParse({
+    adminName: formData.get("adminName"),
+    adminEmail: formData.get("adminEmail"),
+    adminPassword: formData.get("adminPassword"),
+  });
+  if (!admin.success) return { error: admin.error.issues[0].message };
+  const cfg = await readStoreConfig(formData, null);
+  if ("error" in cfg) return { error: cfg.error };
+  if (!/^[A-Z]{3}$/.test(cfg.currency)) return { error: "La moneda debe tener 3 letras (ej. COP)." };
+
+  const email = admin.data.adminEmail.toLowerCase();
+  if (await prisma.user.findUnique({ where: { email } })) {
+    return { error: "Ya existe un usuario con ese email." };
+  }
+  const passwordHash = await bcrypt.hash(admin.data.adminPassword, 10);
+
+  // Crea el usuario admin y su tienda de forma atómica
+  await prisma.user.create({
+    data: {
+      email,
+      name: admin.data.adminName,
+      passwordHash,
+      role: "ADMIN",
+      store: { create: { ...cfg.data, currency: cfg.currency } },
+    },
+  });
+
+  revalidatePath("/superadmin");
+  redirect("/superadmin");
+}
+
+/** El superadmin edita la configuración de la tienda (los mismos campos que al crearla). */
 export async function updateStoreConfigAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   await requireSuperadmin();
 
-  const parsed = configSchema.safeParse({
-    storeId: formData.get("storeId"),
-    storeName: formData.get("storeName"),
-    slug: formData.get("slug"),
-    type: (formData.get("type") as string) || undefined,
-    customDomain: formData.get("customDomain") ?? "",
-    plan: (formData.get("plan") as string) || "SALE",
-    paidUntil: formData.get("paidUntil") ?? "",
-    maxLocations: formData.get("maxLocations") ?? 1,
-    wompiPublicKey: formData.get("wompiPublicKey") ?? "",
-    wompiPrivateKey: formData.get("wompiPrivateKey") ?? "",
-    wompiIntegritySecret: formData.get("wompiIntegritySecret") ?? "",
-    wompiEventsSecret: formData.get("wompiEventsSecret") ?? "",
-  });
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const d = parsed.data;
-
-  const store = await prisma.store.findUnique({ where: { id: d.storeId } });
+  const storeId = String(formData.get("storeId") ?? "");
+  const store = await prisma.store.findUnique({ where: { id: storeId } });
   if (!store) return { error: "Tienda no encontrada." };
-
-  const slug = slugify(d.slug);
-  if (!slug) return { error: "Slug inválido." };
-  if (isReservedSlug(slug)) {
-    return { error: "Ese slug está reservado por el sistema. Elige otro." };
-  }
-  if (await prisma.store.findFirst({ where: { slug, id: { not: store.id } } })) {
-    return { error: "Ese slug ya está en uso por otra tienda." };
-  }
-
-  const customDomain = normalizeDomain(d.customDomain);
-  if (
-    customDomain &&
-    (await prisma.store.findFirst({
-      where: { customDomain, id: { not: store.id } },
-    }))
-  ) {
-    return { error: "Ese dominio ya está asignado a otra tienda." };
-  }
-
-  const s = (v?: string) => {
-    const t = (v ?? "").trim();
-    return t.length ? t : null;
-  };
+  const cfg = await readStoreConfig(formData, store);
+  if ("error" in cfg) return { error: cfg.error };
+  const { slug } = cfg.data;
 
   // Si cambia el slug, guardamos el anterior como alias (para redirigir viejos
   // enlaces al nuevo) y liberamos el nuevo por si era un alias.
@@ -177,49 +242,17 @@ export async function updateStoreConfigAction(
       create: { slug: store.slug, storeId: store.id },
     });
   }
-
-  const plan = d.plan === "RENT" ? "RENT" : "SALE";
-  // Ambos planes vencen: anual (pago único) o mensual. Vacío = sin control.
-  const paidUntil = d.paidUntil ? new Date(`${d.paidUntil}T23:59:59-05:00`) : null;
-  if (paidUntil && Number.isNaN(paidUntil.getTime())) {
-    return { error: "Fecha de pago inválida." };
-  }
   // Si cambia la fecha de pago, reinicia el aviso para el nuevo ciclo.
-  const paidChanged =
-    (paidUntil?.getTime() ?? null) !== (store.paidUntil?.getTime() ?? null);
-
-  // Métodos de pago (checkboxes). Debe quedar al menos uno activo.
-  const onlinePaymentEnabled = formData.get("onlinePayment") === "on";
-  const codEnabled = formData.get("codPayment") === "on";
-  const transferEnabled = formData.get("transferPayment") === "on";
-  if (!onlinePaymentEnabled && !codEnabled && !transferEnabled) {
-    return { error: "Debe quedar al menos un método de pago activo." };
-  }
+  const paidChanged = (cfg.data.paidUntil?.getTime() ?? null) !== (store.paidUntil?.getTime() ?? null);
 
   await prisma.store.update({
     where: { id: store.id },
-    data: {
-      name: d.storeName.trim(),
-      slug,
-      ...(d.type ? { type: d.type } : {}),
-      customDomain,
-      plan,
-      paidUntil,
-      maxLocations: d.maxLocations,
-      onlinePaymentEnabled,
-      codEnabled,
-      transferEnabled,
-      ...(paidChanged ? { rentNotice: null } : {}),
-      wompiPublicKey: s(d.wompiPublicKey),
-      wompiPrivateKey: s(d.wompiPrivateKey),
-      wompiIntegritySecret: s(d.wompiIntegritySecret),
-      wompiEventsSecret: s(d.wompiEventsSecret),
-    },
+    data: { ...cfg.data, ...(paidChanged ? { rentNotice: null } : {}) },
   });
 
   revalidatePath("/superadmin");
-  revalidatePath(`/${store.slug}`);
-  revalidatePath(`/${slug}`);
+  revalidatePath(`/${store.slug}`, "layout");
+  revalidatePath(`/${slug}`, "layout");
   return { ok: true };
 }
 

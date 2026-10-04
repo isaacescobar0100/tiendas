@@ -6,6 +6,7 @@ import { aboutIsLive, parseAbout } from "@/lib/about";
 import { parseStoreHours } from "@/lib/store-hours";
 import { storeUrl, seoHomeDescription, seoKeywords } from "@/lib/seo";
 import { SeoForm } from "./seo-form";
+import { categoryKeywords } from "@/lib/seo-data";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "SEO y Google" };
@@ -27,6 +28,7 @@ export default async function SeoPage() {
   const withAddr = locations.filter((l) => l.address).length;
   const withGeo = locations.filter((l) => l.lat != null && l.lng != null).length;
   const home = storeUrl(store);
+  const autoKeywords = (await categoryKeywords(store.id, store.merchCategoryIds)) ?? "";
 
   const checks: Check[] = [
     { ok: !!store.logoUrl, label: "Logo de la tienda", hint: "Aparece en Google y al compartir.", href: "/admin/settings" },
@@ -105,8 +107,9 @@ export default async function SeoPage() {
         }}
         storeName={store.name}
         storeType={store.type}
+        autoKeywords={autoKeywords}
         url={home}
-        autoDescription={seoHomeDescription({ ...store, seoDescription: null })}
+        autoDescription={seoHomeDescription({ ...store, seoKeywords: store.seoKeywords || autoKeywords, seoDescription: null })}
       />
 
       {/* Guía: lo que hace el dueño fuera del sistema */}

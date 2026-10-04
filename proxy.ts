@@ -50,6 +50,37 @@ async function resolveSlug(
   }
 }
 
+// Dominio propio ACTIVO de una tienda (por su slug), con caché de 1 minuto.
+const movedCache = new Map<string, { domain: string | null; exp: number }>();
+async function activeDomainOf(slug: string, origin: string): Promise<string | null> {
+  const hit = movedCache.get(slug);
+  if (hit && hit.exp > Date.now()) return hit.domain;
+  try {
+    const res = await fetch(`${origin}/api/resolve-domain?slug=${encodeURIComponent(slug)}`, { headers: { "x-mw": "1" } });
+    const data = (await res.json()) as { domain: string | null };
+    if (movedCache.size > 500) movedCache.clear();
+    movedCache.set(slug, { domain: data.domain, exp: Date.now() + 60_000 });
+    return data.domain;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Tienda que ya estrenó dominio propio: su subdominio (surenos.dominio-puente)
+ * redirige para siempre (301) a ese dominio con la misma ruta. Así Google pasa
+ * todo al dominio nuevo y los QR o enlaces viejos siguen funcionando. Solo en
+ * visitas (GET/HEAD): nunca se redirige un envío de formulario.
+ */
+async function redirectToOwnDomain(req: NextRequest): Promise<NextResponse | null> {
+  if (req.method !== "GET" && req.method !== "HEAD") return null;
+  const slug = subdomainSlug(cleanHost(req.headers.get("host") ?? ""));
+  if (!slug) return null;
+  const domain = await activeDomainOf(slug, req.nextUrl.origin);
+  if (!domain) return null;
+  return NextResponse.redirect(`https://${domain}${req.nextUrl.pathname}${req.nextUrl.search}`, 301);
+}
+
 // Rutas de la plataforma que nunca se reescriben a una tienda.
 const PLATFORM_PATHS =
   /^\/(admin|superadmin|api|login|recuperar|restablecer|sede|_next|favicon|sitemap|robots|\.well-known)(\/|$)/;
@@ -101,7 +132,11 @@ export default auth(async (req) => {
     return NextResponse.redirect(`https://${ph}${p}${req.nextUrl.search}`, 307);
   }
 
-  // 1) Host de una tienda → reescribe a /slug (antes de la auth).
+  // 1) Subdominio de una tienda con dominio propio activo → al dominio.
+  const moved = await redirectToOwnDomain(req);
+  if (moved) return moved;
+
+  // 2) Host de una tienda → reescribe a /slug (antes de la auth).
   const rewrite = await mapStoreHost(req);
   if (rewrite) return rewrite;
 

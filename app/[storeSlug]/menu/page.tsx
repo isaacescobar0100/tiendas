@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ storeSlug
   const { storeSlug } = await params;
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
-    select: { name: true, slug: true, customDomain: true, seoCity: true, logoUrl: true, categories: { select: { name: true }, orderBy: { name: "asc" } } },
+    select: { name: true, slug: true, customDomain: true, domainActive: true, seoCity: true, logoUrl: true, categories: { select: { name: true }, orderBy: { name: "asc" } } },
   });
   if (!store) return { title: "Menú" };
   const canonical = storeUrl(store, "/menu");
@@ -52,7 +52,7 @@ export default async function MenuPage({
       id: true,
       name: true,
       slug: true,
-      customDomain: true,
+      customDomain: true, domainActive: true,
       type: true,
       seoCity: true,
       seoKeywords: true,

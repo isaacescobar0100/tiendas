@@ -20,6 +20,7 @@ import {
   breadcrumbJsonLd,
 } from "@/lib/seo";
 import { JsonLd } from "@/components/json-ld";
+import { withAutoKeywords } from "@/lib/seo-data";
 import { ProductCard } from "@/components/product-card";
 
 async function getData(storeSlug: string, sede: string) {
@@ -32,7 +33,7 @@ async function getData(storeSlug: string, sede: string) {
   if (!store) return null;
   const loc = store.locations.find((l) => sedeSlug(l.name) === sede);
   if (!loc) return null;
-  return { store, loc };
+  return { store: await withAutoKeywords(store), loc };
 }
 
 export async function generateMetadata({

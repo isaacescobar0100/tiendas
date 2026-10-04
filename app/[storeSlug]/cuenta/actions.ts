@@ -29,7 +29,7 @@ const registerSchema = z.object({
 async function storeBySlug(slug: string) {
   return prisma.store.findFirst({
     where: { slug, active: true },
-    select: { id: true, slug: true, name: true, customDomain: true, themeColor: true, logoUrl: true },
+    select: { id: true, slug: true, name: true, customDomain: true, domainActive: true, themeColor: true, logoUrl: true },
   });
 }
 

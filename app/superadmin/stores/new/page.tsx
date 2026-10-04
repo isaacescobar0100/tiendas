@@ -4,9 +4,11 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createStoreAction, type ActionState } from "../../actions";
-import { STORE_TYPE_OPTIONS } from "@/lib/store-type";
 import { keepFormSubmit } from "@/components/keep-form";
+import { StoreConfigFields, newStoreDefaults, inputCls, labelCls } from "../store-config-fields";
 
+// Crear tienda: la MISMA configuración que «Configurar tienda» (dominio, SEO,
+// pagos, plan y sedes, Wompi) más su administrador. Todo queda listo de una vez.
 export default function NewStorePage() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     createStoreAction,
@@ -24,81 +26,33 @@ export default function NewStorePage() {
       </Link>
       <h1 className="mb-1 text-2xl font-bold text-gray-900">Nueva tienda</h1>
       <p className="mb-6 text-sm text-gray-500">
-        Crea la tienda y su usuario administrador.
+        Crea la tienda ya configurada (plan, sedes, pagos, dominio y Google) y su usuario administrador.
       </p>
 
       <form
         onSubmit={keepFormSubmit(formAction)}
         className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6"
       >
-        <fieldset className="space-y-4">
-          <legend className="text-sm font-semibold text-gray-900">
-            Datos de la tienda
-          </legend>
-          <Field
-            label="Nombre de la tienda"
-            name="storeName"
-            placeholder="Zapatería Central"
-            required
-          />
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Tipo de tienda
-            </label>
-            <select
-              name="type"
-              defaultValue="FASHION"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
-            >
-              {STORE_TYPE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label} — {o.hint}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-gray-400">
-              Define qué se muestra: tallas y stock (moda), adiciones y horario
-              (comida), o stock y +18 (licores).
-            </p>
-          </div>
-          <Field
-            label="Moneda (ISO 3 letras)"
-            name="currency"
-            placeholder="COP"
-            defaultValue="COP"
-          />
-        </fieldset>
+        <StoreConfigFields store={newStoreDefaults()} isNew />
 
         <fieldset className="space-y-4 border-t border-gray-100 pt-6">
-          <legend className="text-sm font-semibold text-gray-900">
-            Administrador de la tienda
-          </legend>
-          <Field
-            label="Nombre"
-            name="adminName"
-            placeholder="Ana Pérez"
-            required
-          />
-          <Field
-            label="Email"
-            name="adminEmail"
-            type="email"
-            placeholder="ana@zapateria.com"
-            required
-          />
-          <Field
-            label="Contraseña"
-            name="adminPassword"
-            type="password"
-            placeholder="mínimo 8 caracteres"
-            required
-          />
+          <legend className="text-sm font-semibold text-gray-900">Administrador de la tienda</legend>
+          <div>
+            <label className={labelCls}>Nombre</label>
+            <input name="adminName" placeholder="Ana Pérez" required className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Email</label>
+            <input name="adminEmail" type="email" placeholder="ana@tienda.com" required className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Contraseña</label>
+            <input name="adminPassword" type="password" placeholder="mínimo 8 caracteres" required className={inputCls} autoComplete="new-password" />
+          </div>
         </fieldset>
 
         {state?.error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-            {state.error}
-          </p>
+          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{state.error}</p>
         )}
 
         <button
@@ -109,23 +63,6 @@ export default function NewStorePage() {
           {pending ? "Creando…" : "Crear tienda"}
         </button>
       </form>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  ...props
-}: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div>
-      <label className="mb-1 block text-sm font-medium text-gray-700">
-        {label}
-      </label>
-      <input
-        {...props}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900"
-      />
     </div>
   );
 }
