@@ -161,44 +161,56 @@ async function takeStock(lines: StockLine[]) {
   });
 }
 
+export type PaymentChange = { ok: true } | { ok: false; error: string };
+
 /**
  * Cambio manual del estado de PAGO (admin o sede), con reglas:
- *  - Un pedido CANCELADO no se reabre.
- *  - Un pedido PAGADO no vuelve a PENDIENTE (evita que se "pague" dos veces).
+ *  - Un pedido CANCELADO no se reabre (su stock ya se devolvió).
+ *  - PAGADO → PENDIENTE se permite para corregir un error (ej. una
+ *    transferencia marcada por equivocación), salvo si el pago lo confirmó
+ *    Wompi: ese dinero sí entró.
  *  - Al CANCELAR se devuelve el stock que el pedido había reservado
  *    (contraentrega/transferencia lo reservan al crearse; en línea, al pagarse).
- *  - Marcar PAGADO a mano un pedido en línea descuenta su stock.
+ *  - Marcar PAGADO a mano un pedido en línea descuenta su stock (y volverlo a
+ *    pendiente lo devuelve).
  * `scope` limita qué pedidos puede tocar quien llama (tienda, y sede si aplica).
- * Devuelve true si cambió el estado.
+ * Si no se puede, devuelve el motivo para mostrárselo a quien lo intentó.
  */
 export async function setOrderPaymentStatus(
   scope: { id: string; storeId: string; locationName?: string },
   next: "PENDING" | "PAID" | "CANCELLED",
-): Promise<boolean> {
+): Promise<PaymentChange> {
   const order = await prisma.order.findFirst({
     where: scope,
     select: {
       id: true,
       status: true,
       paymentMethod: true,
+      wompiTransactionId: true,
       store: { select: { type: true } },
       items: { select: { variantId: true, productId: true, quantity: true } },
     },
   });
-  if (!order) return false;
+  if (!order) return { ok: false, error: "Pedido no encontrado." };
   const current = order.status === "SHIPPED" ? "PAID" : order.status; // legado
-  if (current === next) return false;
-  if (current === "CANCELLED") return false;
-  if (current === "PAID" && next === "PENDING") return false;
+  if (current === next) return { ok: true };
+  if (current === "CANCELLED") {
+    return { ok: false, error: "Un pedido cancelado no se puede reabrir." };
+  }
+  if (current === "PAID" && next === "PENDING" && order.wompiTransactionId) {
+    return { ok: false, error: "Este pago lo confirmó Wompi: no se puede volver a pendiente." };
+  }
 
   // Transición atómica: solo si el estado sigue siendo el que leímos.
   const res = await prisma.order.updateMany({
     where: { id: order.id, status: order.status },
     data: { status: next },
   });
-  if (res.count === 0) return false;
+  if (res.count === 0) {
+    return { ok: false, error: "El pedido cambió mientras tanto. Vuelve a intentarlo." };
+  }
 
-  if (!tracksStock(order.store.type)) return true;
+  if (!tracksStock(order.store.type)) return { ok: true };
   const reservedAtCreation =
     order.paymentMethod === "COD" || order.paymentMethod === "TRANSFER";
   const isOnline = order.paymentMethod === "ONLINE";
@@ -208,8 +220,11 @@ export async function setOrderPaymentStatus(
     if (hadStock) await restock(order.items);
   } else if (next === "PAID" && isOnline) {
     await takeStock(order.items);
+  } else if (next === "PENDING" && isOnline && current === "PAID") {
+    // Se había marcado pagado a mano: ese descuento de stock se deshace.
+    await restock(order.items);
   }
-  return true;
+  return { ok: true };
 }
 
 /**

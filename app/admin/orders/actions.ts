@@ -13,6 +13,8 @@ const fulfillmentSchema = z.enum(["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"
 const noticeKindSchema = z.enum(["confirmed", "shipped"]);
 
 export type NotifyState = { ok?: boolean; error?: string } | undefined;
+// Resultado de cambiar un estado desde el selector: el motivo si no se pudo.
+export type StatusResult = { error?: string };
 
 function refresh(orderId: string) {
   revalidatePath("/admin/orders");
@@ -66,32 +68,31 @@ export async function markNoticeSentAction(orderId: string, kind: string) {
 }
 
 /** Cambia el estado de PAGO del pedido (pendiente / pagado / cancelado). */
-export async function updateOrderStatusAction(formData: FormData) {
+export async function updateOrderStatusAction(formData: FormData): Promise<StatusResult> {
   const { store } = await requireAdminStore();
   const orderId = String(formData.get("orderId") ?? "");
   const parsed = paymentSchema.safeParse(formData.get("status"));
-  if (!parsed.success) return;
+  if (!parsed.success) return { error: "Estado no válido." };
 
   // El storeId garantiza que el admin solo toca sus pedidos. Las reglas (no
   // reabrir cancelados, devolver stock al cancelar…) están en lib/orders.
-  await setOrderPaymentStatus({ id: orderId, storeId: store.id }, parsed.data);
-
-  revalidatePath("/admin/orders");
-  revalidatePath(`/admin/orders/${orderId}`);
+  const r = await setOrderPaymentStatus({ id: orderId, storeId: store.id }, parsed.data);
+  // También el Inicio: "Facturado" depende del estado de pago.
+  refresh(orderId);
+  return r.ok ? {} : { error: r.error };
 }
 
 /** Cambia el estado de ATENCIÓN (por confirmar / confirmado / en camino / entregado). */
-export async function updateFulfillmentAction(formData: FormData) {
+export async function updateFulfillmentAction(formData: FormData): Promise<StatusResult> {
   const { store } = await requireAdminStore();
   const orderId = String(formData.get("orderId") ?? "");
   const parsed = fulfillmentSchema.safeParse(formData.get("fulfillment"));
-  if (!parsed.success) return;
+  if (!parsed.success) return { error: "Estado no válido." };
 
-  await prisma.order.updateMany({
+  const r = await prisma.order.updateMany({
     where: { id: orderId, storeId: store.id },
     data: { fulfillment: parsed.data },
   });
-
-  revalidatePath("/admin/orders");
-  revalidatePath(`/admin/orders/${orderId}`);
+  refresh(orderId);
+  return r.count ? {} : { error: "Pedido no encontrado." };
 }

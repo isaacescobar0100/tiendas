@@ -1,36 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { PAYMENT_STATUSES, PAYMENT_LABEL } from "@/lib/order-status";
 import { updateSedePaymentAction } from "@/app/sede/actions";
+import { StatusSelect } from "@/components/status-select";
 
 // Selector de estado de PAGO para el panel de sede. Guarda al cambiar.
-export function SedePaymentSelect({
-  orderId,
-  current,
-}: {
-  orderId: string;
-  current: string;
-}) {
-  const [val, setVal] = useState(current);
+export function SedePaymentSelect({ orderId, current }: { orderId: string; current: string }) {
   return (
-    <form action={updateSedePaymentAction}>
-      <input type="hidden" name="orderId" value={orderId} />
-      <select
-        name="status"
-        value={val}
-        onChange={(e) => {
-          setVal(e.target.value);
-          e.currentTarget.form?.requestSubmit();
-        }}
-        className="rounded-lg border border-line-2 bg-surface px-2 py-1 text-xs outline-none focus:border-ink"
-      >
-        {PAYMENT_STATUSES.map((s) => (
-          <option key={s} value={s}>
-            {PAYMENT_LABEL[s]}
-          </option>
-        ))}
-      </select>
-    </form>
+    <StatusSelect
+      orderId={orderId}
+      name="status"
+      value={current}
+      options={PAYMENT_STATUSES}
+      labels={PAYMENT_LABEL}
+      ariaLabel="Estado de pago"
+      action={updateSedePaymentAction}
+      className={() => "rounded-lg border border-line-2 bg-surface px-2 py-1 text-xs outline-none focus:border-ink"}
+    />
   );
 }

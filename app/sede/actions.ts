@@ -81,38 +81,43 @@ export async function sedeLogoutAction() {
 const FULFILLMENTS: Fulfillment[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
 const PAYMENTS = ["PENDING", "PAID", "CANCELLED"] as const;
 
+/** Resultado de cambiar un estado desde el selector: el motivo si no se pudo. */
+export type SedeStatusResult = { error?: string };
+
 /** La sede cambia el estado de ENVÍO, solo de SUS pedidos. */
-export async function updateSedeFulfillmentAction(formData: FormData) {
+export async function updateSedeFulfillmentAction(formData: FormData): Promise<SedeStatusResult> {
   const sede = await getCurrentSede();
   if (!sede) redirect("/sede/login");
 
   const orderId = String(formData.get("orderId") ?? "");
   const value = String(formData.get("fulfillment") ?? "") as Fulfillment;
-  if (!FULFILLMENTS.includes(value)) return;
+  if (!FULFILLMENTS.includes(value)) return { error: "Estado no válido." };
 
-  await prisma.order.updateMany({
+  const r = await prisma.order.updateMany({
     where: { id: orderId, storeId: sede.storeId, locationName: sede.name },
     data: { fulfillment: value },
   });
   revalidatePath("/sede/pedidos");
   revalidatePath("/sede");
+  return r.count ? {} : { error: "Pedido no encontrado." };
 }
 
 /** La sede cambia el estado de PAGO, solo de SUS pedidos. */
-export async function updateSedePaymentAction(formData: FormData) {
+export async function updateSedePaymentAction(formData: FormData): Promise<SedeStatusResult> {
   const sede = await getCurrentSede();
   if (!sede) redirect("/sede/login");
 
   const orderId = String(formData.get("orderId") ?? "");
   const value = String(formData.get("status") ?? "") as (typeof PAYMENTS)[number];
-  if (!PAYMENTS.includes(value)) return;
+  if (!PAYMENTS.includes(value)) return { error: "Estado no válido." };
 
-  await setOrderPaymentStatus(
+  const r = await setOrderPaymentStatus(
     { id: orderId, storeId: sede.storeId, locationName: sede.name },
     value,
   );
   revalidatePath("/sede/pedidos");
   revalidatePath("/sede");
+  return r.ok ? {} : { error: r.error };
 }
 
 /** La sede avisó por WhatsApp: su pedido avanza a "confirmado" / "en camino". */
