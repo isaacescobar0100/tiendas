@@ -12,7 +12,7 @@ import { stopImpersonationAction } from "@/app/superadmin/actions";
 export async function generateMetadata(): Promise<Metadata> {
   const { store } = await requireAdminStore();
   return {
-    title: { default: `Admin · ${store.name}`, template: `%s · Admin ${store.name}` },
+    title: { absolute: `Admin · ${store.name}`, template: `%s · Admin ${store.name}` },
     icons: storeIcons(store.logoUrl),
     robots: { index: false },
   };

@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const sede = await getCurrentSede();
   if (!sede) return {};
   return {
-    title: { default: `${sede.name} · ${sede.store.name}`, template: `%s · ${sede.name}` },
+    title: { absolute: `${sede.name} · ${sede.store.name}`, template: `%s · ${sede.name}` },
     icons: storeIcons(sede.store.logoUrl),
     robots: { index: false },
   };

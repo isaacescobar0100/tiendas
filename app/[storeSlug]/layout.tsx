@@ -35,7 +35,7 @@ export async function generateMetadata({
   });
   if (!store) return {};
   return {
-    title: { default: store.name, template: `%s · ${store.name}` },
+    title: { absolute: store.name, template: `%s · ${store.name}` },
     icons: storeIcons(store.logoUrl),
   };
 }
