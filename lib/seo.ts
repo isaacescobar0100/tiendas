@@ -47,7 +47,7 @@ export function parseCoords(input: string | null | undefined): { lat: number; ln
 const round6 = (n: number) => Math.round(n * 1e6) / 1e6;
 
 /** Enlace "Cómo llegar": el de Google Maps del admin, las coordenadas o la dirección. */
-export function directionsUrl(loc: { lat?: number | null; lng?: number | null; mapsUrl?: string | null; address?: string | null }, storeName: string): string | null {
+export function directionsUrl(loc: { lat?: number | null; lng?: number | null; mapsUrl?: string | null; address?: string | null }): string | null {
   if (loc.mapsUrl && /^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(loc.mapsUrl)) {
     return loc.mapsUrl;
   }
@@ -55,14 +55,15 @@ export function directionsUrl(loc: { lat?: number | null; lng?: number | null; m
     return `https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}`;
   }
   if (loc.address) {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${loc.address} ${storeName}`)}`;
+    // Solo la dirección: con el nombre, Google puede escoger la ficha de otra sede.
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}`;
   }
   return null;
 }
 
 /** Mapa incrustado (sin llave de API). */
-export function mapEmbedUrl(loc: { lat?: number | null; lng?: number | null; address?: string | null }, storeName: string): string | null {
-  const q = loc.lat != null && loc.lng != null ? `${loc.lat},${loc.lng}` : loc.address ? `${loc.address} ${storeName}` : null;
+export function mapEmbedUrl(loc: { lat?: number | null; lng?: number | null; address?: string | null }): string | null {
+  const q = loc.lat != null && loc.lng != null ? `${loc.lat},${loc.lng}` : loc.address || null;
   return q ? `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=16&output=embed` : null;
 }
 
@@ -93,8 +94,8 @@ export function seoKeywords(store: SeoStore): string[] {
 }
 
 /** "Hamburguesas, desgranados y salchipapas en Barranquilla" (para títulos). */
-export function seoTagline(store: SeoStore): string {
-  const kw = seoKeywords(store).slice(0, 3);
+export function seoTagline(store: SeoStore, max = 3): string {
+  const kw = seoKeywords(store).slice(0, max);
   const what = kw.length
     ? kw.length === 1
       ? kw[0]
@@ -105,7 +106,13 @@ export function seoTagline(store: SeoStore): string {
 
 /** Título de la portada en Google: "Sureños Club | Hamburguesas y … en Barranquilla". */
 export function seoHomeTitle(store: SeoStore): string {
-  return store.seoTitle?.trim() || `${store.name} | ${seoTagline(store)}`;
+  if (store.seoTitle?.trim()) return store.seoTitle.trim();
+  // Google corta hacia los 60 caracteres: si se pasa, menos productos.
+  for (const n of [3, 2, 1]) {
+    const t = `${store.name} | ${seoTagline(store, n)}`;
+    if (t.length <= 60 || n === 1) return t;
+  }
+  return store.name;
 }
 
 /** Descripción de la portada en Google (~160 caracteres). */
@@ -180,7 +187,7 @@ export function locationJsonLd(
         }
       : undefined,
     geo: loc.lat != null && loc.lng != null ? { "@type": "GeoCoordinates", latitude: loc.lat, longitude: loc.lng } : undefined,
-    hasMap: directionsUrl(loc, store.name) ?? undefined,
+    hasMap: directionsUrl(loc) ?? undefined,
     openingHoursSpecification: openingHoursSpec(store.hoursJson),
     parentOrganization: { "@id": `${storeUrl(store)}#marca` },
   };

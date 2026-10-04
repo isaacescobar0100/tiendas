@@ -331,9 +331,9 @@ export default async function AboutPage({
                           >
                             <MapPin className="h-4 w-4" /> Ver sede
                           </Link>
-                          {directionsUrl(l, store.name) && (
+                          {directionsUrl(l) && (
                             <a
-                              href={directionsUrl(l, store.name)!}
+                              href={directionsUrl(l)!}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 rounded-full border border-line-2 px-3 py-1.5 text-sm font-medium text-ink-2 hover:bg-surface-2"

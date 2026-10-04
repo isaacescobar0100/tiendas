@@ -89,8 +89,8 @@ export default async function SedePage({
   const open = getStoreOpenState(store.hoursJson);
   const today = bogotaDow();
   const wa = whatsappLink(loc.whatsapp, `Hola ${loc.name}, quiero hacer un pedido.`);
-  const go = directionsUrl(loc, store.name);
-  const map = mapEmbedUrl(loc, store.name);
+  const go = directionsUrl(loc);
+  const map = mapEmbedUrl(loc);
   const others = store.locations.filter((l) => l.id !== loc.id);
 
   // Lo más pedido / mejor valorado de la carta.
