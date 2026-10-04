@@ -55,7 +55,7 @@ export async function generateMetadata({
   const about = parseAbout(store.aboutJson);
   const description = about.intro || about.story.slice(0, 160) || store.description || undefined;
   return {
-    title: `Conócenos · ${store.name}`,
+    title: "Conócenos",
     description,
     openGraph: {
       title: `Conócenos · ${store.name}`,

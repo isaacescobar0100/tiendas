@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { storeIcons } from "@/lib/store-meta";
 import { LogOut, Store } from "lucide-react";
 import { getCurrentSede } from "@/lib/sede-auth";
 import { SedeNav } from "@/components/sede-nav";
@@ -7,6 +9,17 @@ import { themeFontVars } from "@/lib/fonts";
 import { sedeLogoutAction } from "../actions";
 
 export const dynamic = "force-dynamic";
+
+// Pestaña del panel de sede: "Sede Las Nieves · SUREÑOS CLUB" con su logo.
+export async function generateMetadata(): Promise<Metadata> {
+  const sede = await getCurrentSede();
+  if (!sede) return {};
+  return {
+    title: { default: `${sede.name} · ${sede.store.name}`, template: `%s · ${sede.name}` },
+    icons: storeIcons(sede.store.logoUrl),
+    robots: { index: false },
+  };
+}
 
 export default async function SedePanelLayout({
   children,

@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { storeIcons } from "@/lib/store-meta";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { Store, Clock } from "lucide-react";
@@ -19,6 +21,24 @@ import { AccountMenu } from "./cuenta/account-menu";
 import { StoreBaseProvider } from "@/components/store-base";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { aboutIsLive, parseAbout } from "@/lib/about";
+
+// Pestaña con el logo y el nombre de ESTA tienda en todas sus páginas.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ storeSlug: string }>;
+}): Promise<Metadata> {
+  const { storeSlug } = await params;
+  const store = await prisma.store.findFirst({
+    where: { slug: storeSlug },
+    select: { name: true, logoUrl: true },
+  });
+  if (!store) return {};
+  return {
+    title: { default: store.name, template: `%s · ${store.name}` },
+    icons: storeIcons(store.logoUrl),
+  };
+}
 
 export default async function StoreLayout({
   params,

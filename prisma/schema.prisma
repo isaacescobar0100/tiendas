@@ -182,6 +182,8 @@ model DiningTable {
   location   StoreLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
   locationId String?
   name       String         // "Mesa 1", "Terraza 2", "Barra"…
+  // QR general (entrada, mostrador, volantes): el menú no muestra número de mesa.
+  general    Boolean        @default(false)
   createdAt  DateTime       @default(now())
 
   @@index([storeId])

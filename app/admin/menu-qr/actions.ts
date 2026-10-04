@@ -63,10 +63,14 @@ export async function createTablesAction(_prev: TableState, formData: FormData):
   };
 }
 
-/** Agrega una mesa con nombre libre ("Barra", "Terraza 2"…). */
+/**
+ * Agrega un QR suelto: una mesa con nombre libre ("Barra", "Terraza 2"…) o un
+ * QR general (entrada, mostrador, volantes) que no muestra número de mesa.
+ */
 export async function addTableAction(_prev: TableState, formData: FormData): Promise<TableState> {
   const { store } = await requireAdminStore();
-  const name = cleanName(formData.get("name"));
+  const general = formData.get("kind") === "general";
+  const name = cleanName(formData.get("name")) || (general ? "Menú general" : "");
   if (!name) return { error: "Escribe el nombre de la mesa." };
   const locationId = await resolveLocation(store.id, formData.get("locationId"));
   if (locationId === false) return { error: "Sede no válida." };
@@ -78,7 +82,7 @@ export async function addTableAction(_prev: TableState, formData: FormData): Pro
   if ((await prisma.diningTable.count({ where: { storeId: store.id } })) >= MAX_TABLES) {
     return { error: `Máximo ${MAX_TABLES} mesas por tienda.` };
   }
-  await prisma.diningTable.create({ data: { storeId: store.id, locationId, name } });
+  await prisma.diningTable.create({ data: { storeId: store.id, locationId, name, general } });
   revalidatePath("/admin/menu-qr");
   return { ok: `«${name}» creada.` };
 }

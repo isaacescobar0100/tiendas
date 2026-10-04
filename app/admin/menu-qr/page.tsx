@@ -1,121 +1,57 @@
-import QRCode from "qrcode";
-import { Download, ExternalLink, QrCode } from "lucide-react";
+import { ExternalLink, QrCode } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { storePublicUrl } from "@/lib/site-url";
-import { PrintButton } from "./print-button";
 import { TablesManager } from "./tables-manager";
 
 export const dynamic = "force-dynamic";
 
-// QR para las mesas: abre el menú de SOLO LECTURA de la tienda (sin comprar).
-// Uno general y, si hay sedes, uno por sede (muestra el nombre de la sede).
+export const metadata = { title: "Menú QR" };
+
+// QR del menú de SOLO LECTURA: nada viene creado de fábrica. La tienda crea
+// los suyos (mesas por sede o QR generales) y puede borrarlos cuando quiera.
 export default async function MenuQrPage() {
   const { store } = await requireAdminStore();
-  const locations = await prisma.storeLocation.findMany({
-    where: { storeId: store.id },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { id: true, name: true },
-  });
-
-  // Mesas con QR propio (ordenadas como personas: Mesa 2 antes que Mesa 10).
-  const tables = (
-    await prisma.diningTable.findMany({
+  const [locations, rows] = await Promise.all([
+    prisma.storeLocation.findMany({
       where: { storeId: store.id },
-      select: { id: true, name: true, locationId: true },
-    })
-  ).sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true, sensitivity: "base" }));
-
-  const menuUrl = `${storePublicUrl(store)}/menu`;
-  const targets = [
-    { key: "general", title: "Menú general", url: menuUrl },
-    ...locations.map((l) => ({
-      key: l.id,
-      title: l.name,
-      url: `${menuUrl}?sede=${encodeURIComponent(l.name)}`,
-    })),
-  ];
-
-  const codes = await Promise.all(
-    targets.map(async (t) => ({
-      ...t,
-      svg: await QRCode.toString(t.url, {
-        type: "svg",
-        margin: 1,
-        errorCorrectionLevel: "M",
-      }),
-      png: await QRCode.toDataURL(t.url, {
-        width: 1024,
-        margin: 2,
-        errorCorrectionLevel: "M",
-      }),
-    })),
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: { id: true, name: true },
+    }),
+    prisma.diningTable.findMany({
+      where: { storeId: store.id },
+      select: { id: true, name: true, locationId: true, general: true },
+    }),
+  ]);
+  // Generales primero; después las mesas como las cuenta una persona
+  // (Mesa 2 antes que Mesa 10).
+  const tables = rows.sort(
+    (a, b) =>
+      Number(b.general) - Number(a.general) ||
+      a.name.localeCompare(b.name, "es", { numeric: true, sensitivity: "base" }),
   );
-  const fileBase = store.slug.replace(/[^a-z0-9-]/g, "");
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3 print:hidden">
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-ink">
-            <QrCode className="h-6 w-6" /> Menú QR para mesas
+            <QrCode className="h-6 w-6" /> Menú QR
           </h1>
           <p className="mt-1 text-sm text-ink-3">
-            El cliente escanea y ve la carta con fotos y precios, sin poder
-            pedir: en el local se pide al mesero. Se actualiza sola cuando
-            cambias productos o precios; no hay que reimprimir.
+            El cliente escanea y ve la carta con fotos y precios, sin poder pedir: en el local se pide al
+            mesero. Se actualiza sola cuando cambias productos o precios; no hay que reimprimir.
           </p>
         </div>
-        <PrintButton />
+        <a
+          href={`${storePublicUrl(store)}/menu`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-line-2 bg-surface px-3 py-2 text-sm font-medium text-ink-2 hover:bg-surface-2"
+        >
+          <ExternalLink className="h-4 w-4" /> Ver el menú
+        </a>
       </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 print:grid-cols-2">
-        {codes.map((c) => (
-          <div
-            key={c.key}
-            className="break-inside-avoid rounded-2xl border border-line bg-surface p-5 text-center"
-          >
-            <p className="font-semibold text-ink">{store.name}</p>
-            <p className="text-sm text-ink-3">{c.title}</p>
-            <div
-              className="mx-auto mt-3 w-full max-w-[220px] [&>svg]:h-auto [&>svg]:w-full"
-              // SVG generado en el servidor por la librería a partir de la URL.
-              dangerouslySetInnerHTML={{ __html: c.svg }}
-            />
-            <p className="mt-2 text-xs font-medium uppercase tracking-widest text-ink-3">
-              Escanea para ver el menú
-            </p>
-            <p className="mt-2 break-all text-[11px] text-ink-3 print:hidden">
-              {c.url}
-            </p>
-            <div className="mt-3 flex justify-center gap-2 print:hidden">
-              <a
-                href={c.png}
-                download={`menu-qr-${fileBase}-${c.key}.png`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-ink hover:bg-brand-hover"
-              >
-                <Download className="h-3.5 w-3.5" /> PNG
-              </a>
-              <a
-                href={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(c.svg)}`}
-                download={`menu-qr-${fileBase}-${c.key}.svg`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-line-2 px-3 py-1.5 text-xs font-medium text-ink-2 hover:bg-surface-2"
-              >
-                <Download className="h-3.5 w-3.5" /> SVG (imprenta)
-              </a>
-              <a
-                href={c.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-line-2 px-3 py-1.5 text-xs font-medium text-ink-2 hover:bg-surface-2"
-              >
-                <ExternalLink className="h-3.5 w-3.5" /> Ver
-              </a>
-            </div>
-          </div>
-        ))}
-      </div>
-
       <TablesManager locations={locations} tables={tables} />
     </div>
   );

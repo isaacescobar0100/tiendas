@@ -12,30 +12,33 @@ import {
 } from "./actions";
 
 type Loc = { id: string; name: string };
-type Table = { id: string; name: string; locationId: string | null };
+type Table = { id: string; name: string; locationId: string | null; general: boolean };
 
 const inputCls =
   "w-full rounded-lg border border-line-2 bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-ink focus:ring-1 focus:ring-ink";
 const btnCls =
   "inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-ink transition hover:bg-brand-hover disabled:opacity-60";
 
-/** Mesas con QR propio: crear varias, agregar una, renombrar, imprimir, borrar. */
+/**
+ * Los QR de la tienda: mesas (Mesa 1…N por sede) y QR generales (entrada,
+ * mostrador, volantes). Nada viene creado de fábrica y todo se puede borrar.
+ */
 export function TablesManager({ locations, tables }: { locations: Loc[]; tables: Table[] }) {
   // Grupos por sede (y "Sin sede" si hay mesas sin sede o la tienda no tiene sedes).
   const groups = [
     ...locations.map((l) => ({ key: l.id, title: l.name, items: tables.filter((t) => t.locationId === l.id) })),
-    { key: "none", title: locations.length ? "Sin sede" : "Mesas", items: tables.filter((t) => !t.locationId) },
+    { key: "none", title: locations.length ? "Sin sede" : "Tus QR", items: tables.filter((t) => !t.locationId) },
   ].filter((g) => g.items.length > 0);
 
   return (
     <section className="space-y-5 rounded-2xl border border-line bg-surface p-5 sm:p-6 print:hidden">
       <div>
         <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
-          <Armchair className="h-5 w-5" /> QR por mesa
+          <Armchair className="h-5 w-5" /> Tus códigos QR
         </h2>
         <p className="mt-0.5 text-sm text-ink-3">
-          Cada mesa tiene su propio QR: al escanearlo, el menú muestra el nombre de la mesa y su sede. Si
-          cambias el nombre de una mesa no hay que reimprimir su QR.
+          Crea un QR por mesa (el menú muestra «Mesa 1» y su sede) o QR generales para la entrada, el
+          mostrador o volantes. Si cambias el nombre no hay que reimprimir: el QR sigue siendo el mismo.
         </p>
       </div>
 
@@ -46,14 +49,14 @@ export function TablesManager({ locations, tables }: { locations: Loc[]; tables:
 
       {groups.length === 0 ? (
         <p className="rounded-xl border border-dashed border-line-2 px-4 py-8 text-center text-sm text-ink-3">
-          Aún no hay mesas. Crea las de cada sede arriba (por ejemplo, Mesa 1 a Mesa 10).
+          Aún no tienes códigos QR. Crea las mesas de cada sede (por ejemplo, Mesa 1 a Mesa 10) o un QR general.
         </p>
       ) : (
         groups.map((g) => (
           <div key={g.key} className="space-y-3 border-t border-line pt-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-semibold text-ink">
-                {g.title} <span className="text-sm font-normal text-ink-3">· {g.items.length} {g.items.length === 1 ? "mesa" : "mesas"}</span>
+                {g.title} <span className="text-sm font-normal text-ink-3">· {g.items.length} QR</span>
               </h3>
               <a
                 href={`/admin/menu-qr/imprimir?sede=${g.key}`}
@@ -138,17 +141,51 @@ function BatchForm({ locations }: { locations: Loc[] }) {
 
 function SingleForm({ locations }: { locations: Loc[] }) {
   const [state, action, pending] = useActionState<TableState, FormData>(addTableAction, undefined);
+  const [kind, setKind] = useState<"table" | "general">("table");
   return (
     <form onSubmit={keepFormSubmit(action)} className="space-y-3 rounded-xl border border-line bg-surface-2 p-4">
-      <p className="text-sm font-semibold text-ink">Una mesa con otro nombre</p>
+      <p className="text-sm font-semibold text-ink">Agregar un QR</p>
       <LocationSelect locations={locations} />
+      <fieldset className="grid grid-cols-2 gap-2">
+        <legend className="sr-only">Tipo de QR</legend>
+        {(
+          [
+            ["table", "Mesa", "Barra, Terraza 2, VIP…"],
+            ["general", "General", "Entrada, mostrador, volantes"],
+          ] as const
+        ).map(([value, label, hint]) => (
+          <label
+            key={value}
+            className={`cursor-pointer rounded-lg border px-3 py-2 text-sm transition ${
+              kind === value ? "border-brand bg-brand-soft text-ink" : "border-line-2 text-ink-2 hover:border-line"
+            }`}
+          >
+            <input
+              type="radio"
+              name="kind"
+              value={value}
+              checked={kind === value}
+              onChange={() => setKind(value)}
+              className="sr-only"
+            />
+            <span className="block font-semibold">{label}</span>
+            <span className="block text-xs text-ink-3">{hint}</span>
+          </label>
+        ))}
+      </fieldset>
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-ink-2">Nombre de la mesa</span>
-        <input name="name" maxLength={40} required placeholder="Barra, Terraza 2, VIP…" className={inputCls} />
+        <span className="mb-1 block text-sm font-medium text-ink-2">Nombre</span>
+        <input
+          name="name"
+          maxLength={40}
+          required={kind === "table"}
+          placeholder={kind === "table" ? "Barra, Terraza 2, VIP…" : "Menú general"}
+          className={inputCls}
+        />
       </label>
       <Msg state={state} />
       <button type="submit" disabled={pending} className={btnCls}>
-        <Plus className="h-4 w-4" /> {pending ? "Agregando…" : "Agregar mesa"}
+        <Plus className="h-4 w-4" /> {pending ? "Agregando…" : "Agregar QR"}
       </button>
     </form>
   );
@@ -190,6 +227,11 @@ function TableRow({ table }: { table: Table }) {
           <span className="block break-words font-semibold leading-tight text-ink" data-table-name>
             {table.name}
           </span>
+          {table.general && (
+            <span className="inline-block rounded-full bg-info-soft px-2 py-0.5 text-[11px] font-semibold text-info-ink">
+              General
+            </span>
+          )}
           <div className="flex gap-1">
             <a
               href={`/admin/menu-qr/imprimir?mesa=${table.id}`}
@@ -221,7 +263,7 @@ function TableRow({ table }: { table: Table }) {
             <form
               action={deleteTableAction}
               onSubmit={(e) => {
-                if (!confirm(`¿Eliminar «${table.name}»? Su QR impreso dejará de mostrar el nombre de la mesa.`)) {
+                if (!confirm(`¿Eliminar «${table.name}»? Su QR impreso seguirá abriendo el menú, pero sin el nombre.`)) {
                   e.preventDefault();
                 }
               }}

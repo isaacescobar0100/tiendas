@@ -1,10 +1,22 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { storeIcons } from "@/lib/store-meta";
 import { requireAdminStore } from "@/lib/guards";
 import { billingOf, GRACE_DAYS } from "@/lib/billing";
 import { storeTheme, themeStyle } from "@/lib/theme";
 import { themeFontVars } from "@/lib/fonts";
 import { AdminNav } from "@/components/admin-nav";
 import { stopImpersonationAction } from "@/app/superadmin/actions";
+
+// Pestaña del panel: "Pedidos · Admin SUREÑOS CLUB" con el logo de la tienda.
+export async function generateMetadata(): Promise<Metadata> {
+  const { store } = await requireAdminStore();
+  return {
+    title: { default: `Admin · ${store.name}`, template: `%s · Admin ${store.name}` },
+    icons: storeIcons(store.logoUrl),
+    robots: { index: false },
+  };
+}
 
 export default async function AdminLayout({
   children,

@@ -43,7 +43,7 @@ export async function generateMetadata({
     store.description || `Compra en ${store.name}. Envíos a toda Colombia.`;
   const images = store.logoUrl ? [store.logoUrl] : [];
   return {
-    title: store.name,
+    title: { absolute: store.name },
     description,
     openGraph: {
       title: store.name,

@@ -74,7 +74,7 @@ export async function generateMetadata({
   const images = product.imageUrl ? [product.imageUrl] : [];
 
   return {
-    title: `${product.name} · ${store.name}`,
+    title: product.name,
     description,
     openGraph: {
       title: product.name,

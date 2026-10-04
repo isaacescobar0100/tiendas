@@ -59,12 +59,13 @@ export default async function MenuPage({
   });
   if (!store) notFound();
 
-  // QR de una mesa (?mesa=<id>): muestra la mesa y su sede.
+  // QR de una mesa (?mesa=<id>): muestra la mesa y su sede (un QR general,
+  // solo la sede).
   const table =
     typeof mesa === "string" && mesa.length <= 40
       ? await prisma.diningTable.findFirst({
           where: { id: mesa, storeId: store.id },
-          select: { name: true, location: { select: { name: true, address: true } } },
+          select: { name: true, general: true, location: { select: { name: true, address: true } } },
         })
       : null;
 
@@ -133,7 +134,7 @@ export default async function MenuPage({
       storeName={store.name}
       logoUrl={store.logoUrl}
       location={location}
-      table={table?.name ?? null}
+      table={table && !table.general ? table.name : null}
       open={
         openState.enforced
           ? { isOpen: openState.isOpen, message: openState.message ?? null }
