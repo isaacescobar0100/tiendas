@@ -70,16 +70,16 @@ export default async function PrintTablesPage({
             {cards.map((c) => (
               <article
                 key={c.id}
-                className="flex break-inside-avoid flex-col overflow-hidden rounded-3xl border border-line bg-surface text-ink shadow-sm [-webkit-print-color-adjust:exact] [print-color-adjust:exact] print:h-[125mm] print:shadow-none"
+                className="flex break-inside-avoid flex-col overflow-hidden rounded-3xl border border-line bg-surface text-ink shadow-sm [-webkit-print-color-adjust:exact] [print-color-adjust:exact] print:shadow-none"
               >
-                <header className="relative flex flex-col items-center gap-2 bg-brand px-6 pb-5 pt-6 text-brand-ink">
+                <header className="relative flex flex-col items-center gap-2 bg-brand px-6 pb-5 pt-6 text-brand-ink print:pb-3 print:pt-4">
                   <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-brand-ink/10" aria-hidden />
                   {store.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={store.logoUrl}
                       alt=""
-                      className="relative h-16 w-16 rounded-2xl bg-surface object-cover shadow-lg ring-4 ring-brand-ink/15"
+                      className="relative h-16 w-16 print:h-12 print:w-12 rounded-2xl bg-surface object-cover shadow-lg ring-4 ring-brand-ink/15"
                     />
                   ) : null}
                   <span className="relative font-heading text-base font-extrabold uppercase tracking-wide">
@@ -94,7 +94,7 @@ export default async function PrintTablesPage({
                   {c.location && <p className="mt-1.5 text-sm text-ink-3">{c.location.name}</p>}
                   {/* El QR siempre negro sobre blanco: así lo lee cualquier celular. */}
                   <div
-                    className="mt-4 w-full max-w-[52mm] rounded-2xl bg-white p-2.5 ring-2 ring-brand [&>svg]:h-auto [&>svg]:w-full"
+                    className="mt-4 w-full max-w-[48mm] rounded-2xl bg-white p-2.5 ring-2 ring-brand [&>svg]:h-auto [&>svg]:w-full"
                     // SVG generado en el servidor por la librería a partir de la URL.
                     dangerouslySetInnerHTML={{ __html: c.svg }}
                   />
