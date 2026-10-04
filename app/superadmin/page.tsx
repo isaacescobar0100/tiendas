@@ -84,7 +84,7 @@ export default async function SuperadminHome() {
     return status === "grace" || status === "suspended";
   }).length;
 
-  // Ranking: facturado por tienda (entregados).
+  // Ranking: facturado por tienda (pagados).
   const rankItems = stores
     .map((s) => ({
       label: s.name,

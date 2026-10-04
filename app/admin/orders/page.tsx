@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { reconcileOnlineOrders } from "@/lib/orders";
 import { requireAdminStore } from "@/lib/guards";
 import { formatPrice } from "@/lib/utils";
-import { isDelivered } from "@/lib/order-status";
+import { isPaidStatus } from "@/lib/order-status";
 import {
   PaymentSelect,
   FulfillmentSelect,
@@ -31,9 +31,10 @@ export default async function OrdersPage() {
     include: { _count: { select: { items: true } } },
   });
 
-  // Solo cuenta pedidos ENTREGADOS (dinero realmente recibido).
+  // Solo cuenta pedidos PAGADOS (dinero realmente recibido).
   const revenue = orders
-    .filter((o) => isDelivered(o.fulfillment))
+    // Igual que el Inicio y la sede: "facturado" = pedidos PAGADOS.
+    .filter((o) => isPaidStatus(o.status))
     .reduce((n, o) => n + o.totalCents, 0);
 
   return (
