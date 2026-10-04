@@ -22,6 +22,7 @@ export function LiveRefresh({
   alertNew = false,
   ordersHref,
   refreshPattern,
+  floating = true,
 }: {
   src: string;
   interval?: number;
@@ -30,6 +31,8 @@ export function LiveRefresh({
   // Solo se actualiza la pantalla en las rutas que cumplan este patrón
   // (en el resto solo suena el aviso). Sin patrón: siempre.
   refreshPattern?: string;
+  // false = la etiqueta "En vivo" va en su lugar (páginas del cliente), no flotando.
+  floating?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -151,7 +154,9 @@ export function LiveRefresh({
   return (
     <>
       <span
-        className="pointer-events-none fixed bottom-3 left-3 z-40 inline-flex items-center gap-1.5 rounded-full bg-surface/90 px-2.5 py-1 text-[11px] font-semibold text-ink-3 shadow ring-1 ring-line backdrop-blur print:hidden"
+        className={`pointer-events-none inline-flex items-center gap-1.5 rounded-full bg-surface/90 px-2.5 py-1 text-[11px] font-semibold text-ink-3 ring-1 ring-line print:hidden ${
+          floating ? "fixed bottom-3 left-3 z-40 shadow backdrop-blur" : ""
+        }`}
         aria-hidden
       >
         <span className="relative flex h-2 w-2">

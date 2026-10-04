@@ -213,8 +213,6 @@ export default async function OrderSuccessPage({
   return (
     <div className="mx-auto max-w-lg text-center">
       {shouldClearCart && <ClearCart />}
-      {/* Cuando la sede confirma o despacha, el estado se actualiza solo. */}
-      <LiveRefresh src={`/api/live?scope=order&id=${order.id}`} />
 
       <div
         className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${ui.color}`}
@@ -232,6 +230,10 @@ export default async function OrderSuccessPage({
       {/* Progreso del pedido: avanza solo cuando la sede lo confirma o despacha. */}
       <div className="mx-auto max-w-md text-left">
         <OrderProgress fulfillment={order.fulfillment} status={order.status} />
+      </div>
+      {/* Cuando la sede confirma o despacha, el estado se actualiza solo. */}
+      <div className="mt-2">
+        <LiveRefresh src={`/api/live?scope=order&id=${order.id}`} floating={false} />
       </div>
 
       {awaiting && (
