@@ -4,6 +4,9 @@ import { useState, useTransition } from "react";
 import { Check, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { ABOUT_LIMITS as L, type StoreAbout, type SocialKey } from "@/lib/about";
 import { saveAboutAction, type AboutState } from "./actions";
+import { GalleryEditor } from "./gallery-editor";
+
+type ListKey = "values" | "phones" | "emails" | "faqs" | "highlights";
 
 const SOCIAL_FIELDS: { key: SocialKey; label: string; placeholder: string }[] = [
   { key: "instagram", label: "Instagram", placeholder: "@surenosclub o https://instagram.com/…" },
@@ -27,12 +30,12 @@ export function AboutForm({ initial, publicUrl }: { initial: StoreAbout; publicU
     setState(undefined);
   };
   // Listas: editar, añadir y quitar filas.
-  const edit = <K extends "values" | "phones" | "emails" | "faqs">(
+  const edit = <K extends ListKey>(
     k: K,
     i: number,
     patch: Partial<StoreAbout[K][number]>,
   ) => set(k, a[k].map((row, j) => (j === i ? { ...row, ...patch } : row)) as StoreAbout[K]);
-  const remove = <K extends "values" | "phones" | "emails" | "faqs">(k: K, i: number) =>
+  const remove = <K extends ListKey>(k: K, i: number) =>
     set(k, a[k].filter((_, j) => j !== i) as StoreAbout[K]);
 
   return (
@@ -81,6 +84,31 @@ export function AboutForm({ initial, publicUrl }: { initial: StoreAbout; publicU
 
       <Card title="Quiénes somos" desc="Cuenta su historia: cómo empezaron, qué los hace distintos. Puedes usar varios párrafos.">
         <Area label="Nuestra historia" value={a.story} max={L.story} rows={6} onChange={(v) => set("story", v)} />
+        <div className="space-y-3 border-t border-line pt-5">
+          <h3 className="text-sm font-semibold text-ink-2">Datos destacados (opcional)</h3>
+          <p className="-mt-2 text-xs text-ink-3">
+            Cifras que se muestran en grande junto a la historia. Ej: «3» sedes, «+10» años, «2015» año de fundación.
+          </p>
+          {a.highlights.map((h, i) => (
+            <Row key={i} onRemove={() => remove("highlights", i)} label={`Dato ${i + 1}`}>
+              <Text label="Cifra" value={h.value} max={L.highlightValue} placeholder="+10" onChange={(x) => edit("highlights", i, { value: x })} />
+              <Text label="Qué significa" value={h.label} max={L.highlightLabel} placeholder="años sirviendo al barrio" onChange={(x) => edit("highlights", i, { label: x })} />
+            </Row>
+          ))}
+          <AddButton disabled={a.highlights.length >= L.highlights} onClick={() => set("highlights", [...a.highlights, { value: "", label: "" }])}>
+            Añadir dato
+          </AddButton>
+        </div>
+      </Card>
+
+      <Card title="Galería de fotos y videos" desc="Va justo debajo de «Quiénes somos». Tus clientes la ven en grande y los videos suenan.">
+        <GalleryEditor
+          items={a.gallery}
+          update={(fn) => {
+            setA((p) => ({ ...p, gallery: fn(p.gallery) }));
+            setState(undefined);
+          }}
+        />
       </Card>
 
       <Card title="Misión y visión">
@@ -158,7 +186,7 @@ export function AboutForm({ initial, publicUrl }: { initial: StoreAbout; publicU
 
       <p className="text-xs text-ink-3">
         La página también muestra sola: tu video o foto de portada (Ajustes › Portada), las fotos del
-        negocio (Apariencia), tus sedes (Sedes) y el horario (Ajustes › Horario).
+        negocio (Apariencia, se suman a la galería), tus sedes (Sedes) y el horario (Ajustes › Horario).
       </p>
 
       {/* Barra de guardado: siempre a mano */}

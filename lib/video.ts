@@ -64,3 +64,17 @@ export function parseCoverVideo(raw: string | null | undefined): CoverVideo | nu
   if (url.protocol === "https:") return { kind: "file", src: url.toString() };
   return null;
 }
+
+/** Reproductor "de verdad" (con sonido y controles) para ver un video en grande. */
+export function videoPlayerSrc(v: CoverVideo): string {
+  if (v.kind === "youtube") {
+    return `https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`;
+  }
+  if (v.kind === "vimeo") return `https://player.vimeo.com/video/${v.id}?autoplay=1&dnt=1`;
+  return v.src;
+}
+
+/** Miniatura del video si la red la ofrece sin API (YouTube); si no, null. */
+export function videoThumb(v: CoverVideo): string | null {
+  return v.kind === "youtube" ? `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg` : null;
+}

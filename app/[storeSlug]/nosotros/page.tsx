@@ -13,14 +13,14 @@ import {
   Sparkles,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { aboutIsLive, parseAbout, SOCIAL_KEYS, type SocialKey } from "@/lib/about";
+import { aboutIsLive, parseAbout, SOCIAL_KEYS, type AboutMedia, type SocialKey } from "@/lib/about";
 import { parseStorePhotos } from "@/lib/store-photos";
 import { bogotaDow, DAY_ORDER, getStoreOpenState, parseStoreHours } from "@/lib/store-hours";
 import { whatsappLink } from "@/lib/whatsapp";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { BannerSlider } from "@/components/banner-slider";
 import { MissionTabs } from "@/components/about/mission-tabs";
-import { PhotoGallery } from "@/components/about/photo-gallery";
+import { MediaGallery } from "@/components/about/media-gallery";
 import { SocialIcon } from "@/components/about/social-icon";
 
 async function getStore(slug: string) {
@@ -107,7 +107,15 @@ export default async function AboutPage({
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     select: { name: true, address: true, whatsapp: true },
   });
-  const photos = parseStorePhotos(store.photosJson);
+  // Galería: lo que el admin subió aquí + las fotos del negocio (Apariencia).
+  const gallery: AboutMedia[] = [
+    ...about.gallery,
+    ...parseStorePhotos(store.photosJson)
+      .filter((ph) => !about.gallery.some((g) => g.url === ph.url))
+      .map((ph) => ({ kind: "image" as const, url: ph.url, caption: "" })),
+  ];
+  // Foto que acompaña a "Quiénes somos": la primera de la galería.
+  const featured = gallery.find((g) => g.kind === "image") ?? null;
   const hours = parseStoreHours(store.hoursJson);
   const showHours = !!hours?.enabled;
   const open = getStoreOpenState(store.hoursJson);
@@ -117,7 +125,8 @@ export default async function AboutPage({
 
   // Índice de secciones (solo las que tienen contenido).
   const nav = [
-    about.story || photos.length ? { id: "quienes-somos", label: "Quiénes somos" } : null,
+    about.story ? { id: "quienes-somos", label: "Quiénes somos" } : null,
+    gallery.length ? { id: "galeria", label: "Galería" } : null,
     about.mission || about.vision ? { id: "mision-vision", label: "Misión y visión" } : null,
     about.values.length ? { id: "valores", label: "Valores" } : null,
     locations.length || showHours ? { id: "visitanos", label: "Visítanos" } : null,
@@ -186,25 +195,53 @@ export default async function AboutPage({
       )}
 
       <div className="space-y-20 [&>section]:scroll-mt-32">
-        {(about.story || photos.length > 0) && (
+        {about.story && (
           <section id="quienes-somos" aria-labelledby="h-quienes" className="reveal">
-            <SectionTitle id="h-quienes" kicker="Nuestra historia">
-              Quiénes somos
+            <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-10 rounded-[2rem] border border-line bg-surface p-6 sm:p-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+              <div>
+                <SectionTitle id="h-quienes" kicker="Nuestra historia">
+                  Quiénes somos
+                </SectionTitle>
+                <div className="space-y-4 text-lg leading-relaxed text-ink-2">
+                  {about.story.split(/\n{2,}/).map((p, i) => (
+                    <p key={i} className={`whitespace-pre-line ${i === 0 ? "text-xl font-medium text-ink sm:text-2xl" : ""}`}>
+                      {p}
+                    </p>
+                  ))}
+                </div>
+                {about.highlights.length > 0 && (
+                  <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+                    {about.highlights.map((h, i) => (
+                      <div key={i} className="rounded-2xl bg-brand-soft px-4 py-3">
+                        <dt className="sr-only">{h.label}</dt>
+                        <dd className="text-3xl font-extrabold tracking-tight text-brand-text">{h.value}</dd>
+                        <dd className="mt-0.5 text-sm leading-snug text-ink-2">{h.label}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </div>
+              {featured && (
+                <div className="relative">
+                  <div className="absolute -inset-3 -z-0 rotate-2 rounded-[2rem] bg-brand/25" aria-hidden />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={featured.url}
+                    alt={featured.caption || `Foto de ${store.name}`}
+                    className="relative aspect-[4/5] w-full rounded-[1.75rem] object-cover shadow-xl ring-1 ring-line"
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {gallery.length > 0 && (
+          <section id="galeria" aria-labelledby="h-galeria" className="reveal">
+            <SectionTitle id="h-galeria" kicker="Fotos y videos">
+              Galería
             </SectionTitle>
-            {about.story && (
-              <div className="max-w-3xl space-y-4 text-lg leading-relaxed text-ink-2">
-                {about.story.split(/\n{2,}/).map((p, i) => (
-                  <p key={i} className={`whitespace-pre-line ${i === 0 ? "text-xl text-ink" : ""}`}>
-                    {p}
-                  </p>
-                ))}
-              </div>
-            )}
-            {photos.length > 0 && (
-              <div className={about.story ? "mt-10" : ""}>
-                <PhotoGallery photos={photos} name={store.name} />
-              </div>
-            )}
+            <MediaGallery items={gallery} name={store.name} />
           </section>
         )}
 

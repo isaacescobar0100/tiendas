@@ -1,3 +1,5 @@
+import { parseCoverVideo } from "@/lib/video";
+
 // Página "Conócenos" de la tienda (Admin > Mi tienda > Página Conócenos).
 // Se guarda en Store.aboutJson. Todo es texto del admin: se limpia y se
 // recorta al leer y al guardar, así la página nunca recibe algo inesperado.
@@ -6,6 +8,9 @@ export type AboutValue = { title: string; text: string };
 export type AboutPhone = { label: string; number: string };
 export type AboutEmail = { label: string; email: string };
 export type AboutFaq = { q: string; a: string };
+export type AboutHighlight = { value: string; label: string };
+// Foto o video de la galería (video: subido, YouTube o Vimeo).
+export type AboutMedia = { kind: "image" | "video"; url: string; caption: string };
 export type AboutSocials = {
   instagram: string;
   facebook: string;
@@ -20,6 +25,8 @@ export type StoreAbout = {
   headline: string; // "Bienvenidos a …"
   intro: string; // frase corta bajo el título
   story: string; // quiénes somos
+  highlights: AboutHighlight[]; // datos destacados ("3 sedes", "+10 años")
+  gallery: AboutMedia[];
   mission: string;
   vision: string;
   values: AboutValue[];
@@ -34,6 +41,11 @@ export const ABOUT_LIMITS = {
   headline: 80,
   intro: 200,
   story: 2000,
+  highlights: 4,
+  highlightValue: 14,
+  highlightLabel: 40,
+  gallery: 40,
+  caption: 120,
   mission: 800,
   vision: 800,
   values: 6,
@@ -57,6 +69,8 @@ export function emptyAbout(): StoreAbout {
     headline: "",
     intro: "",
     story: "",
+    highlights: [],
+    gallery: [],
     mission: "",
     vision: "",
     values: [],
@@ -97,6 +111,19 @@ function list<T>(v: unknown, max: number, map: (x: Record<string, unknown>) => T
     if (item) out.push(item);
   }
   return out;
+}
+
+/** Elemento de galería válido: foto https (o /uploads) o video reconocible. */
+function media(x: Record<string, unknown>): AboutMedia | null {
+  const url = line(x.url, 500);
+  const caption = line(x.caption, ABOUT_LIMITS.caption);
+  if (x.kind === "image") {
+    return /^https:\/\/[^\s<>"']+$/i.test(url) || /^\/uploads\/[\w.-]+$/.test(url)
+      ? { kind: "image", url, caption }
+      : null;
+  }
+  if (x.kind === "video") return parseCoverVideo(url) ? { kind: "video", url, caption } : null;
+  return null;
 }
 
 const EMAIL_RE = /^[^\s@<>"']{1,64}@[^\s@<>"']{1,190}\.[a-z]{2,24}$/i;
@@ -162,6 +189,12 @@ export function sanitizeAbout(input: unknown): StoreAbout {
     headline: line(o.headline, L.headline),
     intro: line(o.intro, L.intro),
     story: text(o.story, L.story),
+    highlights: list(o.highlights, L.highlights, (x) => {
+      const value = line(x.value, L.highlightValue);
+      const label = line(x.label, L.highlightLabel);
+      return value && label ? { value, label } : null;
+    }),
+    gallery: list(o.gallery, L.gallery, media),
     mission: text(o.mission, L.mission),
     vision: text(o.vision, L.vision),
     values: list(o.values, L.values, (x) => {
@@ -201,6 +234,6 @@ export function parseAbout(json: string | null | undefined): StoreAbout {
 export function aboutIsLive(a: StoreAbout): boolean {
   return (
     a.enabled &&
-    !!(a.story || a.mission || a.vision || a.values.length || a.phones.length || a.emails.length || a.faqs.length)
+    !!(a.story || a.gallery.length || a.mission || a.vision || a.values.length || a.phones.length || a.emails.length || a.faqs.length)
   );
 }

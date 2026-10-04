@@ -18,7 +18,7 @@ export async function saveAboutAction(json: string): Promise<AboutState> {
     return { error: "No se pudo leer el formulario. Recarga la página." };
   }
   const about = sanitizeAbout(raw);
-  if (about.enabled && !about.story && !about.mission && !about.vision) {
+  if (about.enabled && !about.story && !about.mission && !about.vision && !about.gallery.length) {
     return {
       error: "Para publicar la página escribe al menos «Quiénes somos», la misión o la visión.",
     };
