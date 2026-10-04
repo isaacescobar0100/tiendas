@@ -17,6 +17,7 @@ import { tracksStock } from "@/lib/store-type";
 import { parseModifiers } from "@/lib/modifiers";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
+import { aboutIsLive, parseAbout } from "@/lib/about";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 export const dynamic = "force-dynamic";
@@ -125,14 +126,18 @@ export default async function StorefrontPage({
   // Ajustes > Portada) y después las promociones; en categorías/ofertas,
   // solo sus promociones.
   const isHome = !offers && !cat && !q;
+  // Página "Conócenos" publicada: la portada lleva un botón hacia ella.
+  const about = parseAbout(store.aboutJson);
+  const aboutLive = aboutIsLive(about);
   const cover: BannerSlide | null =
-    isHome && (store.bannerVideoUrl || store.bannerUrl)
+    isHome && (store.bannerVideoUrl || store.bannerUrl || aboutLive)
       ? {
           imageUrl: store.bannerUrl,
           videoUrl: store.bannerVideoUrl,
           title: store.name,
           subtitle: store.description,
-          linkUrl: null,
+          linkUrl: aboutLive ? sh("/nosotros") : null,
+          ctaLabel: aboutLive ? about.ctaLabel : null,
         }
       : null;
   const bannerSlides: BannerSlide[] = [...(cover ? [cover] : []), ...promoSlides];

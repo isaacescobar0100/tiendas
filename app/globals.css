@@ -125,3 +125,29 @@ select {
 .store-theme ::placeholder {
   color: var(--ink-4);
 }
+
+/* Página "Conócenos": las secciones aparecen suavemente al bajar (sin JS:
+   animación ligada al scroll; los navegadores sin soporte las muestran tal
+   cual) y el contenido de las pestañas entra con un fundido corto. */
+@keyframes about-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: about-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+  .about-fade {
+    animation: about-rise 0.35s ease-out both;
+  }
+}

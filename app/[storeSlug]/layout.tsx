@@ -18,6 +18,7 @@ import { StoreUnavailable } from "@/components/store-unavailable";
 import { AccountMenu } from "./cuenta/account-menu";
 import { StoreBaseProvider } from "@/components/store-base";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
+import { aboutIsLive, parseAbout } from "@/lib/about";
 
 export default async function StoreLayout({
   params,
@@ -51,6 +52,7 @@ export default async function StoreLayout({
       shippingCents: true,
       freeShippingOverCents: true,
       hoursJson: true,
+      aboutJson: true,
       plan: true,
       paidUntil: true,
     },
@@ -167,6 +169,14 @@ export default async function StoreLayout({
 
         <footer className="border-t border-line py-6 text-center text-sm text-ink-3">
           <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            {aboutIsLive(parseAbout(store.aboutJson)) && (
+              <Link
+                href={sh(`/nosotros`)}
+                className="font-medium text-ink-3 hover:text-ink"
+              >
+                Conócenos
+              </Link>
+            )}
             <Link
               href={sh(`/rastrear`)}
               className="font-medium text-ink-3 hover:text-ink"

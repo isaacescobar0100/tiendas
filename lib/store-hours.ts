@@ -153,6 +153,11 @@ export type OpenState = {
   message: string | null; // ej. "Abrimos mañana a las 11:00"
 };
 
+/** Día de la semana de hoy en Colombia (0 = domingo). */
+export function bogotaDow(): number {
+  return bogotaNow().dow;
+}
+
 // Estado de apertura AHORA (Bogotá) a partir del hoursJson guardado.
 export function getStoreOpenState(
   hoursJson: string | null | undefined,

@@ -105,6 +105,9 @@ model Store {
   // pantalla de acceso (login). Llevan una capa oscura para que el texto se lea.
   menuBgJson   String  @default("")
   loginBgJson  String  @default("")
+  // Página "Conócenos" (quiénes somos, misión, visión, contacto…): JSON que
+  // edita el admin en Mi tienda > Página Conócenos. Ver lib/about.ts.
+  aboutJson    String  @default("")
   currency    String     @default("COP")
   active      Boolean    @default(true)
   // Métodos de pago que ofrece la tienda (los controla el superadmin)

@@ -37,6 +37,7 @@ export const ADMIN_MENU: MenuGroup[] = [
     label: "Mi tienda",
     items: [
       { href: "/admin/apariencia", label: "Apariencia" },
+      { href: "/admin/nosotros", label: "Página Conócenos" },
       { href: "/admin/menu-qr", label: "Menú QR" },
       { href: "/admin/sedes", label: "Sedes" },
     ],
