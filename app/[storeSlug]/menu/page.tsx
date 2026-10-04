@@ -7,15 +7,32 @@ import { parseModifiers } from "@/lib/modifiers";
 import { getStoreOpenState } from "@/lib/store-hours";
 import { parseStorePhoto } from "@/lib/store-photos";
 import { MenuView, type MenuItem, type MenuSection } from "@/components/menu/menu-view";
+import { storeUrl, menuJsonLd, clip } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
 
 export const dynamic = "force-dynamic";
 
 // Menú de SOLO LECTURA para el QR de las mesas: la carta con fotos y precios,
 // sin carrito ni botones de compra (en el local se pide al mesero).
-export const metadata: Metadata = {
-  title: "Menú",
-  robots: { index: false }, // la carta ya está en la tienda; evita duplicados
-};
+// Se indexa: "menú de <tienda>" es una búsqueda muy común (SEO y GEO). La
+// dirección canónica no lleva la mesa ni la sede.
+export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {
+  const { storeSlug } = await params;
+  const store = await prisma.store.findFirst({
+    where: { slug: storeSlug, active: true },
+    select: { name: true, slug: true, customDomain: true, seoCity: true, logoUrl: true, categories: { select: { name: true }, orderBy: { name: "asc" } } },
+  });
+  if (!store) return { title: "Menú" };
+  const canonical = storeUrl(store, "/menu");
+  const cats = store.categories.map((c) => c.name.toLowerCase()).slice(0, 6).join(", ");
+  const description = clip(`Carta de ${store.name}${store.seoCity ? ` en ${store.seoCity}` : ""} con fotos y precios${cats ? `: ${cats}` : ""}.`, 160);
+  return {
+    title: store.seoCity ? `Menú y precios en ${store.seoCity}` : "Menú y precios",
+    description,
+    alternates: { canonical },
+    openGraph: { title: `Menú de ${store.name}`, description, url: canonical, images: store.logoUrl ? [store.logoUrl] : [], locale: "es_CO" },
+  };
+}
 
 const menuPrice = formatPrice; // "$18.000" (mismo formato que toda la tienda)
 
@@ -34,6 +51,11 @@ export default async function MenuPage({
     select: {
       id: true,
       name: true,
+      slug: true,
+      customDomain: true,
+      type: true,
+      seoCity: true,
+      seoKeywords: true,
       logoUrl: true,
       currency: true,
       hoursJson: true,
@@ -45,6 +67,7 @@ export default async function MenuPage({
         select: {
           id: true,
           name: true,
+          slug: true,
           description: true,
           priceCents: true,
           salePriceCents: true,
@@ -129,7 +152,31 @@ export default async function MenuPage({
     },
   ].filter((s) => s.items.length > 0);
 
+  // La carta completa en datos estructurados (Google y buscadores con IA).
+  const known2 = new Set(store.categories.map((c) => c.id));
+  const menuLd = menuJsonLd(
+    store,
+    [
+      ...store.categories.map((c) => ({ name: c.name, items: store.products.filter((p) => p.categoryId === c.id) })),
+      { name: "Otros", items: store.products.filter((p) => !p.categoryId || !known2.has(p.categoryId)) },
+    ]
+      .filter((g) => g.items.length)
+      .map((g) => ({
+        name: g.name,
+        items: g.items.map((p) => ({
+          name: p.name,
+          description: p.description,
+          imageUrl: p.imageUrl,
+          slug: p.slug,
+          priceCents: p.salePriceCents && p.salePriceCents > 0 && p.salePriceCents < p.priceCents ? p.salePriceCents : p.priceCents,
+        })),
+      })),
+    store.currency,
+  );
+
   return (
+    <>
+    <JsonLd data={menuLd} />
     <MenuView
       storeName={store.name}
       logoUrl={store.logoUrl}
@@ -143,5 +190,6 @@ export default async function MenuPage({
       sections={sections}
       cover={parseStorePhoto(store.menuBgJson)}
     />
+    </>
   );
 }

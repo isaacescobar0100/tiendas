@@ -108,6 +108,12 @@ model Store {
   // Página "Conócenos" (quiénes somos, misión, visión, contacto…): JSON que
   // edita el admin en Mi tienda > Página Conócenos. Ver lib/about.ts.
   aboutJson    String  @default("")
+  // SEO (Admin > Mi tienda > SEO y Google). Vacíos = se arman solos con el
+  // nombre, la descripción y el tipo de negocio.
+  seoTitle       String? // título para Google (ej. "Hamburguesas en Barranquilla")
+  seoDescription String? // descripción para Google (máx. ~160 caracteres)
+  seoCity        String? // ciudad principal (para búsquedas locales)
+  seoKeywords    String? // lo que vende, separado por comas
   currency    String     @default("COP")
   active      Boolean    @default(true)
   // Métodos de pago que ofrece la tienda (los controla el superadmin)
@@ -158,6 +164,10 @@ model StoreLocation {
   name      String   // ej. "Sede Las Nieves"
   address   String?  // dirección visible
   whatsapp  String?  // número de WhatsApp de esa sede
+  // Ubicación en el mapa (SEO local, página de la sede y "Cómo llegar").
+  lat       Float?
+  lng       Float?
+  mapsUrl   String?  // enlace de Google Maps de la sede
   // Acceso propio de la sede (el admin lo crea). Ve solo los pedidos de su sede.
   email        String? @unique
   passwordHash String?

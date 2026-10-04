@@ -8,6 +8,17 @@ import { prisma } from "@/lib/prisma";
 import { cleanHost, isPlatformHost, isRootHost, subdomainSlug } from "@/lib/store-host";
 
 const SELECT = {
+  id: true,
+  type: true,
+  customDomain: true,
+  updatedAt: true,
+  hoursJson: true,
+  seoTitle: true,
+  seoDescription: true,
+  seoCity: true,
+  seoKeywords: true,
+  aboutJson: true,
+  currency: true,
   name: true,
   slug: true,
   logoUrl: true,

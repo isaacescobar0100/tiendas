@@ -1,45 +1,53 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-import { getBaseUrl } from "@/lib/site-url";
+import { storeForHost } from "@/lib/host-store";
+import { storeUrl, sedeSlug } from "@/lib/seo";
+import { aboutIsLive, parseAbout } from "@/lib/about";
 
-// Dinámico: se genera al pedirlo (no en el build), así no depende de la BD
-// durante la compilación. Se cachea 1 hora.
+// Dinámico: cada tienda publica SU sitemap en su propia dirección
+// (subdominio o dominio propio). La plataforma no se indexa.
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = getBaseUrl();
-  const stores = await prisma.store.findMany({
-    where: { active: true },
-    select: {
-      slug: true,
-      updatedAt: true,
-      products: {
-        where: { active: true },
-        select: { slug: true, updatedAt: true },
-      },
-    },
-  });
+  const store = await storeForHost();
+  if (!store) return [];
 
-  // No incluimos la raíz (lista de todas las tiendas): es interna y va noindex.
-  const entries: MetadataRoute.Sitemap = [];
+  const [products, locations] = await Promise.all([
+    prisma.product.findMany({
+      where: { storeId: store.id, active: true },
+      select: { slug: true, updatedAt: true, imageUrl: true },
+    }),
+    prisma.storeLocation.findMany({ where: { storeId: store.id }, select: { name: true } }),
+  ]);
 
-  for (const store of stores) {
-    entries.push({
-      url: `${base}/${store.slug}`,
-      lastModified: store.updatedAt,
-      changeFrequency: "daily",
-      priority: 0.9,
-    });
-    for (const p of store.products) {
-      entries.push({
-        url: `${base}/${store.slug}/${p.slug}`,
-        lastModified: p.updatedAt,
-        changeFrequency: "weekly",
-        priority: 0.6,
-      });
+  const u = (path = "") => storeUrl(store, path);
+  const entries: MetadataRoute.Sitemap = [
+    { url: u(), lastModified: store.updatedAt, changeFrequency: "daily", priority: 1 },
+  ];
+  if (store.type === "FOOD") {
+    entries.push({ url: u("/menu"), lastModified: store.updatedAt, changeFrequency: "daily", priority: 0.9 });
+  }
+  if (aboutIsLive(parseAbout(store.aboutJson))) {
+    entries.push({ url: u("/nosotros"), lastModified: store.updatedAt, changeFrequency: "monthly", priority: 0.7 });
+  }
+  if (locations.length) {
+    entries.push({ url: u("/sedes"), lastModified: store.updatedAt, changeFrequency: "monthly", priority: 0.8 });
+    for (const l of locations) {
+      entries.push({ url: u(`/sedes/${sedeSlug(l.name)}`), lastModified: store.updatedAt, changeFrequency: "monthly", priority: 0.8 });
     }
   }
-
+  for (const p of products) {
+    entries.push({
+      url: u(`/${p.slug}`),
+      lastModified: p.updatedAt,
+      changeFrequency: "weekly",
+      priority: 0.6,
+      images: p.imageUrl ? [p.imageUrl] : undefined,
+    });
+  }
+  for (const doc of ["terminos", "privacidad"]) {
+    entries.push({ url: u(`/legal/${doc}`), changeFrequency: "yearly", priority: 0.2 });
+  }
   return entries;
 }

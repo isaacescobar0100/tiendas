@@ -23,6 +23,8 @@ import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { BannerSlider } from "@/components/banner-slider";
 import { MissionTabs } from "@/components/about/mission-tabs";
 import { MediaGallery } from "@/components/about/media-gallery";
+import { JsonLd } from "@/components/json-ld";
+import { storeUrl, faqJsonLd, breadcrumbJsonLd, directionsUrl, sedeSlug as sedePath } from "@/lib/seo";
 import { SocialIcon } from "@/components/about/social-icon";
 
 async function getStore(slug: string) {
@@ -31,6 +33,9 @@ async function getStore(slug: string) {
     select: {
       id: true,
       name: true,
+      slug: true,
+      customDomain: true,
+      seoCity: true,
       type: true,
       description: true,
       logoUrl: true,
@@ -54,13 +59,17 @@ export async function generateMetadata({
   if (!store) return { title: "Tienda no encontrada" };
   const about = parseAbout(store.aboutJson);
   const description = about.intro || about.story.slice(0, 160) || store.description || undefined;
+  const canonical = storeUrl(store, "/nosotros");
   return {
     title: "Conócenos",
     description,
+    alternates: { canonical },
     openGraph: {
       title: `Conócenos · ${store.name}`,
       description,
+      url: canonical,
       images: store.logoUrl ? [store.logoUrl] : [],
+      locale: "es_CO",
     },
   };
 }
@@ -107,7 +116,7 @@ export default async function AboutPage({
   const locations = await prisma.storeLocation.findMany({
     where: { storeId: store.id },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    select: { name: true, address: true, whatsapp: true },
+    select: { name: true, address: true, whatsapp: true, lat: true, lng: true, mapsUrl: true },
   });
   // Galería: lo que el admin subió aquí + las fotos del negocio (Apariencia).
   const gallery: AboutMedia[] = [
@@ -156,6 +165,14 @@ export default async function AboutPage({
           ]}
         />
       )}
+      {/* Preguntas frecuentes y migas de pan: Google y los buscadores con IA. */}
+      <JsonLd data={faqJsonLd(about.faqs)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: store.name, url: storeUrl(store) },
+          { name: "Conócenos", url: storeUrl(store, "/nosotros") },
+        ])}
+      />
       <header className="mb-10 max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-widest text-brand-text">Conócenos</p>
         <h1 className="mt-1 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
@@ -308,9 +325,15 @@ export default async function AboutPage({
                           </div>
                         </div>
                         <div className="mt-auto flex flex-wrap gap-2 pt-4">
-                          {l.address && (
+                          <Link
+                            href={sh(`/sedes/${sedePath(l.name)}`)}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-line-2 px-3 py-1.5 text-sm font-medium text-ink-2 hover:bg-surface-2"
+                          >
+                            <MapPin className="h-4 w-4" /> Ver sede
+                          </Link>
+                          {directionsUrl(l, store.name) && (
                             <a
-                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${l.address} ${store.name}`)}`}
+                              href={directionsUrl(l, store.name)!}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 rounded-full border border-line-2 px-3 py-1.5 text-sm font-medium text-ink-2 hover:bg-surface-2"

@@ -4,6 +4,30 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
+import { parseCoords } from "@/lib/seo";
+
+const MAPS_LINK = /^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl\/|goo\.gl\/maps)/i;
+
+/**
+ * Ubicación de la sede desde lo que pegue el admin: enlace de Google Maps
+ * (también el corto maps.app.goo.gl, que se resuelve leyendo su redirección)
+ * o "lat, lng". Vacío = sin ubicación.
+ */
+async function readMaps(formData: FormData) {
+  const raw = String(formData.get("maps") ?? "").trim().slice(0, 600);
+  if (!raw) return { lat: null, lng: null, mapsUrl: null };
+  const mapsUrl = MAPS_LINK.test(raw) ? raw : null;
+  let c = parseCoords(raw);
+  // Enlace corto: solo se consulta Google (nada de otros sitios).
+  if (!c && mapsUrl && /^https:\/\/(maps\.app\.goo\.gl|goo\.gl)\//i.test(mapsUrl)) {
+    try {
+      const r = await fetch(mapsUrl, { redirect: "manual", signal: AbortSignal.timeout(4000) });
+      const to = r.headers.get("location");
+      if (to) c = parseCoords(decodeURIComponent(to));
+    } catch {}
+  }
+  return { lat: c?.lat ?? null, lng: c?.lng ?? null, mapsUrl };
+}
 
 function read(formData: FormData) {
   const str = (k: string) => {
@@ -32,6 +56,7 @@ export async function createLocationAction(formData: FormData) {
   const { store } = await requireAdminStore();
   const d = read(formData);
   if (!d.name) return; // el nombre es obligatorio
+  const geo = await readMaps(formData);
 
   let email = readEmail(formData);
   if (email && (await prisma.storeLocation.findFirst({ where: { email } }))) {
@@ -54,6 +79,7 @@ export async function createLocationAction(formData: FormData) {
         name: d.name!,
         address: d.address,
         whatsapp: d.whatsapp,
+        ...geo,
         sortOrder: d.sortOrder,
         email,
         passwordHash,
@@ -74,6 +100,9 @@ export async function updateLocationAction(formData: FormData) {
     name: string;
     address: string | null;
     whatsapp: string | null;
+    lat: number | null;
+    lng: number | null;
+    mapsUrl: string | null;
     sortOrder: number;
     email?: string | null;
     passwordHash?: string;
@@ -82,6 +111,7 @@ export async function updateLocationAction(formData: FormData) {
     name: d.name,
     address: d.address,
     whatsapp: d.whatsapp,
+    ...(await readMaps(formData)),
     sortOrder: d.sortOrder,
   };
 

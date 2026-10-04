@@ -7,6 +7,8 @@ import { activeDiscounts, applyDiscount, applyDiscounts } from "@/lib/discounts"
 import { formatPrice } from "@/lib/utils";
 import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
 import { tracksStock, usesModifiers } from "@/lib/store-type";
+import { storeUrl, productJsonLd, breadcrumbJsonLd } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
 import { parseModifiers } from "@/lib/modifiers";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
@@ -72,15 +74,22 @@ export async function generateMetadata({
     ? `${price} · ${product.description.slice(0, 150)}`
     : `${price} · Cómpralo en ${store.name}.`;
   const images = product.imageUrl ? [product.imageUrl] : [];
+  const canonical = storeUrl(store, `/${product.slug}`);
+  // "Hamburguesa Sureña en Barranquilla" ayuda en búsquedas locales.
+  const title = store.seoCity ? `${product.name} en ${store.seoCity}` : product.name;
 
   return {
-    title: product.name,
+    title,
     description,
+    alternates: { canonical },
     openGraph: {
       title: product.name,
       description,
       images,
       type: "website",
+      url: canonical,
+      siteName: store.name,
+      locale: "es_CO",
     },
     twitter: {
       card: "summary_large_image",
@@ -176,8 +185,35 @@ export default async function ProductPage({
           store.freeShippingOverCents ? ` · gratis desde ${formatPrice(store.freeShippingOverCents, store.currency)}` : ""
         }`;
 
+  // Datos para Google y los buscadores con IA: producto con precio y migas de pan.
+  const inStock = !tracksStock(store.type) || (product.variants.length ? product.variants.some((v) => v.stock > 0) : product.stock > 0);
+  const productLd = productJsonLd(
+    store,
+    {
+      name: product.name,
+      slug: product.slug,
+      description: product.description,
+      imageUrl: product.imageUrl,
+      images: parseGalleryData(product.galleryData).map((g) => g.url),
+      priceCents: product.priceCents,
+      salePriceCents: onSale ? effectiveCents : null,
+      ratingAvg: reviewAvg,
+      ratingCount: reviewCount,
+      inStock,
+      category: product.category?.name,
+    },
+    store.currency,
+  );
+  const crumbs = breadcrumbJsonLd([
+    { name: store.name, url: storeUrl(store) },
+    ...(product.category ? [{ name: product.category.name, url: `${storeUrl(store)}/?cat=${product.category.slug}` }] : []),
+    { name: product.name, url: storeUrl(store, `/${product.slug}`) },
+  ]);
+
   return (
     <div>
+      <JsonLd data={productLd} />
+      <JsonLd data={crumbs} />
       <Link
         href={sh()}
         className="mb-6 inline-flex items-center gap-1 text-sm text-ink-3 hover:text-ink"

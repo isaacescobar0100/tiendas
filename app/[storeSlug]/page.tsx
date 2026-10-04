@@ -17,7 +17,9 @@ import { tracksStock } from "@/lib/store-type";
 import { parseModifiers } from "@/lib/modifiers";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
-import { aboutIsLive, parseAbout } from "@/lib/about";
+import { aboutIsLive, parseAbout, SOCIAL_KEYS, type StoreAbout } from "@/lib/about";
+import { seoHomeTitle, seoHomeDescription, seoKeywords, storeUrl, storeJsonLd, sedeSlug } from "@/lib/seo";
+import { JsonLd } from "@/components/json-ld";
 import { fillGrid } from "@/lib/grid-fill";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
@@ -32,28 +34,41 @@ async function getStore(slug: string) {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ storeSlug: string }>;
+  searchParams: Promise<{ cat?: string }>;
 }): Promise<Metadata> {
   const { storeSlug } = await params;
+  const { cat } = await searchParams;
   const store = await getStore(storeSlug);
   if (!store) return { title: "Tienda no encontrada" };
 
-  const description =
-    store.description || `Compra en ${store.name}. Envíos a toda Colombia.`;
-  const images = store.logoUrl ? [store.logoUrl] : [];
+  // Título y descripción para Google con la ciudad y lo que vende (SEO local).
+  const category = cat ? store.categories.find((c) => c.slug === cat) : null;
+  const title = category
+    ? `${category.name}${store.seoCity ? ` en ${store.seoCity}` : ""} | ${store.name}`
+    : seoHomeTitle(store);
+  const description = seoHomeDescription(store);
+  const images = [store.bannerUrl, store.logoUrl].filter(Boolean) as string[];
+  const canonical = category ? `${storeUrl(store)}/?cat=${category.slug}` : storeUrl(store);
   return {
-    title: { absolute: store.name },
+    title: { absolute: title },
     description,
+    keywords: seoKeywords(store),
+    alternates: { canonical },
     openGraph: {
-      title: store.name,
+      title,
       description,
       images,
       type: "website",
+      url: canonical,
+      siteName: store.name,
+      locale: "es_CO",
     },
     twitter: {
       card: images.length ? "summary_large_image" : "summary",
-      title: store.name,
+      title,
       description,
       images,
     },
@@ -219,7 +234,7 @@ export default async function StorefrontPage({
     where: { storeId: store.id },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     // Sin el id: es un dato interno y no debe salir en la página pública.
-    select: { name: true, address: true },
+    select: { name: true, address: true, whatsapp: true, lat: true, lng: true, mapsUrl: true },
   });
 
 
@@ -229,6 +244,8 @@ export default async function StorefrontPage({
 
   return (
     <div>
+      {/* Datos para Google y los buscadores con IA: marca, sitio y cada sede. */}
+      {isHome && <JsonLd data={storeJsonLd(store, locations, socialLinks(about), await storeRating(store.id))} />}
       <BannerSlider slides={bannerSlides} />
       {/* Si la portada ya muestra el nombre, el título queda solo para
           lectores de pantalla y buscadores (no se repite en pantalla). */}
@@ -421,9 +438,10 @@ export default async function StorefrontPage({
           <h2 className="mb-6 text-lg font-bold text-ink">Ubicaciones</h2>
           <div className={`${locGrid.grid} gap-4`}>
             {locations.map((l, i) => (
-              <div
+              <Link
                 key={`${i}-${l.name}`}
-                className={`flex items-start gap-2 rounded-2xl border border-line p-5 ${i === locations.length - 1 ? locGrid.last : ""}`}
+                href={sh(`/sedes/${sedeSlug(l.name)}`)}
+                className={`group flex items-start gap-2 rounded-2xl border border-line p-5 transition hover:border-brand ${i === locations.length - 1 ? locGrid.last : ""}`}
               >
                 <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-brand-text" />
                 <div className="min-w-0">
@@ -431,8 +449,9 @@ export default async function StorefrontPage({
                   {l.address && (
                     <p className="mt-0.5 text-sm text-ink-3">{l.address}</p>
                   )}
+                  <p className="mt-2 text-xs font-semibold text-brand-text group-hover:underline">Ver sede y horario →</p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
@@ -493,4 +512,20 @@ function SortLink({
       {children}
     </Link>
   );
+}
+
+/** Redes de la página Conócenos (para que Google relacione la marca). */
+function socialLinks(about: StoreAbout): string[] {
+  return SOCIAL_KEYS.map((k) => about.socials[k]).filter(Boolean);
+}
+
+/** Valoración media de la tienda a partir de las reseñas de sus productos. */
+async function storeRating(storeId: string) {
+  const ps = await prisma.product.findMany({
+    where: { storeId, active: true, ratingCount: { gt: 0 } },
+    select: { ratingAvg: true, ratingCount: true },
+  });
+  const count = ps.reduce((n, p) => n + p.ratingCount, 0);
+  const avg = count ? ps.reduce((n, p) => n + p.ratingAvg * p.ratingCount, 0) / count : 0;
+  return { avg, count };
 }

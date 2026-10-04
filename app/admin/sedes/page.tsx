@@ -120,6 +120,22 @@ function LocationForm({
             className={inputCls}
           />
         </div>
+        <div>
+          <label className={labelCls}>Ubicación en Google Maps (recomendado)</label>
+          <input
+            name="maps"
+            defaultValue={location?.mapsUrl ?? (location?.lat != null && location?.lng != null ? `${location.lat}, ${location.lng}` : "")}
+            placeholder="Pega aquí el enlace de Google Maps de la sede"
+            className={inputCls}
+          />
+          <p className="mt-1 text-xs text-ink-3">
+            En Google Maps busca la sede, toca «Compartir» y copia el enlace. Sirve para salir en
+            Google y en el mapa, y para el botón «Cómo llegar».
+            {location?.lat != null && location?.lng != null && (
+              <span className="ml-1 font-semibold text-ok-ink">✓ Ubicación guardada</span>
+            )}
+          </p>
+        </div>
         <div className="flex items-end gap-4">
           <div className="flex-1">
             <label className={labelCls}>WhatsApp de la sede</label>

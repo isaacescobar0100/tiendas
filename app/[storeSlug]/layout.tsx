@@ -73,6 +73,7 @@ export default async function StoreLayout({
       freeShippingOverCents: true,
       hoursJson: true,
       aboutJson: true,
+      _count: { select: { locations: true } },
       plan: true,
       paidUntil: true,
     },
@@ -195,6 +196,11 @@ export default async function StoreLayout({
                 className="font-medium text-ink-3 hover:text-ink"
               >
                 Conócenos
+              </Link>
+            )}
+            {store._count.locations > 0 && (
+              <Link href={sh(`/sedes`)} className="font-medium text-ink-3 hover:text-ink">
+                Sedes
               </Link>
             )}
             <Link
