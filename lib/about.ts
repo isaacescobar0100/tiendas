@@ -1,4 +1,5 @@
 import { parseCoverVideo } from "@/lib/video";
+import { safePosition } from "@/lib/utils";
 
 // Página "Conócenos" de la tienda (Admin > Mi tienda > Página Conócenos).
 // Se guarda en Store.aboutJson. Todo es texto del admin: se limpia y se
@@ -11,6 +12,8 @@ export type AboutFaq = { q: string; a: string };
 export type AboutHighlight = { value: string; label: string };
 // Foto o video de la galería (video: subido, YouTube o Vimeo).
 export type AboutMedia = { kind: "image" | "video"; url: string; caption: string };
+// Foto junto a "Quiénes somos", con su encuadre (posición y zoom).
+export type AboutPhoto = { url: string; position: string; zoom: number };
 export type AboutSocials = {
   instagram: string;
   facebook: string;
@@ -27,6 +30,7 @@ export type StoreAbout = {
   story: string; // quiénes somos
   highlights: AboutHighlight[]; // datos destacados ("3 sedes", "+10 años")
   gallery: AboutMedia[];
+  storyPhoto: AboutPhoto | null; // vacía = la primera foto de la galería
   mission: string;
   vision: string;
   values: AboutValue[];
@@ -71,6 +75,7 @@ export function emptyAbout(): StoreAbout {
     story: "",
     highlights: [],
     gallery: [],
+    storyPhoto: null,
     mission: "",
     vision: "",
     values: [],
@@ -114,6 +119,18 @@ function list<T>(v: unknown, max: number, map: (x: Record<string, unknown>) => T
 }
 
 /** Elemento de galería válido: foto https (o /uploads) o video reconocible. */
+function photo(v: unknown): AboutPhoto | null {
+  if (!v || typeof v !== "object") return null;
+  const x = v as Record<string, unknown>;
+  const m = media({ kind: "image", url: x.url });
+  if (!m) return null;
+  return {
+    url: m.url,
+    position: safePosition(x.position),
+    zoom: Math.max(1, Math.min(3, Number(x.zoom) || 1)),
+  };
+}
+
 function media(x: Record<string, unknown>): AboutMedia | null {
   const url = line(x.url, 500);
   const caption = line(x.caption, ABOUT_LIMITS.caption);
@@ -195,6 +212,7 @@ export function sanitizeAbout(input: unknown): StoreAbout {
       return value && label ? { value, label } : null;
     }),
     gallery: list(o.gallery, L.gallery, media),
+    storyPhoto: photo(o.storyPhoto),
     mission: text(o.mission, L.mission),
     vision: text(o.vision, L.vision),
     values: list(o.values, L.values, (x) => {

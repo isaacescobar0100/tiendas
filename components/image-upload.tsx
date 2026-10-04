@@ -24,6 +24,8 @@ export function ImageUpload({
   defaultZoom = 1,
   // Aviso opcional al padre cuando cambia la URL (subida o quitar).
   onChange,
+  // Aviso opcional al padre cuando cambia el encuadre (posición o zoom).
+  onFrameChange,
 }: {
   name?: string;
   defaultUrl?: string | null;
@@ -35,6 +37,7 @@ export function ImageUpload({
   zoomName?: string;
   defaultZoom?: number;
   onChange?: (url: string) => void;
+  onFrameChange?: (position: string, zoom: number) => void;
 }) {
   const [url, setUrl] = useState(defaultUrl ?? "");
   const [position, setPosition] = useState(defaultPosition || "50% 50%");
@@ -66,6 +69,7 @@ export function ImageUpload({
       onChange?.(data.url);
       setPosition("50% 50%"); // nueva foto: centrada y sin zoom
       setZoom(1);
+      onFrameChange?.("50% 50%", 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al subir.");
     } finally {
@@ -81,7 +85,9 @@ export function ImageUpload({
     // Arrastrar la foto revela el lado contrario -> se resta el desplazamiento.
     const nx = clamp(drag.current.px - dx);
     const ny = clamp(drag.current.py - dy);
-    setPosition(`${Math.round(nx)}% ${Math.round(ny)}%`);
+    const next = `${Math.round(nx)}% ${Math.round(ny)}%`;
+    setPosition(next);
+    onFrameChange?.(next, zoom);
   }
 
   const showReposition = reposition && url;
@@ -153,7 +159,11 @@ export function ImageUpload({
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setZoom((z) => clampZoom(z - 0.25))}
+                onClick={() => {
+                  const z = clampZoom(zoom - 0.25);
+                  setZoom(z);
+                  onFrameChange?.(position, z);
+                }}
                 disabled={zoom <= 1}
                 className="rounded-lg border border-line-2 p-1.5 text-ink-2 hover:bg-surface-2 disabled:opacity-40"
                 aria-label="Alejar"
@@ -165,7 +175,11 @@ export function ImageUpload({
               </span>
               <button
                 type="button"
-                onClick={() => setZoom((z) => clampZoom(z + 0.25))}
+                onClick={() => {
+                  const z = clampZoom(zoom + 0.25);
+                  setZoom(z);
+                  onFrameChange?.(position, z);
+                }}
                 disabled={zoom >= 3}
                 className="rounded-lg border border-line-2 p-1.5 text-ink-2 hover:bg-surface-2 disabled:opacity-40"
                 aria-label="Acercar"

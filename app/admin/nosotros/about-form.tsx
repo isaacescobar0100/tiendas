@@ -5,6 +5,7 @@ import { Check, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { ABOUT_LIMITS as L, type StoreAbout, type SocialKey } from "@/lib/about";
 import { saveAboutAction, type AboutState } from "./actions";
 import { GalleryEditor } from "./gallery-editor";
+import { ImageUpload } from "@/components/image-upload";
 
 type ListKey = "values" | "phones" | "emails" | "faqs" | "highlights";
 
@@ -84,6 +85,27 @@ export function AboutForm({ initial, publicUrl }: { initial: StoreAbout; publicU
 
       <Card title="Quiénes somos" desc="Cuenta su historia: cómo empezaron, qué los hace distintos. Puedes usar varios párrafos.">
         <Area label="Nuestra historia" value={a.story} max={L.story} rows={6} onChange={(v) => set("story", v)} />
+        <div className="space-y-2 border-t border-line pt-5">
+          <ImageUpload
+            name="storyPhotoUrl"
+            label="Foto junto a «Quiénes somos»"
+            defaultUrl={a.storyPhoto?.url ?? null}
+            defaultPosition={a.storyPhoto?.position}
+            defaultZoom={a.storyPhoto?.zoom}
+            reposition
+            positionName="storyPhotoPosition"
+            zoomName="storyPhotoZoom"
+            onChange={(url) =>
+              set("storyPhoto", url ? { url, position: "50% 50%", zoom: 1 } : null)
+            }
+            onFrameChange={(position, zoom) =>
+              setA((p) => (p.storyPhoto ? { ...p, storyPhoto: { ...p.storyPhoto, position, zoom } } : p))
+            }
+          />
+          <p className="text-xs text-ink-3">
+            El local, el equipo o los dueños. Si no subes una, se usa la primera foto de la galería.
+          </p>
+        </div>
         <div className="space-y-3 border-t border-line pt-5">
           <h3 className="text-sm font-semibold text-ink-2">Datos destacados (opcional)</h3>
           <p className="-mt-2 text-xs text-ink-3">

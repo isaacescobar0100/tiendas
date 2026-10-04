@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { aboutIsLive, parseAbout, SOCIAL_KEYS, type AboutMedia, type SocialKey } from "@/lib/about";
-import { parseStorePhotos } from "@/lib/store-photos";
+import { parseStorePhotos, type StorePhoto } from "@/lib/store-photos";
+import { StorePhotoImg } from "@/components/store-photo";
 import { bogotaDow, DAY_ORDER, getStoreOpenState, parseStoreHours } from "@/lib/store-hours";
 import { whatsappLink } from "@/lib/whatsapp";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
@@ -114,8 +115,10 @@ export default async function AboutPage({
       .filter((ph) => !about.gallery.some((g) => g.url === ph.url))
       .map((ph) => ({ kind: "image" as const, url: ph.url, caption: "" })),
   ];
-  // Foto que acompaña a "Quiénes somos": la primera de la galería.
-  const featured = gallery.find((g) => g.kind === "image") ?? null;
+  // La elegida en el admin (con su encuadre) o, si no hay, la primera foto.
+  const firstPhoto = gallery.find((g) => g.kind === "image");
+  const featured: StorePhoto | null =
+    about.storyPhoto ?? (firstPhoto ? { url: firstPhoto.url, position: "50% 50%", zoom: 1 } : null);
   const hours = parseStoreHours(store.hoursJson);
   const showHours = !!hours?.enabled;
   const open = getStoreOpenState(store.hoursJson);
@@ -224,11 +227,10 @@ export default async function AboutPage({
               {featured && (
                 <div className="relative">
                   <div className="absolute -inset-3 -z-0 rotate-2 rounded-[2rem] bg-brand/25" aria-hidden />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={featured.url}
-                    alt={featured.caption || `Foto de ${store.name}`}
-                    className="relative aspect-[4/5] w-full rounded-[1.75rem] object-cover shadow-xl ring-1 ring-line"
+                  <StorePhotoImg
+                    photo={featured}
+                    alt={`Foto de ${store.name}`}
+                    className="relative aspect-[4/5] w-full rounded-[1.75rem] shadow-xl ring-1 ring-line"
                   />
                 </div>
               )}
