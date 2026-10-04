@@ -95,11 +95,14 @@ export function seoKeywords(store: SeoStore): string[] {
 
 /** "Hamburguesas, desgranados y salchipapas en Barranquilla" (para títulos). */
 export function seoTagline(store: SeoStore, max = 3): string {
-  const kw = seoKeywords(store).slice(0, max);
+  // En la frase solo va con mayúscula la primera (las categorías vienen con mayúscula).
+  const kw = seoKeywords(store)
+    .slice(0, max)
+    .map((k, i) => (i === 0 ? k : k.charAt(0).toLowerCase() + k.slice(1)));
   const what = kw.length
     ? kw.length === 1
       ? kw[0]
-      : `${kw.slice(0, -1).join(", ")} y ${kw[kw.length - 1].toLowerCase()}`
+      : `${kw.slice(0, -1).join(", ")} y ${kw[kw.length - 1]}`
     : TYPE_WORDS[store.type];
   return store.seoCity ? `${what} en ${store.seoCity}` : what;
 }
