@@ -27,6 +27,7 @@ import CopyButton from "./copy-button";
 import { PostOrderAccount } from "../post-order-account";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { LiveRefresh } from "@/components/live-refresh";
+import { OrderProgress } from "@/components/order-progress";
 
 export const dynamic = "force-dynamic";
 
@@ -227,6 +228,11 @@ export default async function OrderSuccessPage({
       <p className="mt-1 text-sm text-ink-3">
         Nº de pedido: <span className="font-mono">{order.id.slice(-8)}</span>
       </p>
+
+      {/* Progreso del pedido: avanza solo cuando la sede lo confirma o despacha. */}
+      <div className="mx-auto max-w-md text-left">
+        <OrderProgress fulfillment={order.fulfillment} status={order.status} />
+      </div>
 
       {awaiting && (
         <div className="mt-6 rounded-2xl border border-line p-5 text-left">
