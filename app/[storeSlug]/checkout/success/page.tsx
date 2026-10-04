@@ -26,6 +26,7 @@ import ClearCart from "./clear-cart";
 import CopyButton from "./copy-button";
 import { PostOrderAccount } from "../post-order-account";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
+import { LiveRefresh } from "@/components/live-refresh";
 
 export const dynamic = "force-dynamic";
 
@@ -211,6 +212,8 @@ export default async function OrderSuccessPage({
   return (
     <div className="mx-auto max-w-lg text-center">
       {shouldClearCart && <ClearCart />}
+      {/* Cuando la sede confirma o despacha, el estado se actualiza solo. */}
+      <LiveRefresh src={`/api/live?scope=order&id=${order.id}`} />
 
       <div
         className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${ui.color}`}

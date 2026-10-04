@@ -6,6 +6,7 @@ import { billingOf, GRACE_DAYS } from "@/lib/billing";
 import { storeTheme, themeStyle } from "@/lib/theme";
 import { themeFontVars } from "@/lib/fonts";
 import { AdminNav } from "@/components/admin-nav";
+import { LiveRefresh } from "@/components/live-refresh";
 import { stopImpersonationAction } from "@/app/superadmin/actions";
 
 // Pestaña del panel: "Pedidos · Admin SUREÑOS CLUB" con el logo de la tienda.
@@ -104,6 +105,14 @@ export default async function AdminLayout({
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      {/* Tiempo real: los pedidos se actualizan solos y uno nuevo suena en
+          cualquier pantalla del panel (la lista solo se refresca en Inicio y Pedidos). */}
+      <LiveRefresh
+        src="/api/live?scope=admin"
+        alertNew
+        ordersHref="/admin/orders"
+        refreshPattern="^/admin(/orders(/.*)?)?$"
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { storeIcons } from "@/lib/store-meta";
 import { LogOut, Store } from "lucide-react";
 import { getCurrentSede } from "@/lib/sede-auth";
 import { SedeNav } from "@/components/sede-nav";
+import { LiveRefresh } from "@/components/live-refresh";
 import { storeTheme, themeStyle } from "@/lib/theme";
 import { themeFontVars } from "@/lib/fonts";
 import { sedeLogoutAction } from "../actions";
@@ -67,6 +68,8 @@ export default async function SedePanelLayout({
         </div>
       </header>
       <main className="mx-auto max-w-4xl px-4 py-8">{children}</main>
+      {/* Tiempo real: pedidos nuevos y cambios aparecen solos, con sonido. */}
+      <LiveRefresh src="/api/live?scope=sede" alertNew ordersHref="/sede/pedidos" />
     </div>
   );
 }

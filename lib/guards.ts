@@ -54,3 +54,16 @@ export async function requireAdminStore() {
 
   return { user, store, impersonating: false };
 }
+
+/**
+ * Tienda del admin de la sesión, sin redirigir (para APIs que responden 401).
+ * Incluye al superadmin cuando está dentro de una tienda.
+ */
+export async function getAdminStoreId(): Promise<string | null> {
+  const user = await getSessionUser();
+  if (!user) return null;
+  if (user.role === "SUPERADMIN") return getImpersonatedStoreId(user.id);
+  if (user.role !== "ADMIN") return null;
+  const store = await prisma.store.findUnique({ where: { ownerId: user.id }, select: { id: true } });
+  return store?.id ?? null;
+}

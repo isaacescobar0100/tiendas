@@ -9,6 +9,7 @@ import {
   FULFILLMENT_BADGE,
 } from "@/lib/order-status";
 import { OrderProgress } from "@/components/order-progress";
+import { LiveRefresh } from "@/components/live-refresh";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { TZ } from "@/lib/dates";
 
@@ -117,6 +118,8 @@ export default async function TrackOrderPage({
 
       {order && (
         <div className="mt-6 rounded-2xl border border-line p-5">
+          {/* El estado cambia solo cuando la tienda lo actualiza. */}
+          <LiveRefresh src={`/api/live?scope=order&id=${order.id}`} />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="font-semibold text-ink">
