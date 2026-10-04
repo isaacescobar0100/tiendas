@@ -25,16 +25,21 @@ export type CartItem = {
   alwaysAvailable?: boolean;
   // Adiciones/opciones elegidas (para comida).
   modifiers?: SelectedMod[];
+  // Nota del cliente para este producto (p. ej. "sin lechuga").
+  note?: string | null;
   quantity: number;
 };
 
-/** Clave única de una línea del carrito (producto + variante + adiciones). */
+/** Clave única de una línea del carrito (producto + variante + adiciones +
+ *  nota): el mismo plato con notas distintas va en líneas separadas. */
 export function lineKey(
   productId: string,
   variantId?: string | null,
   modifiers?: { optionId: string }[] | null,
+  note?: string | null,
 ): string {
-  return `${productId}::${variantId ?? ""}::${modifierSignature(modifiers)}`;
+  const n = (note ?? "").trim().toLowerCase();
+  return `${productId}::${variantId ?? ""}::${modifierSignature(modifiers)}${n ? `::${n}` : ""}`;
 }
 
 type CartContextValue = {
@@ -105,7 +110,7 @@ export function CartProvider({
 
   const add = useCallback(
     (item: Omit<CartItem, "quantity" | "key">, quantity = 1) => {
-      const key = lineKey(item.productId, item.variantId, item.modifiers);
+      const key = lineKey(item.productId, item.variantId, item.modifiers, item.note);
       setItems((prev) => {
         const existing = prev.find((i) => i.key === key);
         if (existing) {

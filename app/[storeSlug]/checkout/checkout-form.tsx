@@ -107,6 +107,7 @@ export default function CheckoutForm({
       variantId: i.variantId ?? null,
       quantity: i.quantity,
       modifierOptionIds: (i.modifiers ?? []).map((m) => m.optionId),
+      note: i.note ?? null,
     })),
   );
 
@@ -212,6 +213,20 @@ export default function CheckoutForm({
             </div>
           </div>
 
+          <div className="border-t border-line pt-5">
+            <label htmlFor="order-notes" className="mb-1 block text-sm font-medium text-ink-2">
+              Notas del pedido (opcional)
+            </label>
+            <textarea
+              id="order-notes"
+              name="notes"
+              rows={2}
+              maxLength={300}
+              placeholder="Ej: tocar el timbre, traer cambio de $50.000, sin cubiertos…"
+              className={`${inputCls} resize-none`}
+            />
+          </div>
+
           {/* Método de pago */}
           <div className="border-t border-line pt-5">
             <h2 className="mb-3 text-sm font-semibold text-ink">
@@ -311,6 +326,9 @@ export default function CheckoutForm({
                     <span className="block text-xs text-ink-3">
                       {i.modifiers.map((m) => m.optionName).join(" · ")}
                     </span>
+                  )}
+                  {i.note && (
+                    <span className="block text-xs italic text-ink-3">“{i.note}”</span>
                   )}
                 </span>
                 <span className="text-ink">

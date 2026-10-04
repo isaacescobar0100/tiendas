@@ -109,6 +109,11 @@ export default async function SedeOrders() {
                           {i.modifiers}
                         </span>
                       )}
+                      {i.note && (
+                        <span className="mt-0.5 inline-block rounded bg-warn-soft px-1.5 py-0.5 text-xs font-medium text-warn-ink">
+                          Nota: {i.note}
+                        </span>
+                      )}
                     </span>
                     <span className="text-ink">
                       {formatPrice(i.priceCents * i.quantity, o.currency)}
@@ -116,6 +121,12 @@ export default async function SedeOrders() {
                   </li>
                 ))}
               </ul>
+
+              {o.notes && (
+                <p className="mt-2 rounded-lg bg-warn-soft px-3 py-2 text-xs text-warn-ink">
+                  <span className="font-semibold">Notas del cliente:</span> {o.notes}
+                </p>
+              )}
 
               <div className="mt-2 flex items-center justify-between border-t border-line pt-2">
                 <span className="text-xs text-ink-3">

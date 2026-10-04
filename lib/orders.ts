@@ -96,6 +96,7 @@ export async function markOrderPaid(
     locationName: order.locationName,
     address: order.address,
     reference: order.reference,
+    notes: order.notes,
     paymentLabel: "Pagado en línea",
     adminEmail: order.store.owner?.email,
     brand: { name: order.store.name, color: order.store.themeColor, logoUrl: order.store.logoUrl },
@@ -108,6 +109,7 @@ export async function markOrderPaid(
       color: i.color,
       size: i.size,
       modifiers: i.modifiers,
+      note: i.note,
     })),
   });
   return true;

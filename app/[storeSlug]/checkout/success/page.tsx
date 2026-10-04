@@ -189,7 +189,8 @@ export default async function OrderSuccessPage({
         .map((i) => {
           const v = variantLabel(i.color, i.size);
           const mods = i.modifiers ? `\n   (${i.modifiers})` : "";
-          return `• ${i.name}${v ? ` (${v})` : ""} x${i.quantity}${mods}`;
+          const note = i.note ? `\n   Nota: ${i.note}` : "";
+          return `• ${i.name}${v ? ` (${v})` : ""} x${i.quantity}${mods}${note}`;
         })
         .join("\n");
       const msg =
@@ -201,6 +202,7 @@ export default async function OrderSuccessPage({
         `Nombre: ${order.customerName}\n` +
         `Tel: ${order.customerPhone ?? ""}\n` +
         `Envío a: ${order.address}` +
+        (order.notes ? `\nNotas: ${order.notes}` : "") +
         (awaiting ? `\n\nTe adjunto la captura del comprobante de pago.` : "");
       sedeWaHref = `https://wa.me/${number}?text=${encodeURIComponent(msg)}`;
     }
@@ -352,6 +354,9 @@ export default async function OrderSuccessPage({
                   <span className="block text-xs text-ink-3">
                     {i.modifiers}
                   </span>
+                )}
+                {i.note && (
+                  <span className="block text-xs italic text-ink-3">“{i.note}”</span>
                 )}
               </span>
               <span className="text-ink">

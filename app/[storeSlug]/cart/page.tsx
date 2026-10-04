@@ -63,6 +63,9 @@ export default function CartPage() {
                   {item.modifiers.map((m) => m.optionName).join(" · ")}
                 </p>
               )}
+              {item.note && (
+                <p className="text-xs italic text-ink-3">“{item.note}”</p>
+              )}
               <p className="text-sm text-ink-3">
                 {formatPrice(item.priceCents, currency)}
               </p>

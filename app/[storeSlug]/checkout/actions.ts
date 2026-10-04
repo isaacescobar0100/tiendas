@@ -64,6 +64,8 @@ const itemsSchema = z
         .positive()
         .max(MAX_QTY_PER_LINE, `Máximo ${MAX_QTY_PER_LINE} unidades por producto.`),
       modifierOptionIds: z.array(z.string()).max(50).optional(),
+      // Indicación del cliente para este producto ("sin lechuga").
+      note: z.string().max(140).nullable().optional(),
     }),
   )
   .max(MAX_LINES, `Máximo ${MAX_LINES} productos por pedido.`);
@@ -108,6 +110,7 @@ export async function placeOrderAction(
     variantId?: string | null;
     quantity: number;
     modifierOptionIds?: string[];
+    note?: string | null;
   }[];
   try {
     items = itemsSchema.parse(JSON.parse(String(formData.get("items") ?? "[]")));
@@ -115,6 +118,8 @@ export async function placeOrderAction(
     return { error: "Carrito inválido." };
   }
   if (items.length === 0) return { error: "Tu carrito está vacío." };
+  // Nota general del pedido (opcional).
+  const notes = cleanNote(formData.get("notes"), 300);
 
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
@@ -188,6 +193,7 @@ export async function placeOrderAction(
     color: string | null;
     size: string | null;
     modifiers: string | null;
+    note: string | null;
     imageUrl: string | null;
     priceCents: number;
     quantity: number;
@@ -212,6 +218,7 @@ export async function placeOrderAction(
     const sel = resolveSelection(groups, item.modifierOptionIds ?? []);
     if (!sel.ok) return { error: `${product.name}: ${sel.error}` };
     const modifiersLabel = sel.label || null;
+    const note = cleanNote(item.note, 140);
 
     // Precio a cobrar: el de oferta o descuento vigente (si no, el normal) +
     // adiciones. Calculado aquí, en el servidor: el cliente no lo decide.
@@ -238,6 +245,7 @@ export async function placeOrderAction(
         color: variant.color || null,
         size: variant.size || null,
         modifiers: modifiersLabel,
+        note,
         imageUrl: product.imageUrl,
         priceCents: unitCents,
         quantity: item.quantity,
@@ -255,6 +263,7 @@ export async function placeOrderAction(
         color: null,
         size: null,
         modifiers: modifiersLabel,
+        note,
         imageUrl: product.imageUrl,
         priceCents: unitCents,
         quantity: item.quantity,
@@ -309,6 +318,7 @@ export async function placeOrderAction(
           postalCode: d.postalCode ?? null,
           country: d.country,
           address,
+          notes,
           totalCents: grandTotalCents,
           shippingCents,
           currency: store.currency,
@@ -320,6 +330,7 @@ export async function placeOrderAction(
               color: l.color,
               size: l.size,
               modifiers: l.modifiers,
+              note: l.note,
               imageUrl: l.imageUrl,
               priceCents: l.priceCents,
               quantity: l.quantity,
@@ -381,7 +392,9 @@ export async function placeOrderAction(
         color: l.color,
         size: l.size,
         modifiers: l.modifiers,
+        note: l.note,
       })),
+      notes,
     }, { toCustomer: mailOk });
 
     return { orderId: order.id };
@@ -390,4 +403,15 @@ export async function placeOrderAction(
       error: "No se pudo completar el pedido (stock insuficiente). Inténtalo de nuevo.",
     };
   }
+}
+
+// Texto libre del cliente: una sola línea limpia (sin caracteres de control),
+// recortado al máximo permitido; vacío = null.
+function cleanNote(value: unknown, max: number): string | null {
+  const t = String(value ?? "")
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+  return t || null;
 }

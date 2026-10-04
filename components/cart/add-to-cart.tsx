@@ -17,16 +17,19 @@ export function AddToCart({
   modifierGroups = [],
   currency = "COP",
   disabled,
+  allowNote = false,
 }: {
   storeSlug: string;
   product: Omit<
     CartItem,
-    "quantity" | "key" | "variantId" | "size" | "color" | "modifiers"
+    "quantity" | "key" | "variantId" | "size" | "color" | "modifiers" | "note"
   >;
   variants?: Variant[];
   modifierGroups?: ModGroup[];
   currency?: string;
   disabled?: boolean;
+  // Tiendas de comida: nota para la cocina (p. ej. "sin lechuga").
+  allowNote?: boolean;
 }) {
   const sh = useStoreHref();
   const { add, storeClosed } = useCart();
@@ -36,6 +39,7 @@ export function AddToCart({
   const [selColor, setSelColor] = useState<string | null>(null);
   const [selSize, setSelSize] = useState<string | null>(null);
   const [warn, setWarn] = useState("");
+  const [note, setNote] = useState("");
   // Adiciones: opciones elegidas. En los grupos obligatorios de "elegir una"
   // preseleccionamos la primera para que siempre haya un estado válido.
   const [selMods, setSelMods] = useState<Set<string>>(() => {
@@ -139,9 +143,11 @@ export function AddToCart({
         color: selected?.color || null,
         size: selected?.size || null,
         modifiers: modSelection.selected,
+        note: note.trim().slice(0, 140) || null,
       },
       qty,
     );
+    setNote("");
     return true;
   };
   const fail = (msg: string) => {
@@ -278,6 +284,22 @@ export function AddToCart({
             {formatPrice(product.priceCents + modSelection.addedCents, currency)}
           </span>
         </p>
+      )}
+      {allowNote && (
+        <div>
+          <label htmlFor="item-note" className="mb-1.5 block text-sm font-medium text-ink-2">
+            Indicaciones (opcional)
+          </label>
+          <textarea
+            id="item-note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={140}
+            rows={2}
+            placeholder="Ej: sin lechuga, salsa aparte, bien asada…"
+            className="w-full resize-none rounded-xl border border-line-2 bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-ink-4 focus:border-brand focus:ring-2 focus:ring-brand/15"
+          />
+        </div>
       )}
       {warn && <p className="text-xs text-bad-ink">{warn}</p>}
 

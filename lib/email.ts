@@ -17,6 +17,7 @@ export type OrderEmailItem = {
   color?: string | null;
   size?: string | null;
   modifiers?: string | null;
+  note?: string | null; // indicación del cliente ("sin lechuga")
 };
 
 export type OrderEmailData = {
@@ -29,6 +30,7 @@ export type OrderEmailData = {
   locationName?: string | null; // sede elegida (negocios con varias sedes)
   address?: string | null; // resumen legible de la dirección
   reference?: string | null; // referencia / cómo llegar
+  notes?: string | null; // nota general del pedido
   paymentLabel?: string; // p. ej. "Pagado en línea" o "Contra entrega"
   adminEmail?: string | null;
   totalCents: number; // incluye el envío
@@ -87,7 +89,10 @@ function itemsTable(data: OrderEmailData): string {
       const mods = i.modifiers
         ? `<div style="color:#888;font-size:12px">${esc(i.modifiers)}</div>`
         : "";
-      return `<tr><td style="padding:6px 0">${label}${mods}</td><td style="padding:6px 0;text-align:right;vertical-align:top">${formatPrice(
+      const note = i.note
+        ? `<div style="color:#b45309;font-size:12px;font-style:italic">“${esc(i.note)}”</div>`
+        : "";
+      return `<tr><td style="padding:6px 0">${label}${mods}${note}</td><td style="padding:6px 0;text-align:right;vertical-align:top">${formatPrice(
         i.priceCents * i.quantity,
         data.currency,
       )}</td></tr>`;
@@ -128,6 +133,7 @@ function customerBlock(data: OrderEmailData): string {
     data.locationName ? ["Sede", esc(data.locationName)] : null,
     data.address ? ["Dirección", esc(data.address)] : null,
     data.reference ? ["Referencia", esc(data.reference)] : null,
+    data.notes ? ["Notas", esc(data.notes)] : null,
     data.paymentLabel ? ["Pago", esc(data.paymentLabel)] : null,
   ].filter(Boolean) as [string, string][];
   return `<table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:6px">${rows

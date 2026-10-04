@@ -379,6 +379,8 @@ model Order {
   currency      String      @default("COP")
   status        OrderStatus @default(PENDING) // estado de PAGO
   fulfillment   Fulfillment @default(PENDING) // estado de ENVÍO
+  // Nota general del cliente para el pedido (p. ej. "llamar al llegar").
+  notes         String?
   items         OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -401,6 +403,8 @@ model OrderItem {
   size       String?
   // Adiciones elegidas (texto legible: "Bien asado · +Queso · Sin cebolla").
   modifiers  String?
+  // Nota del cliente para este producto (p. ej. "sin lechuga").
+  note       String?
   imageUrl   String?
   priceCents Int // precio unitario YA con las adiciones incluidas
   quantity   Int

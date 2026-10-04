@@ -46,6 +46,7 @@ export async function GET(request: Request) {
     "Estado pago",
     "Estado envio",
     "Productos",
+    "Notas",
     "Subtotal",
     "Envio",
     "Total",
@@ -56,7 +57,8 @@ export async function GET(request: Request) {
       .map((i) => {
         const v = variantLabel(i.color, i.size);
         const m = i.modifiers ? ` [${i.modifiers}]` : "";
-        return `${i.name}${v ? ` (${v})` : ""}${m} x${i.quantity}`;
+        const n = i.note ? ` {Nota: ${i.note}}` : "";
+        return `${i.name}${v ? ` (${v})` : ""}${m}${n} x${i.quantity}`;
       })
       .join(" | ");
     return [
@@ -71,6 +73,7 @@ export async function GET(request: Request) {
       PAYMENT_LABEL[o.status],
       FULFILLMENT_LABEL[o.fulfillment],
       productos,
+      o.notes ?? "",
       pesos(o.totalCents - o.shippingCents),
       pesos(o.shippingCents),
       pesos(o.totalCents),

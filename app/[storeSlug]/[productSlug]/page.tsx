@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { activeDiscounts, applyDiscount, applyDiscounts } from "@/lib/discounts";
 import { formatPrice } from "@/lib/utils";
 import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
-import { tracksStock } from "@/lib/store-type";
+import { tracksStock, usesModifiers } from "@/lib/store-type";
 import { parseModifiers } from "@/lib/modifiers";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
@@ -267,6 +267,7 @@ export default async function ProductPage({
 
           <AddToCart
             storeSlug={store.slug}
+            allowNote={usesModifiers(store.type)}
             currency={store.currency}
             disabled={tracksStock(store.type) && product.stock === 0}
             variants={product.variants.map((v) => ({
