@@ -127,19 +127,43 @@ export default async function AboutPage({
 
   return (
     <div>
-      <BannerSlider
-        slides={[
-          {
-            imageUrl: store.bannerUrl,
-            videoUrl: store.bannerVideoUrl,
-            title: about.headline || `Bienvenidos a ${store.name}`,
-            subtitle: about.intro || null,
-            linkUrl: sh(),
-            ctaLabel: isFood ? "Ver el menú" : "Ver la tienda",
-          },
-        ]}
-      />
-      <h1 className="sr-only">Conócenos · {store.name}</h1>
+      {/* Portada limpia (su arte ya trae texto); la bienvenida va debajo. */}
+      {(store.bannerUrl || store.bannerVideoUrl) && (
+        <BannerSlider
+          slides={[
+            {
+              imageUrl: store.bannerUrl,
+              videoUrl: store.bannerVideoUrl,
+              title: null,
+              subtitle: null,
+              linkUrl: null,
+            },
+          ]}
+        />
+      )}
+      <header className="mb-10 max-w-3xl">
+        <p className="text-sm font-semibold uppercase tracking-widest text-brand-text">Conócenos</p>
+        <h1 className="mt-1 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          {about.headline || `Bienvenidos a ${store.name}`}
+        </h1>
+        {about.intro && <p className="mt-3 text-lg text-ink-2">{about.intro}</p>}
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href={sh()}
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-ink shadow-sm transition hover:bg-brand-hover"
+          >
+            {isFood ? "Ver el menú" : "Ver la tienda"} <ChevronRight className="h-4 w-4" />
+          </Link>
+          {hasContact && (
+            <a
+              href="#contacto"
+              className="inline-flex items-center gap-1.5 rounded-full border border-line-2 bg-surface px-5 py-2.5 text-sm font-semibold text-ink-2 transition hover:border-brand hover:text-ink"
+            >
+              <Phone className="h-4 w-4" /> Contáctanos
+            </a>
+          )}
+        </div>
+      </header>
 
       {nav.length > 1 && (
         <nav
