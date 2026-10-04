@@ -9,6 +9,7 @@ import {
   MapPin, Search } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { activeDiscounts, applyDiscounts, discountedWhere } from "@/lib/discounts";
 import { parseStorePhotos } from "@/lib/store-photos";
 import { StorePhotoImg } from "@/components/store-photo";
 import { isMerchProduct } from "@/lib/store-hours";
@@ -16,7 +17,6 @@ import { tracksStock } from "@/lib/store-type";
 import { parseModifiers } from "@/lib/modifiers";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
-import { VideoHero } from "@/components/video-hero";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 export const dynamic = "force-dynamic";
@@ -82,8 +82,14 @@ export default async function StorefrontPage({
 
   // Producto "en oferta": tiene precio de oferta válido (0 < oferta < precio).
   // Usa referencia de campo de Prisma para comparar dos columnas.
+  // Descuentos por porcentaje vigentes (Admin > Descuentos): también cuentan
+  // como "en oferta" y se aplican al precio de cada producto.
+  const rules = await activeDiscounts(store.id);
   const saleWhere = {
-    salePriceCents: { gt: 0, lt: prisma.product.fields.priceCents },
+    OR: [
+      { salePriceCents: { gt: 0, lt: prisma.product.fields.priceCents } },
+      ...discountedWhere(rules),
+    ],
   };
 
   // Banner (slider): promociones que el admin marcó para esta vista.
@@ -109,26 +115,28 @@ export default async function StorefrontPage({
     imageUrl: p.imageUrl,
     imagePosition: p.imagePosition,
     imageZoom: p.imageZoom,
+    videoUrl: p.videoUrl,
     title: p.title,
     subtitle: p.subtitle,
     linkUrl: p.linkUrl,
   }));
 
-  // En el inicio (sin filtros), si no hay promociones, usamos el banner base.
+  // Slider: en el inicio, primero la portada de la tienda (video o foto, de
+  // Ajustes > Portada) y después las promociones; en categorías/ofertas,
+  // solo sus promociones.
   const isHome = !offers && !cat && !q;
-  const bannerSlides: BannerSlide[] =
-    promoSlides.length > 0
-      ? promoSlides
-      : isHome && store.bannerUrl
-        ? [
-            {
-              imageUrl: store.bannerUrl,
-              title: store.name,
-              subtitle: store.description,
-              linkUrl: null,
-            },
-          ]
-        : [];
+  const cover: BannerSlide | null =
+    isHome && (store.bannerVideoUrl || store.bannerUrl)
+      ? {
+          imageUrl: store.bannerUrl,
+          videoUrl: store.bannerVideoUrl,
+          title: store.name,
+          subtitle: store.description,
+          linkUrl: null,
+        }
+      : null;
+  const bannerSlides: BannerSlide[] = [...(cover ? [cover] : []), ...promoSlides];
+
 
   // Por defecto (sin ordenar por precio): primero los MEJOR VALORADOS
   // (más estrellas y más reseñas), luego el resto por novedad. Aplica igual
@@ -157,7 +165,7 @@ export default async function StorefrontPage({
   const PAGE_SIZE = 12;
   const pageNum = Math.max(1, Number(page) || 1);
 
-  const [total, products, offersCount] = await Promise.all([
+  const [total, rawProducts, offersCount] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
       where,
@@ -175,6 +183,7 @@ export default async function StorefrontPage({
       where: { storeId: store.id, active: true, ...saleWhere },
     }),
   ]);
+  const products = applyDiscounts(rawProducts, rules);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const hasOffers = offersCount > 0;
 
@@ -212,26 +221,13 @@ export default async function StorefrontPage({
 
   return (
     <div>
-      {store.bannerVideoUrl ? (
-        <VideoHero
-          videoUrl={store.bannerVideoUrl}
-          poster={store.bannerUrl}
-          title={store.name}
-          subtitle={store.description}
-        />
-      ) : (
-        <>
-          <BannerSlider slides={bannerSlides} />
-          {/* Si la portada ya muestra el nombre, el título queda solo para
-              lectores de pantalla y buscadores (no se repite en pantalla). */}
-          <div className={bannerSlides[0]?.title === store.name ? "sr-only" : "mb-8"}>
-            <h1 className="text-3xl font-bold tracking-tight text-ink">{store.name}</h1>
-            {store.description && (
-              <p className="mt-1 text-ink-3">{store.description}</p>
-            )}
-          </div>
-        </>
-      )}
+      <BannerSlider slides={bannerSlides} />
+      {/* Si la portada ya muestra el nombre, el título queda solo para
+          lectores de pantalla y buscadores (no se repite en pantalla). */}
+      <div className={bannerSlides[0]?.title === store.name ? "sr-only" : "mb-8"}>
+        <h1 className="text-3xl font-bold tracking-tight text-ink">{store.name}</h1>
+        {store.description && <p className="mt-1 text-ink-3">{store.description}</p>}
+      </div>
 
       {/* Búsqueda + orden */}
       <div className="mb-4 mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

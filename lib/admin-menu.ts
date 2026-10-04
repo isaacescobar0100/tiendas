@@ -28,7 +28,8 @@ export const ADMIN_MENU: MenuGroup[] = [
     items: [
       { href: "/admin/products", label: "Productos" },
       { href: "/admin/categories", label: "Categorías" },
-      { href: "/admin/promotions", label: "Promociones" },
+      { href: "/admin/promotions", label: "Promociones (banner)" },
+      { href: "/admin/descuentos", label: "Descuentos %" },
       { href: "/admin/reviews", label: "Reseñas" },
     ],
   },

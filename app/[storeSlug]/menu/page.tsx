@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { activeDiscounts, applyDiscounts } from "@/lib/discounts";
 import { formatPrice, safePosition } from "@/lib/utils";
 import { parseModifiers } from "@/lib/modifiers";
 import { getStoreOpenState } from "@/lib/store-hours";
@@ -68,6 +69,9 @@ export default async function MenuPage({
       : null;
 
   const openState = getStoreOpenState(store.hoursJson);
+  // Descuentos vigentes: el menú muestra el mismo precio que se cobra.
+  const rules = await activeDiscounts(store.id);
+  store.products = applyDiscounts(store.products, rules);
   const cur = store.currency;
 
   const toItem = (p: (typeof store.products)[number]): MenuItem => {

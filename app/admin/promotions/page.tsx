@@ -6,7 +6,10 @@ import {
   createPromotionAction,
   updatePromotionAction,
   deletePromotionAction,
+  type PromoState,
 } from "./actions";
+import { PromoFormShell } from "./promo-form-shell";
+import { VideoField } from "@/components/video-field";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +66,7 @@ export default async function PromotionsPage() {
       {/* Nueva promoción */}
       <PromotionForm
         action={createPromotionAction}
+        resetOnSuccess
         submitLabel="Añadir promoción"
         title="Nueva promoción"
         specialLinks={specialLinks}
@@ -97,6 +101,7 @@ export default async function PromotionsPage() {
 
 function PromotionForm({
   action,
+  resetOnSuccess = false,
   promotion,
   submitLabel,
   title,
@@ -105,7 +110,8 @@ function PromotionForm({
   productLinks,
   categories,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
+  action: (prev: PromoState, formData: FormData) => Promise<PromoState>;
+  resetOnSuccess?: boolean;
   promotion?: Promotion;
   submitLabel: string;
   title?: string;
@@ -129,7 +135,7 @@ function PromotionForm({
       {title && (
         <h2 className="mb-4 text-sm font-semibold text-ink">{title}</h2>
       )}
-      <form action={action} className="space-y-4">
+      <PromoFormShell action={action} submitLabel={submitLabel} resetOnSuccess={resetOnSuccess}>
         {promotion && <input type="hidden" name="id" value={promotion.id} />}
 
         <ImageUpload
@@ -143,6 +149,14 @@ function PromotionForm({
           zoomName="imageZoom"
           defaultZoom={promotion?.imageZoom ?? 1}
         />
+
+        <div>
+          <label className={labelCls}>Video de la diapositiva (opcional)</label>
+          <p className="mb-2 text-xs text-ink-3">
+            Si pones un video, la diapositiva lo muestra en lugar de la imagen (con botón de sonido).
+          </p>
+          <VideoField name="videoUrl" defaultUrl={promotion?.videoUrl ?? null} />
+        </div>
 
         <div>
           <label className={labelCls}>Título</label>
@@ -270,13 +284,7 @@ function PromotionForm({
           </label>
         </div>
 
-        <button
-          type="submit"
-          className="rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-brand-ink transition hover:bg-brand-hover"
-        >
-          {submitLabel}
-        </button>
-      </form>
+      </PromoFormShell>
 
       {promotion && (
         <form action={deletePromotionAction} className="mt-3">

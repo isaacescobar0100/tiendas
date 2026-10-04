@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, Clock, MessageCircle, Truck, Wallet } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { activeDiscounts, applyDiscount, applyDiscounts } from "@/lib/discounts";
 import { formatPrice } from "@/lib/utils";
 import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
 import { tracksStock } from "@/lib/store-type";
@@ -101,7 +102,10 @@ export default async function ProductPage({
   const sh = (p = "") => joinStorePath(storeBase, p);
   const data = await getData(storeSlug, productSlug);
   if (!data) notFound();
-  const { store, product } = data;
+  const { store } = data;
+  // Descuento vigente (Admin > Descuentos): mismo cálculo que en el checkout.
+  const rules = await activeDiscounts(store.id);
+  const product = applyDiscount(data.product, rules);
 
   const onSale = isOnSale(product);
   const effectiveCents = effectivePriceCents(product);
@@ -130,7 +134,7 @@ export default async function ProductPage({
     },
     take: 12,
   });
-  const related = relatedRaw
+  const related = applyDiscounts(relatedRaw, rules)
     .sort(
       (a, b) =>
         (b.categoryId === product.categoryId ? 1 : 0) -

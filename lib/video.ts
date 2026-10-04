@@ -42,6 +42,8 @@ export function parseCoverVideo(raw: string | null | undefined): CoverVideo | nu
       playsinline: "1",
       modestbranding: "1",
       rel: "0",
+      // Permite activar/desactivar el sonido desde la página (botón de sonido).
+      enablejsapi: "1",
     });
     return { kind: "youtube", id: yt, src: `https://www.youtube-nocookie.com/embed/${yt}?${p}` };
   }
@@ -53,7 +55,8 @@ export function parseCoverVideo(raw: string | null | undefined): CoverVideo | nu
     return {
       kind: "vimeo",
       id,
-      src: `https://player.vimeo.com/video/${id}?background=1&autoplay=1&loop=1&muted=1`,
+      // Sin "background" (que fuerza el silencio): así el botón puede activar el sonido.
+      src: `https://player.vimeo.com/video/${id}?autoplay=1&loop=1&muted=1&controls=0&title=0&byline=0&portrait=0&dnt=1`,
     };
   }
 

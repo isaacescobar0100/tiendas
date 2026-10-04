@@ -11,6 +11,7 @@ import {
 } from "@/lib/wompi";
 import { computeShipping } from "@/lib/shipping";
 import { effectivePriceCents } from "@/lib/pricing";
+import { activeDiscounts, applyDiscount } from "@/lib/discounts";
 import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
 import { tracksStock } from "@/lib/store-type";
 import { parseModifiers, resolveSelection } from "@/lib/modifiers";
@@ -192,6 +193,8 @@ export async function placeOrderAction(
     quantity: number;
   }[] = [];
   let totalCents = 0;
+  // Descuentos vigentes: el mismo cálculo que vio el cliente en la tienda.
+  const rules = await activeDiscounts(store.id);
   for (const item of items) {
     const product = byId.get(item.productId);
     if (!product) return { error: `Un producto ya no está disponible.` };
@@ -210,8 +213,9 @@ export async function placeOrderAction(
     if (!sel.ok) return { error: `${product.name}: ${sel.error}` };
     const modifiersLabel = sel.label || null;
 
-    // Precio a cobrar: el de oferta si es válido (si no, el normal) + adiciones.
-    const unitCents = effectivePriceCents(product) + sel.addedCents;
+    // Precio a cobrar: el de oferta o descuento vigente (si no, el normal) +
+    // adiciones. Calculado aquí, en el servidor: el cliente no lo decide.
+    const unitCents = effectivePriceCents(applyDiscount(product, rules)) + sel.addedCents;
 
     if (product.variants.length > 0) {
       // El producto tiene variantes: se exige elegir una válida con stock
