@@ -18,6 +18,7 @@ import { parseModifiers } from "@/lib/modifiers";
 import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 import { aboutIsLive, parseAbout } from "@/lib/about";
+import { fillGrid } from "@/lib/grid-fill";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 export const dynamic = "force-dynamic";
@@ -223,6 +224,8 @@ export default async function StorefrontPage({
 
 
   const photos = parseStorePhotos(store.photosJson);
+  // Tarjetas de sedes sin huecos en la última fila.
+  const locGrid = fillGrid(locations.length);
 
   return (
     <div>
@@ -416,11 +419,11 @@ export default async function StorefrontPage({
       {locations.length > 0 && (
         <section className="mt-16">
           <h2 className="mb-6 text-lg font-bold text-ink">Ubicaciones</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={`${locGrid.grid} gap-4`}>
             {locations.map((l, i) => (
               <div
                 key={`${i}-${l.name}`}
-                className="flex items-start gap-2 rounded-2xl border border-line p-5"
+                className={`flex items-start gap-2 rounded-2xl border border-line p-5 ${i === locations.length - 1 ? locGrid.last : ""}`}
               >
                 <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-brand-text" />
                 <div className="min-w-0">

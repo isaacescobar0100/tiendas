@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 import { aboutIsLive, parseAbout, SOCIAL_KEYS, type AboutMedia, type SocialKey } from "@/lib/about";
 import { parseStorePhotos, type StorePhoto } from "@/lib/store-photos";
 import { StorePhotoImg } from "@/components/store-photo";
+import { fillGrid } from "@/lib/grid-fill";
 import { bogotaDow, DAY_ORDER, getStoreOpenState, parseStoreHours } from "@/lib/store-hours";
 import { whatsappLink } from "@/lib/whatsapp";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
@@ -119,6 +120,8 @@ export default async function AboutPage({
   const firstPhoto = gallery.find((g) => g.kind === "image");
   const featured: StorePhoto | null =
     about.storyPhoto ?? (firstPhoto ? { url: firstPhoto.url, position: "50% 50%", zoom: 1 } : null);
+  const locGrid = fillGrid(locations.length);
+  const contactGrid = fillGrid(about.phones.length + about.emails.length);
   const hours = parseStoreHours(store.hoursJson);
   const showHours = !!hours?.enabled;
   const open = getStoreOpenState(store.hoursJson);
@@ -285,13 +288,16 @@ export default async function AboutPage({
             <SectionTitle id="h-visitanos" kicker="Te esperamos">
               Visítanos
             </SectionTitle>
-            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="space-y-4">
               {locations.length > 0 && (
-                <ul className="grid grid-cols-[minmax(0,1fr)] content-start gap-4 sm:grid-cols-2">
+                <ul className={`${locGrid.grid} gap-4`}>
                   {locations.map((l, i) => {
                     const wa = whatsappLink(l.whatsapp, `Hola ${l.name}, tengo una pregunta.`);
                     return (
-                      <li key={`${i}-${l.name}`} className="flex flex-col rounded-3xl border border-line bg-surface p-5">
+                      <li
+                        key={`${i}-${l.name}`}
+                        className={`flex flex-col rounded-3xl border border-line bg-surface p-5 ${i === locations.length - 1 ? locGrid.last : ""}`}
+                      >
                         <div className="flex items-start gap-3">
                           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand-text">
                             <MapPin className="h-5 w-5" />
@@ -301,7 +307,7 @@ export default async function AboutPage({
                             {l.address && <p className="mt-0.5 text-sm text-ink-3">{l.address}</p>}
                           </div>
                         </div>
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-auto flex flex-wrap gap-2 pt-4">
                           {l.address && (
                             <a
                               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${l.address} ${store.name}`)}`}
@@ -330,7 +336,7 @@ export default async function AboutPage({
               )}
 
               {showHours && hours && (
-                <div className="h-fit rounded-3xl border border-line bg-surface p-5">
+                <div className="rounded-3xl border border-line bg-surface p-5">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <h3 className="flex items-center gap-2 font-bold text-ink">
                       <Clock className="h-5 w-5 text-brand-text" /> Horario
@@ -343,20 +349,23 @@ export default async function AboutPage({
                       {open.isOpen ? "Abierto ahora" : "Cerrado ahora"}
                     </span>
                   </div>
-                  <dl className="divide-y divide-line text-sm">
+                  {/* Celular: lista; pantalla grande: los 7 días en fila */}
+                  <dl className="divide-y divide-line text-sm lg:grid lg:grid-cols-7 lg:gap-2 lg:divide-y-0">
                     {DAY_ORDER.map(({ idx, label }) => {
                       const d = hours.days[idx];
                       const isToday = idx === today;
                       return (
                         <div
                           key={idx}
-                          className={`flex justify-between gap-3 py-2 ${isToday ? "font-semibold text-ink" : "text-ink-2"}`}
+                          className={`flex justify-between gap-3 py-2 lg:flex-col lg:justify-start lg:gap-1 lg:rounded-2xl lg:px-3 lg:py-3 ${
+                            isToday ? "font-semibold text-ink lg:bg-brand-soft" : "text-ink-2 lg:bg-surface-2"
+                          }`}
                         >
                           <dt>
                             {label}
                             {isToday && <span className="ml-1.5 text-xs font-medium text-brand-text">hoy</span>}
                           </dt>
-                          <dd className="text-right">
+                          <dd className="text-right lg:text-left">
                             {d.closed || !d.open || !d.close ? "Cerrado" : `${hour12(d.open)} – ${hour12(d.close)}`}
                           </dd>
                         </div>
@@ -375,11 +384,14 @@ export default async function AboutPage({
             <SectionTitle id="h-contacto" kicker="Hablemos">
               Contacto
             </SectionTitle>
-            <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className={`${contactGrid.grid} gap-4`}>
               {about.phones.map((p, i) => {
                 const wa = isMobileCo(p.number) ? whatsappLink(p.number, `Hola ${store.name}`) : null;
                 return (
-                  <div key={`p${i}`} className="rounded-3xl border border-line bg-surface p-5">
+                  <div
+                    key={`p${i}`}
+                    className={`rounded-3xl border border-line bg-surface p-5 ${!about.emails.length && i === about.phones.length - 1 ? contactGrid.last : ""}`}
+                  >
                     <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">{p.label || "Teléfono"}</p>
                     <p className="mt-1 text-xl font-bold text-ink">{p.number}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -407,7 +419,7 @@ export default async function AboutPage({
                 <a
                   key={`m${i}`}
                   href={`mailto:${m.email}?subject=${encodeURIComponent(`${m.label || "Contacto"} · ${store.name}`)}`}
-                  className="group rounded-3xl border border-line bg-surface p-5 transition hover:border-brand"
+                  className={`group rounded-3xl border border-line bg-surface p-5 transition hover:border-brand ${i === about.emails.length - 1 ? contactGrid.last : ""}`}
                 >
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink-3">{m.label || "Correo"}</p>
                   <p className="mt-1 break-all text-lg font-bold text-ink">{m.email}</p>
