@@ -68,7 +68,7 @@ export function MediaGallery({ items, name }: { items: AboutMedia[]; name: strin
 
       <ul className="grid auto-rows-[9rem] grid-cols-2 gap-3 sm:auto-rows-[13rem] md:grid-cols-4">
         {shown.map((m, i) => (
-          <li key={`${m.url}-${i}`} className={i === 0 ? "col-span-2 row-span-2" : ""}>
+          <li key={`${m.url}-${i}`} className={i === 0 ? "col-span-2 row-span-2" : i === n - 1 ? lastSpan(n) : ""}>
             <button
               type="button"
               onClick={() => setOpen(i)}
@@ -132,6 +132,17 @@ export function MediaGallery({ items, name }: { items: AboutMedia[]; name: strin
       )}
     </>
   );
+}
+
+// El último elemento se estira para que la última fila no quede con huecos
+// (la primera ocupa 2×2; el resto va de a 2 en el celular y de a 4 en pantalla grande).
+function lastSpan(n: number): string {
+  const rest = n - 1;
+  if (rest < 1) return "";
+  const mobile = rest % 2 === 1 ? "col-span-2" : "";
+  const r = rest % 4;
+  const desk = r === 0 ? "md:col-span-1" : ["", "md:col-span-4", "md:col-span-3", "md:col-span-2"][r];
+  return `${mobile} ${desk}`.trim();
 }
 
 // Miniatura: la foto, el primer cuadro del video subido o la de YouTube.
