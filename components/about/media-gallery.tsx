@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Images, Play, X } from "lucide-react";
 import type { AboutMedia } from "@/lib/about";
 import { parseCoverVideo, videoPlayerSrc, videoThumb } from "@/lib/video";
@@ -93,7 +94,9 @@ export function MediaGallery({ items, name }: { items: AboutMedia[]; name: strin
         ))}
       </ul>
 
-      {current && open !== null && (
+      {/* El visor va al <body>: dentro de la sección (animada con transform)
+          "fixed" quedaría encerrado en ella y no cubriría la pantalla. */}
+      {current && open !== null && createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -128,7 +131,8 @@ export function MediaGallery({ items, name }: { items: AboutMedia[]; name: strin
               <NavBtn side="right" label="Siguiente" onClick={() => setOpen((open + 1) % n)} />
             </>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
