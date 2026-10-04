@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const ALL = "__todos__";
-import { ConciergeBell, MapPin, UtensilsCrossed, X } from "lucide-react";
+import { ConciergeBell, MapPin, UtensilsCrossed, X, Armchair } from "lucide-react";
 import type { StorePhoto } from "@/lib/store-photos";
 import { StorePhotoImg } from "@/components/store-photo";
 
@@ -30,6 +30,7 @@ export function MenuView({
   storeName,
   logoUrl,
   location,
+  table = null,
   open,
   sections,
   cover = null,
@@ -37,6 +38,7 @@ export function MenuView({
   storeName: string;
   logoUrl: string | null;
   location: { name: string; address: string | null } | null;
+  table?: string | null; // mesa del QR ("Mesa 1")
   open: { isOpen: boolean; message: string | null } | null;
   sections: MenuSection[];
   cover?: StorePhoto | null;
@@ -127,6 +129,12 @@ export function MenuView({
             {storeName}
           </h1>
 
+          {table && (
+            <p className="mx-auto mt-4 inline-flex items-center gap-2 rounded-2xl bg-surface px-5 py-2 text-lg font-extrabold text-ink shadow-lg">
+              <Armchair className="h-5 w-5 text-brand-text" aria-hidden />
+              {table}
+            </p>
+          )}
           {(location || open) && (
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-medium">
               {location && (

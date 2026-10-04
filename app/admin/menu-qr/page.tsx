@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { storePublicUrl } from "@/lib/site-url";
 import { PrintButton } from "./print-button";
+import { TablesManager } from "./tables-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,14 @@ export default async function MenuQrPage() {
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     select: { id: true, name: true },
   });
+
+  // Mesas con QR propio (ordenadas como personas: Mesa 2 antes que Mesa 10).
+  const tables = (
+    await prisma.diningTable.findMany({
+      where: { storeId: store.id },
+      select: { id: true, name: true, locationId: true },
+    })
+  ).sort((a, b) => a.name.localeCompare(b.name, "es", { numeric: true, sensitivity: "base" }));
 
   const menuUrl = `${storePublicUrl(store)}/menu`;
   const targets = [
@@ -106,6 +115,8 @@ export default async function MenuQrPage() {
           </div>
         ))}
       </div>
+
+      <TablesManager locations={locations} tables={tables} />
     </div>
   );
 }

@@ -144,6 +144,7 @@ model Store {
   discounts   Discount[]
   slugAliases StoreSlugAlias[]
   locations   StoreLocation[]
+  tables      DiningTable[]
   reviews     Review[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -166,6 +167,22 @@ model StoreLocation {
   sessionVersion Int      @default(0)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+  tables    DiningTable[]
+
+  @@index([storeId])
+}
+
+// Mesa del local con su propio QR (Admin > Menú QR). El QR lleva el id, así
+// que renombrar la mesa no obliga a reimprimirlo. Si se borra la sede, la
+// mesa queda sin sede (no se pierde).
+model DiningTable {
+  id         String         @id @default(cuid())
+  store      Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId    String
+  location   StoreLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  locationId String?
+  name       String         // "Mesa 1", "Terraza 2", "Barra"…
+  createdAt  DateTime       @default(now())
 
   @@index([storeId])
 }

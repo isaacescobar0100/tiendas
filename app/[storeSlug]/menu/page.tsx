@@ -24,10 +24,10 @@ export default async function MenuPage({
   searchParams,
 }: {
   params: Promise<{ storeSlug: string }>;
-  searchParams: Promise<{ sede?: string }>;
+  searchParams: Promise<{ sede?: string; mesa?: string }>;
 }) {
   const { storeSlug } = await params;
-  const { sede } = await searchParams;
+  const { sede, mesa } = await searchParams;
 
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
@@ -59,14 +59,24 @@ export default async function MenuPage({
   });
   if (!store) notFound();
 
+  // QR de una mesa (?mesa=<id>): muestra la mesa y su sede.
+  const table =
+    typeof mesa === "string" && mesa.length <= 40
+      ? await prisma.diningTable.findFirst({
+          where: { id: mesa, storeId: store.id },
+          select: { name: true, location: { select: { name: true, address: true } } },
+        })
+      : null;
+
   // Sede del QR (opcional): solo se muestra si existe en esta tienda.
   const location =
-    typeof sede === "string" && sede.length <= 100
+    table?.location ??
+    (typeof sede === "string" && sede.length <= 100
       ? await prisma.storeLocation.findFirst({
           where: { storeId: store.id, name: sede },
           select: { name: true, address: true },
         })
-      : null;
+      : null);
 
   const openState = getStoreOpenState(store.hoursJson);
   // Descuentos vigentes: el menú muestra el mismo precio que se cobra.
@@ -123,6 +133,7 @@ export default async function MenuPage({
       storeName={store.name}
       logoUrl={store.logoUrl}
       location={location}
+      table={table?.name ?? null}
       open={
         openState.enforced
           ? { isOpen: openState.isOpen, message: openState.message ?? null }
