@@ -64,7 +64,7 @@ export function TablesManager({ locations, tables }: { locations: Loc[]; tables:
                 <Printer className="h-4 w-4" /> Imprimir todas
               </a>
             </div>
-            <ul className="grid grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {g.items.map((t) => (
                 <TableRow key={t.id} table={t} />
               ))}
@@ -167,7 +167,7 @@ function TableRow({ table }: { table: Table }) {
   return (
     <li className="rounded-xl border border-line bg-surface-2 px-3 py-2.5">
       {editing ? (
-        <form onSubmit={keepFormSubmit(action)} className="flex gap-2">
+        <form onSubmit={keepFormSubmit(action)} className="flex flex-wrap gap-2">
           <input type="hidden" name="id" value={table.id} />
           <input
             name="name"
@@ -185,9 +185,12 @@ function TableRow({ table }: { table: Table }) {
           </button>
         </form>
       ) : (
-        <div className="flex items-center justify-between gap-2">
-          <span className="min-w-0 truncate font-semibold text-ink">{table.name}</span>
-          <div className="flex shrink-0 gap-1">
+        <div className="space-y-2">
+          {/* Nombre arriba (completo) y los botones debajo */}
+          <span className="block break-words font-semibold leading-tight text-ink" data-table-name>
+            {table.name}
+          </span>
+          <div className="flex gap-1">
             <a
               href={`/admin/menu-qr/imprimir?mesa=${table.id}`}
               target="_blank"
