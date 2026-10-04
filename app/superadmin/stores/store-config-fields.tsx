@@ -99,7 +99,7 @@ export function StoreConfigFields({ store, isNew }: { store: StoreCfg; isNew: bo
         </div>
         <p className="-mt-2 text-xs text-gray-400">
           {isNew
-            ? "Si no escribes la URL corta, se arma con el nombre (sureños-club → surenos-club)."
+            ? "Si no escribes la URL corta, se arma con el nombre (sureños-club → surenos-club). También será su subdominio (surenos-club.acordemusic.com): verifica que no lo use ya un cliente de Sindika."
             : "Cambiarla modifica el enlace actual (el anterior redirige al nuevo)."}
         </p>
       </fieldset>

@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/guards";
 import { EditStoreForm } from "./edit-form";
+import { DomainPanel } from "./domain-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,10 @@ export default async function EditStorePage({
       <p className="mb-6 text-sm text-gray-500">
         {store.name} · {store.owner.email}
       </p>
+
+      <div className="mb-6">
+        <DomainPanel storeId={store.id} slug={store.slug} customDomain={store.customDomain} />
+      </div>
 
       <EditStoreForm
         store={{

@@ -13,6 +13,29 @@ import { setImpersonation, clearImpersonation } from "@/lib/impersonation";
 import { setTempPasswordFlash, clearTempPasswordFlash } from "@/lib/flash";
 import { sendRentEmail } from "@/lib/email";
 import { signOut } from "@/auth";
+import { addProjectDomain, removeProjectDomain, vercelEnabled } from "@/lib/vercel";
+
+/** Subdominio de la tienda en el dominio puente (surenos.acordemusic.com). */
+function storeSubdomain(slug: string): string | null {
+  const root = (process.env.STORE_ROOT_DOMAIN ?? "").trim().toLowerCase();
+  return root ? `${slug}.${root}` : null;
+}
+
+/**
+ * Agrega a Vercel los dominios de la tienda (subdominio y dominio propio).
+ * Si falla, la tienda igual queda creada y en «Configurar tienda» se ve el
+ * estado y se puede reintentar.
+ */
+async function connectDomains(slug: string, customDomain: string | null): Promise<string[]> {
+  if (!vercelEnabled()) return [];
+  const errors: string[] = [];
+  for (const d of [storeSubdomain(slug), customDomain]) {
+    if (!d) continue;
+    const r = await addProjectDomain(d);
+    if (!r.ok && r.message) errors.push(r.message);
+  }
+  return errors;
+}
 
 const adminSchema = z.object({
   adminName: z.string().min(2, "El nombre del admin es muy corto."),
@@ -213,6 +236,8 @@ export async function createStoreAction(
       store: { create: { ...cfg.data, currency: cfg.currency } },
     },
   });
+  // Subdominio (y dominio propio) en Vercel, sin tener que hacerlo a mano.
+  await connectDomains(cfg.data.slug, cfg.data.customDomain);
 
   revalidatePath("/superadmin");
   redirect("/superadmin");
@@ -250,10 +275,28 @@ export async function updateStoreConfigAction(
     data: { ...cfg.data, ...(paidChanged ? { rentNotice: null } : {}) },
   });
 
+  // Dominios en Vercel: el subdominio viejo se conserva (los enlaces viejos
+  // siguen llegando); el dominio propio reemplazado se quita.
+  let vercelErrors: string[] = [];
+  if (slug !== store.slug || cfg.data.customDomain !== store.customDomain) {
+    vercelErrors = await connectDomains(slug, cfg.data.customDomain);
+    if (store.customDomain && store.customDomain !== cfg.data.customDomain) await removeProjectDomain(store.customDomain);
+  }
+
   revalidatePath("/superadmin");
   revalidatePath(`/${store.slug}`, "layout");
   revalidatePath(`/${slug}`, "layout");
+  if (vercelErrors.length) return { error: `Guardado, pero Vercel: ${vercelErrors.join(" ")}` };
   return { ok: true };
+}
+
+/** Reintenta conectar en Vercel el subdominio y el dominio propio de la tienda. */
+export async function connectStoreDomainsAction(formData: FormData) {
+  await requireSuperadmin();
+  const store = await prisma.store.findUnique({ where: { id: String(formData.get("storeId") ?? "") } });
+  if (!store) return;
+  await connectDomains(store.slug, store.customDomain);
+  revalidatePath(`/superadmin/stores/${store.id}/edit`);
 }
 
 /** Renueva el plan: +1 año (pago único + anual) o +1 mes (mensual), desde la
@@ -386,6 +429,8 @@ export async function deleteStoreAction(formData: FormData) {
   if (store) {
     // Borra la tienda y su usuario admin (los productos caen en cascada)
     await prisma.store.delete({ where: { id: storeId } });
+    // Libera sus dominios en Vercel.
+    for (const d of [storeSubdomain(store.slug), store.customDomain]) if (d) await removeProjectDomain(d);
     await prisma.user.delete({ where: { id: store.ownerId } }).catch(() => {});
     revalidatePath("/superadmin");
   }
