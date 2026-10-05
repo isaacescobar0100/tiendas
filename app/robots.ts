@@ -5,23 +5,24 @@ import { storeUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-// Zonas privadas o sin valor para buscadores. Ojo: "/sede/" (panel de sedes)
-// con barra final, para no bloquear "/sedes" (páginas públicas de cada sede).
+// Zonas privadas o sin valor para buscadores. Las reglas de robots.txt son
+// prefijos: cada ruta va exacta ("/cart$"), con barra ("/cart/") o con
+// parámetros ("/rastrear?n=…"), para no
+// bloquear productos cuyo slug empiece igual ("/cartera-de-cuero") ni
+// "/sedes" (páginas públicas de cada sede).
 const PRIVATE = [
   "/admin",
   "/superadmin",
-  "/api/",
   "/login",
   "/recuperar",
   "/restablecer",
-  "/sede/",
-  "/sede$",
+  "/sede",
   "/checkout",
   "/cart",
   "/cuenta",
   "/favorites",
   "/rastrear",
-];
+].flatMap((p) => [`${p}$`, `${p}/`, `${p}?`]).concat("/api/");
 
 // Buscadores con IA: se permiten explícitamente (GEO) para que puedan leer
 // la tienda, su menú y sus sedes al responder preguntas.

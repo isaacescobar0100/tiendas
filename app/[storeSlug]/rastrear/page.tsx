@@ -10,6 +10,7 @@ import {
 } from "@/lib/order-status";
 import { OrderProgress } from "@/components/order-progress";
 import { LiveRefresh } from "@/components/live-refresh";
+import { orderLiveSrc } from "@/lib/order-live";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { TZ } from "@/lib/dates";
 
@@ -120,7 +121,7 @@ export default async function TrackOrderPage({
         <div className="mt-6 rounded-2xl border border-line p-5">
           {/* El estado cambia solo cuando la tienda lo actualiza. */}
           <div className="mb-3">
-            <LiveRefresh src={`/api/live?scope=order&id=${order.id}`} floating={false} />
+            <LiveRefresh src={orderLiveSrc(order.id)} floating={false} />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>

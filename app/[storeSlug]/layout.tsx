@@ -22,6 +22,8 @@ import { AccountMenu } from "./cuenta/account-menu";
 import { StoreBaseProvider } from "@/components/store-base";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { aboutIsLive, parseAbout } from "@/lib/about";
+import { storePublicUrl } from "@/lib/site-url";
+import { STORE_HOST_HEADER } from "@/lib/store-host";
 
 // cache(): la pestaña (metadata) y el layout la piden en el mismo render.
 const getLayoutStore = cache((slug: string) =>
@@ -85,13 +87,20 @@ export default async function StoreLayout({
     // ¿Es un slug antiguo? Redirige al actual conservando el resto de la ruta.
     const alias = await prisma.storeSlugAlias.findUnique({
       where: { slug: storeSlug },
-      select: { store: { select: { slug: true } } },
+      select: { store: { select: { slug: true, customDomain: true, domainActive: true } } },
     });
     if (alias?.store) {
-      const path = (await headers()).get("x-pathname") ?? `/${storeSlug}`;
+      const h = await headers();
+      const path = h.get("x-pathname") ?? `/${storeSlug}`;
       const prefix = `/${storeSlug}`;
-      const rest = path.startsWith(prefix) ? path.slice(prefix.length) : "";
-      redirect(`/${alias.store.slug}${rest}`);
+      const rest = (path.startsWith(prefix) ? path.slice(prefix.length) : "") + (h.get("x-search") ?? "");
+      // Por el subdominio viejo (QR impresos) se va a la dirección actual de la
+      // tienda: una ruta relativa volvería al subdominio viejo y haría un bucle.
+      redirect(
+        h.get(STORE_HOST_HEADER)
+          ? `${storePublicUrl(alias.store)}${rest}`
+          : `/${alias.store.slug}${rest}`,
+      );
     }
     notFound();
   }

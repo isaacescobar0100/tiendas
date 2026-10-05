@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminStoreId } from "@/lib/guards";
 import { getCurrentSede } from "@/lib/sede-auth";
+import { orderIdFromLiveToken } from "@/lib/order-live";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
  * lo consultan cada pocos segundos y, si cambió, se actualizan solas.
  *  - scope=admin  → pedidos de la tienda del admin (sesión).
  *  - scope=sede   → pedidos de la sede (sesión de sede).
- *  - scope=order&id=… → un pedido (el cliente que lo hizo tiene su id).
+ *  - scope=order&t=… → un pedido (token cifrado de lib/order-live).
  * Respuesta: { v: firma del estado, newest: fecha del pedido más reciente }.
  */
 export async function GET(request: Request) {
@@ -19,8 +20,8 @@ export async function GET(request: Request) {
   const noStore = { headers: { "Cache-Control": "no-store" } };
 
   if (scope === "order") {
-    const id = url.searchParams.get("id") ?? "";
-    if (!id || id.length > 40) return NextResponse.json({ error: "id" }, { status: 400 });
+    const id = orderIdFromLiveToken(url.searchParams.get("t"));
+    if (!id) return NextResponse.json({ error: "token" }, { status: 400 });
     const o = await prisma.order.findUnique({
       where: { id },
       select: { status: true, fulfillment: true, updatedAt: true },

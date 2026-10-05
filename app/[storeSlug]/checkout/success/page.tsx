@@ -27,6 +27,7 @@ import CopyButton from "./copy-button";
 import { PostOrderAccount } from "../post-order-account";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { LiveRefresh } from "@/components/live-refresh";
+import { orderLiveSrc } from "@/lib/order-live";
 import { OrderProgress } from "@/components/order-progress";
 
 export const dynamic = "force-dynamic";
@@ -237,7 +238,7 @@ export default async function OrderSuccessPage({
       </div>
       {/* Cuando la sede confirma o despacha, el estado se actualiza solo. */}
       <div className="mt-2">
-        <LiveRefresh src={`/api/live?scope=order&id=${order.id}`} floating={false} />
+        <LiveRefresh src={orderLiveSrc(order.id)} floating={false} />
       </div>
 
       {awaiting && (

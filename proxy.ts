@@ -111,6 +111,7 @@ async function mapStoreHost(req: NextRequest): Promise<NextResponse | null> {
   const headers = cleanRequestHeaders(req);
   headers.set(STORE_HOST_HEADER, slug);
   headers.set("x-pathname", url.pathname);
+  headers.set("x-search", search);
   return NextResponse.rewrite(url, { request: { headers } });
 }
 
@@ -167,6 +168,7 @@ export default auth(async (req) => {
   // Expone la ruta a los server components (para redirigir slugs antiguos).
   const reqHeaders = cleanRequestHeaders(req);
   reqHeaders.set("x-pathname", nextUrl.pathname);
+  reqHeaders.set("x-search", nextUrl.search);
   return NextResponse.next({ request: { headers: reqHeaders } });
 });
 

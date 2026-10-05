@@ -16,6 +16,18 @@ export function storeSubdomain(slug: string): string | null {
   return root ? `${slug}.${root}` : null;
 }
 
+/**
+ * ¿Es un nombre de dominio real ("surenosclub.com", "pedidos.mi-tienda.co")?
+ * Etiquetas de letras, números y guiones (sin guion al inicio o al final),
+ * al menos un punto. Rechaza ".", "..", "@", "?", "#", barras, espacios…
+ */
+export function isHostname(d: string): boolean {
+  return (
+    d.length <= 253 &&
+    /^(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/.test(d)
+  );
+}
+
 /** Host sin puerto y en minúsculas. */
 export const cleanHost = (host: string) => host.split(":")[0].toLowerCase();
 

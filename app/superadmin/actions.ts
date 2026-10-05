@@ -14,7 +14,7 @@ import { setTempPasswordFlash, clearTempPasswordFlash } from "@/lib/flash";
 import { sendRentEmail } from "@/lib/email";
 import { signOut } from "@/auth";
 import { addProjectDomain, removeProjectDomain, vercelEnabled } from "@/lib/vercel";
-import { storeSubdomain } from "@/lib/store-host";
+import { isHostname, isPlatformHost, isRootHost, rootDomain, storeSubdomain } from "@/lib/store-host";
 import { normalizeSeoKeywords } from "@/lib/seo";
 
 /**
@@ -53,14 +53,22 @@ async function uniqueStoreSlug(name: string): Promise<string> {
   return slug;
 }
 
-/** Normaliza un dominio: minúsculas, sin protocolo, sin ruta ni puerto. */
+/**
+ * Normaliza un dominio: minúsculas, sin protocolo, sin ruta ni puerto.
+ * "" si está vacío; null si no es un dominio válido para una tienda (un valor
+ * como ".." terminaría en otra ruta de la API de Vercel).
+ */
 function normalizeDomain(raw?: string): string | null {
   const d = (raw ?? "")
     .trim()
     .toLowerCase()
     .replace(/^https?:\/\//, "")
-    .replace(/[/:].*$/, "");
-  return d || null;
+    .replace(/[/:?#].*$/, "")
+    .replace(/\.$/, "");
+  if (!d) return "";
+  // Ni el dominio puente, ni sus subdominios, ni la dirección del panel.
+  if (!isHostname(d) || isRootHost(d) || isPlatformHost(d) || d.endsWith(`.${rootDomain() || "\0"}`)) return null;
+  return d;
 }
 
 /**
@@ -142,8 +150,14 @@ async function readStoreConfig(formData: FormData, current: CurrentStore | null)
     }
   }
 
-  const customDomain = normalizeDomain(d.customDomain);
-  if (customDomain && (await prisma.store.findFirst({ where: { customDomain, ...notSelf } }))) {
+  const domain = normalizeDomain(d.customDomain);
+  if (domain === null) {
+    return {
+      error: "Dominio no válido. Escribe solo el dominio, por ejemplo surenosclub.com (sin https:// ni rutas, y que no sea del dominio de la plataforma).",
+    } as const;
+  }
+  const customDomain = domain || null;
+  if (customDomain &&(await prisma.store.findFirst({ where: { customDomain, ...notSelf } }))) {
     return { error: "Ese dominio ya está asignado a otra tienda." } as const;
   }
   // Dominio activo: solo si ya abre esta tienda (se comprueba al activarlo).

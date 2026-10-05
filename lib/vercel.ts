@@ -8,6 +8,7 @@
 //
 // Sin token, todo sigue funcionando: solo hay que agregar los dominios a mano.
 import "server-only";
+import { isHostname } from "@/lib/store-host";
 
 const API = "https://api.vercel.com";
 
@@ -41,10 +42,14 @@ async function call(path: string, init: RequestInit = {}): Promise<{ ok: boolean
 
 export type DomainResult = { ok: boolean; message?: string };
 
+// Solo nombres de dominio reales llegan a la URL de la API: un valor como
+// ".." o "." apuntaría a otra ruta (p. ej. al propio proyecto).
+const validDomain = (d: string) => isHostname(d.toLowerCase());
+
 /** ¿El dominio ya está en el proyecto? */
 async function inProject(domain: string): Promise<boolean> {
   const c = cfg();
-  if (!c) return false;
+  if (!c || !validDomain(domain)) return false;
   const r = await call(`/v9/projects/${encodeURIComponent(c.project)}/domains/${encodeURIComponent(domain)}`);
   return r.ok;
 }
@@ -53,6 +58,7 @@ async function inProject(domain: string): Promise<boolean> {
 export async function addProjectDomain(domain: string): Promise<DomainResult> {
   const c = cfg();
   if (!c) return { ok: false, message: "La conexión con Vercel no está configurada (VERCEL_API_TOKEN / VERCEL_PROJECT_ID)." };
+  if (!validDomain(domain)) return { ok: false, message: `«${domain}» no es un dominio válido.` };
   if (await inProject(domain)) return { ok: true };
   const r = await call(`/v10/projects/${encodeURIComponent(c.project)}/domains`, {
     method: "POST",
@@ -69,7 +75,7 @@ export async function addProjectDomain(domain: string): Promise<DomainResult> {
 /** Quita el dominio del proyecto (al borrar la tienda o cambiar de dominio). */
 export async function removeProjectDomain(domain: string): Promise<void> {
   const c = cfg();
-  if (!c) return;
+  if (!c || !validDomain(domain)) return;
   await call(`/v9/projects/${encodeURIComponent(c.project)}/domains/${encodeURIComponent(domain)}`, { method: "DELETE" });
 }
 
@@ -81,7 +87,7 @@ export type DomainStatus = {
 
 /** Estado de un dominio: si está en el proyecto y si su DNS ya apunta bien. */
 export async function domainStatus(domain: string): Promise<DomainStatus | null> {
-  if (!cfg()) return null;
+  if (!cfg() || !validDomain(domain)) return null;
   const [inside, conf] = await Promise.all([inProject(domain), call(`/v6/domains/${encodeURIComponent(domain)}/config`)]);
   const apex = domain.split(".").length === 2;
   const ipv4 = (conf.data.recommendedIPv4 as { value?: string[] }[] | undefined)?.[0]?.value?.[0] ?? "76.76.21.21";
