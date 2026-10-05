@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
+import { normalizeSeoKeywords } from "@/lib/seo";
 
 export type SeoState = { ok?: string; error?: string } | undefined;
 
@@ -18,12 +19,7 @@ const clean = (v: FormDataEntryValue | null, max: number) => {
 /** Guarda los textos para Google (vacíos = se arman solos). */
 export async function saveSeoAction(_prev: SeoState, formData: FormData): Promise<SeoState> {
   const { store } = await requireAdminStore();
-  const keywords = clean(formData.get("seoKeywords"), 300)
-    ?.split(",")
-    .map((k) => k.trim())
-    .filter(Boolean)
-    .slice(0, 12)
-    .join(", ") || null;
+  const keywords = normalizeSeoKeywords(clean(formData.get("seoKeywords"), 300));
   await prisma.store.update({
     where: { id: store.id },
     data: {

@@ -91,6 +91,13 @@ export function parseStoreHours(
   }
 }
 
+/** "18:30" → "6:30 p. m." */
+export function hour12(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${h < 12 ? "a. m." : "p. m."}`;
+}
+
 // Limpia y re-serializa un horario (para guardarlo canónico). Devuelve "" si es
 // inválido (equivale a "siempre abierto / sin restricción").
 export function serializeStoreHours(hours: StoreHours | null): string {

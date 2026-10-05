@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { storeIcons } from "@/lib/store-meta";
@@ -22,37 +23,10 @@ import { StoreBaseProvider } from "@/components/store-base";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { aboutIsLive, parseAbout } from "@/lib/about";
 
-// Pestaña con el logo y el nombre de ESTA tienda en todas sus páginas.
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ storeSlug: string }>;
-}): Promise<Metadata> {
-  const { storeSlug } = await params;
-  const store = await prisma.store.findFirst({
-    where: { slug: storeSlug },
-    select: { name: true, logoUrl: true },
-  });
-  if (!store) return {};
-  return {
-    title: { absolute: store.name, template: `%s · ${store.name}` },
-    icons: storeIcons(store.logoUrl),
-  };
-}
-
-export default async function StoreLayout({
-  params,
-  children,
-}: {
-  params: Promise<{ storeSlug: string }>;
-  children: React.ReactNode;
-}) {
-  const { storeSlug } = await params;
-  // Rutas de la tienda: sin el slug si se visita por su subdominio/dominio.
-  const storeBase = await storeBasePath(storeSlug);
-  const sh = (p = "") => joinStorePath(storeBase, p);
-  const store = await prisma.store.findFirst({
-    where: { slug: storeSlug },
+// cache(): la pestaña (metadata) y el layout la piden en el mismo render.
+const getLayoutStore = cache((slug: string) =>
+  prisma.store.findFirst({
+    where: { slug },
     select: {
       id: true,
       name: true,
@@ -77,7 +51,36 @@ export default async function StoreLayout({
       plan: true,
       paidUntil: true,
     },
-  });
+  }),
+);
+
+// Pestaña con el logo y el nombre de ESTA tienda en todas sus páginas.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ storeSlug: string }>;
+}): Promise<Metadata> {
+  const { storeSlug } = await params;
+  const store = await getLayoutStore(storeSlug);
+  if (!store) return {};
+  return {
+    title: { absolute: store.name, template: `%s · ${store.name}` },
+    icons: storeIcons(store.logoUrl),
+  };
+}
+
+export default async function StoreLayout({
+  params,
+  children,
+}: {
+  params: Promise<{ storeSlug: string }>;
+  children: React.ReactNode;
+}) {
+  const { storeSlug } = await params;
+  // Rutas de la tienda: sin el slug si se visita por su subdominio/dominio.
+  const storeBase = await storeBasePath(storeSlug);
+  const sh = (p = "") => joinStorePath(storeBase, p);
+  const store = await getLayoutStore(storeSlug);
   if (!store) {
     // ¿Es un slug antiguo? Redirige al actual conservando el resto de la ruta.
     const alias = await prisma.storeSlugAlias.findUnique({

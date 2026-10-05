@@ -18,7 +18,7 @@ export async function saveThemeAction(
   if (!raw || typeof raw !== "object") return { error: "Datos inválidos." };
 
   const theme = normalizeTheme(raw);
-  const failing = checkTheme(theme).filter((c) => c.blocking && !c.ok);
+  const failing = checkTheme(theme).filter((c) => !c.ok);
   if (failing.length) {
     return {
       error: `No se puede guardar: ${failing.map((c) => c.label.toLowerCase()).join(", ")} no se leen bien. Usa "Ajustar automáticamente".`,

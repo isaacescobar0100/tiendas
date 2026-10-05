@@ -1,12 +1,12 @@
 import { CheckCircle2, CircleAlert, Globe2, RefreshCw } from "lucide-react";
 import { domainStatus, vercelEnabled, type DomainStatus } from "@/lib/vercel";
 import { connectStoreDomainsAction } from "../../../actions";
+import { storeSubdomain } from "@/lib/store-host";
 
 // Estado de los dominios de la tienda en Vercel: si están en el proyecto y si
 // el DNS ya apunta bien (con los registros a configurar si falta).
 export async function DomainPanel({ storeId, slug, customDomain }: { storeId: string; slug: string; customDomain: string | null }) {
-  const root = (process.env.STORE_ROOT_DOMAIN ?? "").trim().toLowerCase();
-  const sub = root ? `${slug}.${root}` : null;
+  const sub = storeSubdomain(slug);
 
   if (!vercelEnabled()) {
     return (

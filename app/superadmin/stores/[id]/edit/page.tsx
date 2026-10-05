@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/guards";
+import { dayKey } from "@/lib/dates";
 import { EditStoreForm } from "./edit-form";
 import { DomainPanel } from "./domain-panel";
 
@@ -59,11 +60,7 @@ export default async function EditStorePage({
           maxLocations: store.maxLocations,
           sedesUsed: store._count.locations,
           // Fecha en hora de Colombia (YYYY-MM-DD): con UTC se correría un día.
-          paidUntil: store.paidUntil
-            ? new Intl.DateTimeFormat("en-CA", {
-                timeZone: "America/Bogota",
-              }).format(store.paidUntil)
-            : "",
+          paidUntil: store.paidUntil ? dayKey(store.paidUntil) : "",
           onlinePaymentEnabled: store.onlinePaymentEnabled,
           codEnabled: store.codEnabled,
           transferEnabled: store.transferEnabled,

@@ -16,6 +16,11 @@ export function effectivePriceCents(p: Priced): number {
   return isOnSale(p) ? (p.salePriceCents as number) : p.priceCents;
 }
 
+/** Precio con un descuento porcentual, redondeado a pesos enteros. */
+export function discountedCents(priceCents: number, pct: number): number {
+  return Math.round((priceCents * (100 - pct)) / 100 / 100) * 100;
+}
+
 /** Porcentaje de descuento redondeado (0 si no hay oferta). */
 export function discountPercent(p: Priced): number {
   if (!isOnSale(p)) return 0;

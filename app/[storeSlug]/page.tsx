@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -26,12 +27,13 @@ import { storeBasePath, joinStorePath } from "@/lib/store-path";
 
 export const dynamic = "force-dynamic";
 
-async function getStore(slug: string) {
+// cache(): metadata y página la piden en el mismo render.
+const getStore = cache(async (slug: string) => {
   return prisma.store.findFirst({
     where: { slug, active: true },
     include: { categories: { orderBy: { name: "asc" } } },
   });
-}
+});
 
 export async function generateMetadata({
   params,
@@ -104,22 +106,30 @@ export default async function StorefrontPage({
   // Usa referencia de campo de Prisma para comparar dos columnas.
   // Descuentos por porcentaje vigentes (Admin > Descuentos): también cuentan
   // como "en oferta" y se aplican al precio de cada producto.
-  const rules = await activeDiscounts(store.id);
+  // Banner (slider): promociones que el admin marcó para esta vista.
+  //  - Ofertas (offers): las marcadas "en Ofertas".
+  //  - Categoría (cat):  las asignadas a esa categoría.
+  //  - Inicio:           las marcadas "en el banner de inicio".
+  // Sedes/ubicaciones (para negocios con varias sedes). Todo en paralelo.
+  const [rules, promotions, locations] = await Promise.all([
+    activeDiscounts(store.id),
+    prisma.promotion.findMany({
+      where: { storeId: store.id, active: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.storeLocation.findMany({
+      where: { storeId: store.id },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      // Sin el id: es un dato interno y no debe salir en la página pública.
+      select: { name: true, address: true, whatsapp: true, lat: true, lng: true, mapsUrl: true },
+    }),
+  ]);
   const saleWhere = {
     OR: [
       { salePriceCents: { gt: 0, lt: prisma.product.fields.priceCents } },
       ...discountedWhere(rules),
     ],
   };
-
-  // Banner (slider): promociones que el admin marcó para esta vista.
-  //  - Ofertas (offers): las marcadas "en Ofertas".
-  //  - Categoría (cat):  las asignadas a esa categoría.
-  //  - Inicio:           las marcadas "en el banner de inicio".
-  const promotions = await prisma.promotion.findMany({
-    where: { storeId: store.id, active: true },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-  });
 
   const currentCategory = cat
     ? (store.categories.find((c) => c.slug === cat) ?? null)
@@ -231,15 +241,6 @@ export default async function StorefrontPage({
     const qs = sp.toString();
     return sh(qs ? `?${qs}` : "");
   };
-
-  // Sedes/ubicaciones (para negocios con varias sedes).
-  const locations = await prisma.storeLocation.findMany({
-    where: { storeId: store.id },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-    // Sin el id: es un dato interno y no debe salir en la página pública.
-    select: { name: true, address: true, whatsapp: true, lat: true, lng: true, mapsUrl: true },
-  });
-
 
   const photos = parseStorePhotos(store.photosJson);
   // Tarjetas de sedes sin huecos en la última fila.

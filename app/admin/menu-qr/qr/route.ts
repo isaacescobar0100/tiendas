@@ -2,6 +2,7 @@ import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { requireAdminStore } from "@/lib/guards";
 import { storePublicUrl } from "@/lib/site-url";
+import { slugify } from "@/lib/utils";
 
 // Descarga el QR de una mesa en PNG (1024 px, para imprenta o WhatsApp).
 export async function GET(request: Request) {
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     margin: 2,
     errorCorrectionLevel: "M",
   });
-  const file = `qr-${table.name}`.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const file = slugify(`qr-${table.name}`);
   return new Response(new Uint8Array(png), {
     headers: {
       "Content-Type": "image/png",

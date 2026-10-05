@@ -160,15 +160,19 @@ export default async function OrderSuccessPage({
 
   // Sin sesión → invitar a crear cuenta, o a iniciar sesión si ese correo ya
   // tiene una. Si ya hay sesión, no mostramos nada.
-  const loggedIn = await getCurrentCustomer(order.storeId);
-  const accountExists = !!(await prisma.customer.findUnique({
-    where: {
-      storeId_email: {
-        storeId: order.storeId,
-        email: order.customerEmail.toLowerCase(),
+  const [loggedIn, existing] = await Promise.all([
+    getCurrentCustomer(order.storeId),
+    prisma.customer.findUnique({
+      where: {
+        storeId_email: {
+          storeId: order.storeId,
+          email: order.customerEmail.toLowerCase(),
+        },
       },
-    },
-  }));
+      select: { id: true },
+    }),
+  ]);
+  const accountExists = !!existing;
   const accountCta: "create" | "login" | null =
     payment === "failed" || loggedIn ? null : accountExists ? "login" : "create";
 

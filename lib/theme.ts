@@ -176,18 +176,16 @@ export type ThemeCheck = {
   ratio: number;
   min: number;
   ok: boolean;
-  blocking: boolean;
 };
 
 /** Comprobaciones de contraste que muestra el editor y exige el servidor. */
 export function checkTheme(t: ThemeInput): ThemeCheck[] {
   const brandInk = readableOn(t.brand);
   const rows: Omit<ThemeCheck, "ok">[] = [
-    { key: "ink-bg", label: "Texto sobre el fondo", ratio: contrast(t.ink, t.bg), min: 4.5, blocking: true },
-    { key: "ink-surface", label: "Texto sobre tarjetas", ratio: contrast(t.ink, t.surface), min: 4.5, blocking: true },
-    { key: "brand-ink", label: "Texto de los botones", ratio: contrast(brandInk, t.brand), min: 4.5, blocking: true },
-    { key: "brand-bg", label: "Botones sobre el fondo", ratio: contrast(t.brand, t.bg), min: 3, blocking: true },
-    { key: "surface-bg", label: "Tarjetas sobre el fondo", ratio: contrast(t.surface, t.bg), min: 1, blocking: false },
+    { key: "ink-bg", label: "Texto sobre el fondo", ratio: contrast(t.ink, t.bg), min: 4.5 },
+    { key: "ink-surface", label: "Texto sobre tarjetas", ratio: contrast(t.ink, t.surface), min: 4.5 },
+    { key: "brand-ink", label: "Texto de los botones", ratio: contrast(brandInk, t.brand), min: 4.5 },
+    { key: "brand-bg", label: "Botones sobre el fondo", ratio: contrast(t.brand, t.bg), min: 3 },
   ];
   return rows.map((r) => ({ ...r, ratio: Math.round(r.ratio * 100) / 100, ok: r.ratio >= r.min }));
 }

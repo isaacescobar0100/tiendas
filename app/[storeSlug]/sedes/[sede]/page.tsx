@@ -1,10 +1,11 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Clock, MapPin, MessageCircle, Navigation, UtensilsCrossed } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
-import { bogotaDow, DAY_ORDER, getStoreOpenState, parseStoreHours, isMerchProduct } from "@/lib/store-hours";
+import { bogotaDow, DAY_ORDER, getStoreOpenState, hour12, parseStoreHours, isMerchProduct } from "@/lib/store-hours";
 import { whatsappLink } from "@/lib/whatsapp";
 import { activeDiscounts, applyDiscounts } from "@/lib/discounts";
 import { parseModifiers } from "@/lib/modifiers";
@@ -23,7 +24,8 @@ import { JsonLd } from "@/components/json-ld";
 import { withAutoKeywords } from "@/lib/seo-data";
 import { ProductCard } from "@/components/product-card";
 
-async function getData(storeSlug: string, sede: string) {
+// cache(): metadata y página la piden en el mismo render.
+const getData = cache(async (storeSlug: string, sede: string) => {
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
     include: {
@@ -34,7 +36,7 @@ async function getData(storeSlug: string, sede: string) {
   const loc = store.locations.find((l) => sedeSlug(l.name) === sede);
   if (!loc) return null;
   return { store: await withAutoKeywords(store), loc };
-}
+});
 
 export async function generateMetadata({
   params,
@@ -65,13 +67,6 @@ export async function generateMetadata({
   };
 }
 
-// "18:30" → "6:30 p. m."
-function hour12(hhmm: string): string {
-  const [h, m] = hhmm.split(":").map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
-  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${h < 12 ? "a. m." : "p. m."}`;
-}
-
 // Página pública de una sede: SEO local ("comidas rápidas en Las Nieves").
 export default async function SedePage({
   params,
@@ -95,16 +90,16 @@ export default async function SedePage({
   const others = store.locations.filter((l) => l.id !== loc.id);
 
   // Lo más pedido / mejor valorado de la carta.
-  const rules = await activeDiscounts(store.id);
-  const top = applyDiscounts(
-    await prisma.product.findMany({
+  const [rules, topRaw] = await Promise.all([
+    activeDiscounts(store.id),
+    prisma.product.findMany({
       where: { storeId: store.id, active: true },
       orderBy: [{ ratingAvg: "desc" }, { ratingCount: "desc" }, { createdAt: "desc" }],
       include: { variants: { select: { id: true, color: true, size: true, stock: true } } },
       take: 8,
     }),
-    rules,
-  );
+  ]);
+  const top = applyDiscounts(topRaw, rules);
 
   const ld = { "@context": "https://schema.org", ...locationJsonLd(store, loc) };
   const crumbs = breadcrumbJsonLd([

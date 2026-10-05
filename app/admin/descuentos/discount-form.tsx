@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { Check, Search, Tag } from "lucide-react";
 import { keepFormSubmit } from "@/components/keep-form";
 import { formatPrice } from "@/lib/utils";
+import { discountedCents } from "@/lib/pricing";
 import { saveDiscountAction, type DiscountState } from "./actions";
 
 export type DiscountData = {
@@ -135,7 +136,7 @@ export function DiscountForm({
                   {formatPrice(p.priceCents, currency)}
                   {pct > 0 && (
                     <span className="ml-1.5 font-semibold text-ok-ink">
-                      → {formatPrice(Math.round((p.priceCents * (100 - pct)) / 100 / 100) * 100, currency)}
+                      → {formatPrice(discountedCents(p.priceCents, pct), currency)}
                     </span>
                   )}
                 </span>
@@ -165,7 +166,7 @@ export function DiscountForm({
       {example && pct > 0 && scope !== "products" && (
         <p className="flex items-center gap-2 rounded-lg bg-ok-soft px-3 py-2 text-sm text-ok-ink">
           <Tag className="h-4 w-4" /> Ejemplo: {example.name} de {formatPrice(example.priceCents, currency)} queda en{" "}
-          {formatPrice(Math.round((example.priceCents * (100 - pct)) / 100 / 100) * 100, currency)}
+          {formatPrice(discountedCents(example.priceCents, pct), currency)}
         </p>
       )}
 

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -17,12 +18,13 @@ function isDoc(v: string): v is DocKey {
   return v === "terminos" || v === "privacidad";
 }
 
-async function getStore(slug: string) {
+// cache(): metadata y página la piden en el mismo render.
+const getStore = cache(async (slug: string) => {
   return prisma.store.findFirst({
     where: { slug, active: true },
     select: { name: true, slug: true, whatsapp: true },
   });
-}
+});
 
 export async function generateMetadata({
   params,

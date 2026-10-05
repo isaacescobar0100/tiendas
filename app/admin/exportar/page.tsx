@@ -1,4 +1,5 @@
 import { requireAdminStore } from "@/lib/guards";
+import { dayKey } from "@/lib/dates";
 import { ExportForm } from "./export-form";
 
 export const dynamic = "force-dynamic";
@@ -6,14 +7,8 @@ export const dynamic = "force-dynamic";
 export default async function ExportPage() {
   await requireAdminStore();
 
-  // "Hoy" en hora de Colombia (el servidor está en UTC; Colombia es UTC−5).
-  // en-CA da el formato YYYY-MM-DD.
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Bogota",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+  // "Hoy" en hora de Colombia (el servidor está en UTC).
+  const today = dayKey(new Date());
   const defaults = {
     day: today,
     month: today.slice(0, 7),

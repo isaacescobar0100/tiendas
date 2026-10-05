@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,8 +9,9 @@ import { getImpersonatedStoreId } from "@/lib/impersonation";
  * debe existir y su versión de sesión debe coincidir con la del token. Así un
  * cambio de contraseña, un reseteo o borrar la cuenta cierran las sesiones
  * abiertas. El rol se toma de la BD, no del token.
+ * cache(): layout, metadata y página la piden en el mismo render.
  */
-export async function getSessionUser() {
+export const getSessionUser = cache(async () => {
   const session = await auth();
   if (!session?.user?.id) return null;
   const user = await prisma.user.findUnique({
@@ -18,7 +20,7 @@ export async function getSessionUser() {
   });
   if (!user || user.sessionVersion !== session.user.sv) return null;
   return user;
-}
+});
 
 /** Exige sesión de SUPERADMIN o redirige. */
 export async function requireSuperadmin() {
@@ -32,7 +34,7 @@ export async function requireSuperadmin() {
  * Exige sesión de ADMIN y devuelve su tienda (fresca desde la BD).
  * Redirige si no hay sesión, no es admin, o aún no tiene tienda asignada.
  */
-export async function requireAdminStore() {
+export const requireAdminStore = cache(async () => {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
@@ -53,7 +55,7 @@ export async function requireAdminStore() {
   if (!store) redirect("/login?error=sin-tienda");
 
   return { user, store, impersonating: false };
-}
+});
 
 /**
  * Tienda del admin de la sesión, sin redirigir (para APIs que responden 401).

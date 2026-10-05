@@ -1,3 +1,5 @@
+import { storeSubdomain } from "@/lib/store-host";
+
 // URL base absoluta del sitio, para SEO (metadata, Open Graph, sitemap).
 // Prioridad: dominio propio configurado → URL de Vercel → localhost.
 export function getBaseUrl(): string {
@@ -25,7 +27,7 @@ export function storePublicUrl(store: {
   domainActive?: boolean | null;
 }): string {
   if (store.customDomain && store.domainActive) return `https://${store.customDomain}`;
-  const root = (process.env.STORE_ROOT_DOMAIN ?? "").trim().toLowerCase();
-  if (root) return `https://${store.slug}.${root}`;
+  const sub = storeSubdomain(store.slug);
+  if (sub) return `https://${sub}`;
   return `${getBaseUrl()}/${store.slug}`;
 }

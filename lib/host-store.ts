@@ -3,9 +3,10 @@
 // tienda (login de admin, de sede, recuperar clave) lleven su marca y su
 // tema. Solo cosmético: no da permisos ni cambia a qué cuenta se entra.
 import "server-only";
+import { cache } from "react";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { cleanHost, isPlatformHost, isRootHost, subdomainSlug } from "@/lib/store-host";
+import { cleanHost, isMainHost, isPlatformHost, isRootHost, subdomainSlug } from "@/lib/store-host";
 
 const SELECT = {
   id: true,
@@ -32,7 +33,8 @@ const SELECT = {
   loginBgJson: true,
 } as const;
 
-export async function storeForHost() {
+// cache(): la consultan el layout raíz, el login y sus acciones en la misma petición.
+export const storeForHost = cache(async () => {
   const host = cleanHost((await headers()).get("host") ?? "");
   if (!host || isPlatformHost(host)) return null;
   const slug = subdomainSlug(host);
@@ -40,18 +42,9 @@ export async function storeForHost() {
     return prisma.store.findFirst({ where: { slug, active: true }, select: SELECT });
   }
   // Dominio principal de la plataforma (o del puente): sin tienda.
-  if (
-    isRootHost(host) ||
-    host.endsWith(".vercel.app") ||
-    host.startsWith("localhost") ||
-    host.startsWith("127.0.0.1")
-  ) {
-    return null;
-  }
+  if (isRootHost(host) || isMainHost(host)) return null;
   return prisma.store.findFirst({
     where: { customDomain: host, active: true },
     select: SELECT,
   });
-}
-
-export type HostStore = NonNullable<Awaited<ReturnType<typeof storeForHost>>>;
+});

@@ -1,5 +1,6 @@
 import { parseCoverVideo } from "@/lib/video";
 import { safePosition } from "@/lib/utils";
+import type { StorePhoto } from "@/lib/store-photos";
 
 // Página "Conócenos" de la tienda (Admin > Mi tienda > Página Conócenos).
 // Se guarda en Store.aboutJson. Todo es texto del admin: se limpia y se
@@ -13,7 +14,7 @@ export type AboutHighlight = { value: string; label: string };
 // Foto o video de la galería (video: subido, YouTube o Vimeo).
 export type AboutMedia = { kind: "image" | "video"; url: string; caption: string };
 // Foto junto a "Quiénes somos", con su encuadre (posición y zoom).
-export type AboutPhoto = { url: string; position: string; zoom: number };
+export type AboutPhoto = StorePhoto;
 export type AboutSocials = {
   instagram: string;
   facebook: string;

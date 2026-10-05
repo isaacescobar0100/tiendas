@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { activeDiscounts, applyDiscounts } from "@/lib/discounts";
 import { formatPrice, safePosition } from "@/lib/utils";
+import { discountPercent, effectivePriceCents, isOnSale } from "@/lib/pricing";
 import { parseModifiers } from "@/lib/modifiers";
 import { getStoreOpenState } from "@/lib/store-hours";
 import { parseStorePhoto } from "@/lib/store-photos";
@@ -33,8 +34,6 @@ export async function generateMetadata({ params }: { params: Promise<{ storeSlug
     openGraph: { title: `Menú de ${store.name}`, description, url: canonical, images: store.logoUrl ? [store.logoUrl] : [], locale: "es_CO" },
   };
 }
-
-const menuPrice = formatPrice; // "$18.000" (mismo formato que toda la tienda)
 
 export default async function MenuPage({
   params,
@@ -83,14 +82,16 @@ export default async function MenuPage({
   if (!store) notFound();
 
   // QR de una mesa (?mesa=<id>): muestra la mesa y su sede (un QR general,
-  // solo la sede).
-  const table =
+  // solo la sede). Descuentos vigentes: el menú muestra el mismo precio que se cobra.
+  const [table, rules] = await Promise.all([
     typeof mesa === "string" && mesa.length <= 40
-      ? await prisma.diningTable.findFirst({
+      ? prisma.diningTable.findFirst({
           where: { id: mesa, storeId: store.id },
           select: { name: true, general: true, location: { select: { name: true, address: true } } },
         })
-      : null;
+      : null,
+    activeDiscounts(store.id),
+  ]);
 
   // Sede del QR (opcional): solo se muestra si existe en esta tienda.
   const location =
@@ -103,23 +104,18 @@ export default async function MenuPage({
       : null);
 
   const openState = getStoreOpenState(store.hoursJson);
-  // Descuentos vigentes: el menú muestra el mismo precio que se cobra.
-  const rules = await activeDiscounts(store.id);
   store.products = applyDiscounts(store.products, rules);
   const cur = store.currency;
 
   const toItem = (p: (typeof store.products)[number]): MenuItem => {
-    const onSale =
-      p.salePriceCents != null && p.salePriceCents > 0 && p.salePriceCents < p.priceCents;
+    const onSale = isOnSale(p);
     return {
       id: p.id,
       name: p.name,
       description: p.description,
-      price: menuPrice(onSale ? p.salePriceCents! : p.priceCents, cur),
-      oldPrice: onSale ? menuPrice(p.priceCents, cur) : null,
-      discount: onSale
-        ? Math.round((1 - p.salePriceCents! / p.priceCents) * 100)
-        : null,
+      price: formatPrice(effectivePriceCents(p), cur),
+      oldPrice: onSale ? formatPrice(p.priceCents, cur) : null,
+      discount: onSale ? discountPercent(p) : null,
       imageUrl: p.imageUrl,
       imagePosition: safePosition(p.imagePosition),
       imageZoom: p.imageZoom ?? 1,
@@ -129,48 +125,46 @@ export default async function MenuPage({
           name: g.name,
           options: g.options.map((o) => ({
             name: o.name,
-            price: o.priceCents > 0 ? menuPrice(o.priceCents, cur) : null,
+            price: o.priceCents > 0 ? formatPrice(o.priceCents, cur) : null,
           })),
         })),
     };
   };
 
-  // Secciones por categoría (en el orden de las categorías) y "Otros" al final.
+  // Grupos por categoría (en el orden de las categorías) y "Otros" al final.
   const known = new Set(store.categories.map((c) => c.id));
-  const sections: MenuSection[] = [
+  const groups = [
     ...store.categories.map((c) => ({
       id: c.slug,
       name: c.name,
-      items: store.products.filter((p) => p.categoryId === c.id).map(toItem),
+      products: store.products.filter((p) => p.categoryId === c.id),
     })),
     {
       id: "otros",
       name: "Otros",
-      items: store.products
-        .filter((p) => !p.categoryId || !known.has(p.categoryId))
-        .map(toItem),
+      products: store.products.filter((p) => !p.categoryId || !known.has(p.categoryId)),
     },
-  ].filter((s) => s.items.length > 0);
+  ].filter((g) => g.products.length > 0);
+
+  const sections: MenuSection[] = groups.map((g) => ({
+    id: g.id,
+    name: g.name,
+    items: g.products.map(toItem),
+  }));
 
   // La carta completa en datos estructurados (Google y buscadores con IA).
-  const known2 = new Set(store.categories.map((c) => c.id));
   const menuLd = menuJsonLd(
     store,
-    [
-      ...store.categories.map((c) => ({ name: c.name, items: store.products.filter((p) => p.categoryId === c.id) })),
-      { name: "Otros", items: store.products.filter((p) => !p.categoryId || !known2.has(p.categoryId)) },
-    ]
-      .filter((g) => g.items.length)
-      .map((g) => ({
-        name: g.name,
-        items: g.items.map((p) => ({
-          name: p.name,
-          description: p.description,
-          imageUrl: p.imageUrl,
-          slug: p.slug,
-          priceCents: p.salePriceCents && p.salePriceCents > 0 && p.salePriceCents < p.priceCents ? p.salePriceCents : p.priceCents,
-        })),
+    groups.map((g) => ({
+      name: g.name,
+      items: g.products.map((p) => ({
+        name: p.name,
+        description: p.description,
+        imageUrl: p.imageUrl,
+        slug: p.slug,
+        priceCents: effectivePriceCents(p),
       })),
+    })),
     store.currency,
   );
 

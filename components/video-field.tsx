@@ -1,16 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { uploadPresigned } from "@vercel/blob/client";
 import { Film, Link2, Trash2, Upload } from "lucide-react";
 import { parseCoverVideo } from "@/lib/video";
-
-const MAX_BYTES = 100 * 1024 * 1024; // 100 MB (el servidor exige lo mismo)
-const TYPES: Record<string, string> = {
-  "video/mp4": "mp4",
-  "video/webm": "webm",
-  "video/quicktime": "mov",
-};
+import { uploadVideo, videoFileError } from "@/lib/video-upload";
 
 // Video de portada: subirlo desde el teléfono/computador (directo a Vercel
 // Blob, con progreso) o pegar un enlace (YouTube, Vimeo o un .mp4).
@@ -27,21 +20,12 @@ export function VideoField({ name, defaultUrl }: { name: string; defaultUrl: str
   const video = parseCoverVideo(url);
 
   async function onFile(file: File) {
-    setError("");
-    const ext = TYPES[file.type];
-    if (!ext) return setError("Formato no válido: usa MP4, WEBM o MOV.");
-    if (file.size > MAX_BYTES) return setError("El video supera los 100 MB. Recórtalo o comprímelo.");
+    const invalid = videoFileError(file);
+    setError(invalid ?? "");
+    if (invalid) return;
     setProgress(0);
     try {
-      const id = crypto.randomUUID();
-      const blob = await uploadPresigned(`videos/${id}.${ext}`, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload/video",
-        contentType: file.type,
-        multipart: file.size > 20 * 1024 * 1024,
-        onUploadProgress: (p) => setProgress(Math.round(p.percentage)),
-      });
-      setUrl(blob.url);
+      setUrl(await uploadVideo(file, setProgress));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo subir el video.");
     } finally {

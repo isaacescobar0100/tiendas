@@ -52,7 +52,7 @@ export function ThemeEditor({
 
   const theme = useMemo(() => normalizeTheme(raw), [raw]);
   const checks = useMemo(() => checkTheme(theme), [theme]);
-  const blocking = checks.filter((c) => c.blocking && !c.ok);
+  const blocking = checks.filter((c) => !c.ok);
   const clamped = (["brand", "bg", "surface", "ink"] as ColorKey[]).filter(
     (k) => raw[k].toLowerCase() !== theme[k],
   );
@@ -173,9 +173,7 @@ export function ThemeEditor({
 
         <Section title="Legibilidad" desc="Contraste mínimo AA: 4,5 para texto y 3 para botones sobre el fondo.">
           <ul className="divide-y divide-line">
-            {checks
-              .filter((c) => c.blocking)
-              .map((c) => (
+            {checks.map((c) => (
                 <li key={c.key} className="flex items-center justify-between gap-3 py-2 text-sm">
                   <span className="text-ink-2">{c.label}</span>
                   <span className={`inline-flex items-center gap-1 font-medium ${c.ok ? "text-ok-ink" : "text-bad-ink"}`}>

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,13 +10,14 @@ import { storeUrl, sedeSlug, seoTagline, clip, breadcrumbJsonLd, locationJsonLd 
 import { JsonLd } from "@/components/json-ld";
 import { withAutoKeywords } from "@/lib/seo-data";
 
-async function getStore(slug: string) {
+// cache(): metadata y página la piden en el mismo render.
+const getStore = cache(async (slug: string) => {
   const store = await prisma.store.findFirst({
     where: { slug, active: true },
     include: { locations: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] } },
   });
   return store ? withAutoKeywords(store) : null;
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }): Promise<Metadata> {
   const { storeSlug } = await params;

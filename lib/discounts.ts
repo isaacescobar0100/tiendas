@@ -2,7 +2,7 @@
 // solo lugar: cada página que muestra precios y el checkout (que cobra) pasan
 // los productos por applyDiscounts, así lo que se ve es lo que se cobra.
 import { prisma } from "@/lib/prisma";
-import { isOnSale } from "@/lib/pricing";
+import { discountedCents, isOnSale } from "@/lib/pricing";
 
 export type DiscountRule = {
   id: string;
@@ -54,7 +54,7 @@ export function applyDiscount<
 >(p: T, rules: DiscountRule[]): T {
   const pct = discountFor(p, rules);
   if (!pct) return p;
-  const discounted = Math.round((p.priceCents * (100 - pct)) / 100 / 100) * 100;
+  const discounted = discountedCents(p.priceCents, pct);
   if (discounted <= 0 || discounted >= p.priceCents) return p;
   const current = isOnSale(p) ? (p.salePriceCents as number) : Infinity;
   return discounted < current ? { ...p, salePriceCents: discounted } : p;

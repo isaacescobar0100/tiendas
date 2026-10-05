@@ -7,6 +7,7 @@ import {
   isPlatformHost,
   platformHost,
   cleanHost,
+  isMainHost,
   STORE_HOST_HEADER,
 } from "@/lib/store-host";
 
@@ -18,16 +19,6 @@ const { auth } = NextAuth(authConfig);
 // En el dominio principal (*.vercel.app / localhost) no hace nada.
 
 const domainCache = new Map<string, { slug: string | null; exp: number }>();
-
-function isMainHost(host: string): boolean {
-  return (
-    !host ||
-    host.endsWith(".vercel.app") ||
-    host.startsWith("localhost") ||
-    host.startsWith("127.0.0.1") ||
-    host.startsWith("0.0.0.0")
-  );
-}
 
 async function resolveSlug(
   host: string,

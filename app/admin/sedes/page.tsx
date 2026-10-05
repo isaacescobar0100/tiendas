@@ -21,10 +21,7 @@ export default async function SedesPage() {
   });
   const loginUrl = "/sede/login";
   // Cupo del plan (lo fija el superadmin). Las que ya existen se conservan.
-  const { maxLocations } = await prisma.store.findUniqueOrThrow({
-    where: { id: store.id },
-    select: { maxLocations: true },
-  });
+  const { maxLocations } = store;
   const full = locations.length >= maxLocations;
 
   return (

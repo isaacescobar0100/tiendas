@@ -3,6 +3,7 @@ import Link from "next/link";
 import { storeIcons } from "@/lib/store-meta";
 import { requireAdminStore } from "@/lib/guards";
 import { billingOf, GRACE_DAYS } from "@/lib/billing";
+import { TZ } from "@/lib/dates";
 import { storeTheme, themeStyle } from "@/lib/theme";
 import { themeFontVars } from "@/lib/fonts";
 import { AdminNav } from "@/components/admin-nav";
@@ -30,7 +31,7 @@ export default async function AdminLayout({
   const billing = billingOf(store);
   const fecha = store.paidUntil
     ? new Intl.DateTimeFormat("es", {
-        timeZone: "America/Bogota",
+        timeZone: TZ,
         dateStyle: "long",
       }).format(store.paidUntil)
     : "";

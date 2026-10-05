@@ -41,6 +41,8 @@ export function LiveRefresh({
   const [soundOn, setSoundOn] = useState(false);
   const [toast, setToast] = useState(0); // cuántos pedidos nuevos sin ver
   const shouldRefresh = useRef(true);
+  // Cambió algo con la pestaña oculta: se actualiza al volver (nadie la ve).
+  const dirty = useRef(false);
 
   useEffect(() => {
     shouldRefresh.current = !refreshPattern || new RegExp(refreshPattern).test(pathname);
@@ -97,6 +99,8 @@ export function LiveRefresh({
     let stop = false;
     let timer: ReturnType<typeof setTimeout>;
     const tick = async () => {
+      // Pestaña oculta sin avisos: no consultar; al volver se revisa enseguida.
+      if (document.hidden && !alertNew) return;
       try {
         const r = await fetch(src, { cache: "no-store" });
         if (r.ok) {
@@ -104,7 +108,10 @@ export function LiveRefresh({
           const prev = last.current;
           last.current = p;
           if (prev && p.v !== prev.v) {
-            if (shouldRefresh.current) router.refresh();
+            if (shouldRefresh.current) {
+              if (document.hidden) dirty.current = true;
+              else router.refresh();
+            }
             if (alertNew && p.newest && (!prev.newest || p.newest > prev.newest)) {
               setToast((n) => n + 1);
               ding();
@@ -123,6 +130,10 @@ export function LiveRefresh({
     // Al volver a la pestaña, revisar enseguida.
     const onVisible = () => {
       if (document.visibilityState === "visible") {
+        if (dirty.current) {
+          dirty.current = false;
+          router.refresh();
+        }
         clearTimeout(timer);
         void tick();
       }

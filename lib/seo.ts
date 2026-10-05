@@ -5,6 +5,7 @@ import type { StoreType } from "@prisma/client";
 import { storePublicUrl } from "@/lib/site-url";
 import { slugify } from "@/lib/utils";
 import { parseStoreHours } from "@/lib/store-hours";
+import { effectivePriceCents } from "@/lib/pricing";
 
 type StoreLike = { slug: string; customDomain?: string | null; domainActive?: boolean | null };
 
@@ -84,6 +85,18 @@ export type SeoStore = StoreLike & {
   seoCity?: string | null;
   seoKeywords?: string | null;
 };
+
+/** Palabras clave escritas a mano → texto guardado ("a, b, c"; máx. 12), o null. */
+export function normalizeSeoKeywords(raw: string | null | undefined): string | null {
+  return (
+    raw
+      ?.split(",")
+      .map((k) => k.trim())
+      .filter(Boolean)
+      .slice(0, 12)
+      .join(", ") || null
+  );
+}
 
 export function seoKeywords(store: SeoStore): string[] {
   return String(store.seoKeywords ?? "")
@@ -276,7 +289,7 @@ export function productJsonLd(
   },
   currency: string,
 ) {
-  const price = p.salePriceCents && p.salePriceCents > 0 && p.salePriceCents < p.priceCents ? p.salePriceCents : p.priceCents;
+  const price = effectivePriceCents(p);
   return {
     "@context": "https://schema.org",
     "@type": "Product",

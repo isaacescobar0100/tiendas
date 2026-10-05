@@ -24,11 +24,7 @@ export default async function SedeOrders() {
   if (!sede) redirect("/sede/login");
   // Pagos en línea aprobados en Wompi que no nos llegaron por webhook.
   await reconcileOnlineOrders({ storeId: sede.storeId, locationName: sede.name });
-  const store = await prisma.store.findUnique({
-    where: { id: sede.storeId },
-    select: { name: true },
-  });
-  const storeName = store?.name ?? "";
+  const storeName = sede.store.name;
 
   const orders = await prisma.order.findMany({
     where: { storeId: sede.storeId, locationName: sede.name },

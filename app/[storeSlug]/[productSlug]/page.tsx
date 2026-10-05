@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -42,7 +43,8 @@ function parseGalleryData(raw: string): GalleryPic[] {
   }
 }
 
-async function getData(storeSlug: string, productSlug: string) {
+// cache(): metadata y página la piden en el mismo render.
+const getData = cache(async (storeSlug: string, productSlug: string) => {
   const store = await prisma.store.findFirst({
     where: { slug: storeSlug, active: true },
   });
@@ -56,7 +58,7 @@ async function getData(storeSlug: string, productSlug: string) {
   });
   if (!product) return null;
   return { store, product };
-}
+});
 
 export async function generateMetadata({
   params,
@@ -112,8 +114,28 @@ export default async function ProductPage({
   const data = await getData(storeSlug, productSlug);
   if (!data) notFound();
   const { store } = data;
+  // Consultas independientes en paralelo: descuentos, relacionados, reseñas,
+  // cliente en sesión y número de sedes.
+  const [rules, relatedRaw, reviews, customer, sedes] = await Promise.all([
+    activeDiscounts(store.id),
+    // Productos relacionados: misma tienda, priorizando la misma categoría.
+    prisma.product.findMany({
+      where: { storeId: store.id, active: true, id: { not: data.product.id } },
+      orderBy: { createdAt: "desc" },
+      include: {
+        variants: { select: { id: true, color: true, size: true, stock: true } },
+      },
+      take: 12,
+    }),
+    prisma.review.findMany({
+      where: { productId: data.product.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    getCurrentCustomer(store.id),
+    prisma.storeLocation.count({ where: { storeId: store.id } }),
+  ]);
   // Descuento vigente (Admin > Descuentos): mismo cálculo que en el checkout.
-  const rules = await activeDiscounts(store.id);
   const product = applyDiscount(data.product, rules);
 
   const onSale = isOnSale(product);
@@ -134,15 +156,6 @@ export default async function ProductPage({
     ...parseGalleryData(product.galleryData),
   ];
 
-  // Productos relacionados: misma tienda, priorizando la misma categoría
-  const relatedRaw = await prisma.product.findMany({
-    where: { storeId: store.id, active: true, id: { not: product.id } },
-    orderBy: { createdAt: "desc" },
-    include: {
-      variants: { select: { id: true, color: true, size: true, stock: true } },
-    },
-    take: 12,
-  });
   const related = applyDiscounts(relatedRaw, rules)
     .sort(
       (a, b) =>
@@ -151,15 +164,6 @@ export default async function ProductPage({
     )
     .slice(0, 4);
 
-  // Reseñas del producto (lista) + cliente en sesión.
-  const [reviews, customer] = await Promise.all([
-    prisma.review.findMany({
-      where: { productId: product.id },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }),
-    getCurrentCustomer(store.id),
-  ]);
   const reviewCount = reviews.length;
   const reviewAvg =
     reviewCount > 0
@@ -172,7 +176,6 @@ export default async function ProductPage({
 
   // Datos para "Cómo comprar" (todo sale de la configuración real de la tienda).
   const openState = getStoreOpenState(store.hoursJson);
-  const sedes = await prisma.storeLocation.count({ where: { storeId: store.id } });
   const payMethods = [
     store.transferEnabled && "Transferencia / QR",
     store.codEnabled && "Contra entrega",

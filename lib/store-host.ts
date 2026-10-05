@@ -10,6 +10,12 @@ export function rootDomain(): string {
     .replace(/^\.+/, "");
 }
 
+/** Subdominio de la tienda en el dominio puente (surenos.acordemusic.com), o null. */
+export function storeSubdomain(slug: string): string | null {
+  const root = rootDomain();
+  return root ? `${slug}.${root}` : null;
+}
+
 /** Host sin puerto y en minúsculas. */
 export const cleanHost = (host: string) => host.split(":")[0].toLowerCase();
 
@@ -50,6 +56,17 @@ export function isRootHost(host: string): boolean {
   const root = rootDomain();
   const h = cleanHost(host);
   return !!root && (h === root || h === `www.${root}`);
+}
+
+/** Dominio técnico de la plataforma (Vercel o local): nunca es una tienda. */
+export function isMainHost(host: string): boolean {
+  return (
+    !host ||
+    host.endsWith(".vercel.app") ||
+    host.startsWith("localhost") ||
+    host.startsWith("127.0.0.1") ||
+    host.startsWith("0.0.0.0")
+  );
 }
 
 /** Cabecera interna que el middleware pone cuando la visita llega por el

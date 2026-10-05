@@ -14,12 +14,8 @@ import { setTempPasswordFlash, clearTempPasswordFlash } from "@/lib/flash";
 import { sendRentEmail } from "@/lib/email";
 import { signOut } from "@/auth";
 import { addProjectDomain, removeProjectDomain, vercelEnabled } from "@/lib/vercel";
-
-/** Subdominio de la tienda en el dominio puente (surenos.acordemusic.com). */
-function storeSubdomain(slug: string): string | null {
-  const root = (process.env.STORE_ROOT_DOMAIN ?? "").trim().toLowerCase();
-  return root ? `${slug}.${root}` : null;
-}
+import { storeSubdomain } from "@/lib/store-host";
+import { normalizeSeoKeywords } from "@/lib/seo";
 
 /**
  * Agrega a Vercel los dominios de la tienda (subdominio y dominio propio).
@@ -134,19 +130,20 @@ async function readStoreConfig(formData: FormData, current: CurrentStore | null)
   };
 
   // URL corta: la escrita o, al crear sin escribirla, una a partir del nombre.
+  const notSelf = current ? { id: { not: current.id } } : {};
   let slug = slugify(d.slug ?? "");
   if (!slug) {
     if (current) return { error: "Slug inválido." } as const;
     slug = await uniqueStoreSlug(d.storeName);
   } else {
     if (isReservedSlug(slug)) return { error: "Ese slug está reservado por el sistema. Elige otro." } as const;
-    if (await prisma.store.findFirst({ where: { slug, ...(current ? { id: { not: current.id } } : {}) } })) {
+    if (await prisma.store.findFirst({ where: { slug, ...notSelf } })) {
       return { error: "Ese slug ya está en uso por otra tienda." } as const;
     }
   }
 
   const customDomain = normalizeDomain(d.customDomain);
-  if (customDomain && (await prisma.store.findFirst({ where: { customDomain, ...(current ? { id: { not: current.id } } : {}) } }))) {
+  if (customDomain && (await prisma.store.findFirst({ where: { customDomain, ...notSelf } }))) {
     return { error: "Ese dominio ya está asignado a otra tienda." } as const;
   }
   // Dominio activo: solo si ya abre esta tienda (se comprueba al activarlo).
@@ -171,13 +168,7 @@ async function readStoreConfig(formData: FormData, current: CurrentStore | null)
     return { error: "Debe quedar al menos un método de pago activo." } as const;
   }
 
-  const keywords =
-    s(d.seoKeywords)
-      ?.split(",")
-      .map((k) => k.trim())
-      .filter(Boolean)
-      .slice(0, 12)
-      .join(", ") || null;
+  const keywords = normalizeSeoKeywords(s(d.seoKeywords));
 
   return {
     data: {

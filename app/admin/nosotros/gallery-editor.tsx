@@ -1,18 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { uploadPresigned } from "@vercel/blob/client";
 import { ArrowLeft, ArrowRight, Film, ImagePlus, Link2, Play, Trash2 } from "lucide-react";
 import { compressImage } from "@/lib/image-compress";
 import { parseCoverVideo, videoThumb } from "@/lib/video";
 import { ABOUT_LIMITS, type AboutMedia } from "@/lib/about";
-
-const VIDEO_TYPES: Record<string, string> = {
-  "video/mp4": "mp4",
-  "video/webm": "webm",
-  "video/quicktime": "mov",
-};
-const MAX_VIDEO = 100 * 1024 * 1024; // igual que el servidor
+import { uploadVideo as uploadVideoFile, videoFileError } from "@/lib/video-upload";
 
 /**
  * Galería de la página Conócenos: subir varias fotos a la vez, subir videos
@@ -58,20 +51,13 @@ export function GalleryEditor({
   }
 
   async function uploadVideo(file: File) {
-    setError("");
-    const ext = VIDEO_TYPES[file.type];
-    if (!ext) return setError("Formato no válido: usa MP4, WEBM o MOV.");
-    if (file.size > MAX_VIDEO) return setError("El video supera los 100 MB. Recórtalo o comprímelo.");
+    const invalid = videoFileError(file);
+    setError(invalid ?? "");
+    if (invalid) return;
     setBusy("Subiendo video… 0%");
     try {
-      const blob = await uploadPresigned(`videos/${crypto.randomUUID()}.${ext}`, file, {
-        access: "public",
-        handleUploadUrl: "/api/upload/video",
-        contentType: file.type,
-        multipart: file.size > 20 * 1024 * 1024,
-        onUploadProgress: (p) => setBusy(`Subiendo video… ${Math.round(p.percentage)}%`),
-      });
-      push({ kind: "video", url: blob.url, caption: "" });
+      const url = await uploadVideoFile(file, (pct) => setBusy(`Subiendo video… ${pct}%`));
+      push({ kind: "video", url, caption: "" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo subir el video.");
     } finally {

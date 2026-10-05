@@ -3,6 +3,7 @@
 // La cookie lleva la versión de sesión de la sede: si el admin le cambia la clave
 // o le quita el acceso, las sesiones abiertas dejan de valer.
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { signPayload, verifyPayload, cookieOptions } from "@/lib/signed-cookie";
@@ -24,8 +25,9 @@ export async function clearSedeSession() {
   (await cookies()).delete(COOKIE);
 }
 
-/** Sede actual (con su tienda) si hay sesión válida; si no, null. */
-export async function getCurrentSede() {
+/** Sede actual (con su tienda) si hay sesión válida; si no, null.
+ * cache(): layout, metadata y página la piden en el mismo render. */
+export const getCurrentSede = cache(async () => {
   const data = verifyPayload<{ locationId: string; sv: number; exp: number }>(
     PURPOSE,
     (await cookies()).get(COOKIE)?.value,
@@ -66,4 +68,4 @@ export async function getCurrentSede() {
     storeId: sede.storeId,
     store: sede.store,
   };
-}
+});

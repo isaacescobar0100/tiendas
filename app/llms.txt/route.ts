@@ -5,6 +5,7 @@ import { aboutIsLive, parseAbout } from "@/lib/about";
 import { parseStoreHours, DAY_ORDER } from "@/lib/store-hours";
 import { parseTransferAccounts, TRANSFER_KIND_LABEL } from "@/lib/payment-methods";
 import { formatPrice } from "@/lib/utils";
+import { isOnSale } from "@/lib/pricing";
 import { withAutoKeywords } from "@/lib/seo-data";
 
 export const dynamic = "force-dynamic";
@@ -17,31 +18,33 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const found = await storeForHost();
-  const host = found ? await withAutoKeywords(found) : null;
   const headers = { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" };
-  if (!host) {
+  if (!found) {
     return new Response("# MiTienda\n\n> Plataforma para crear tiendas en línea con marca propia.\n", { headers });
   }
 
-  const store = await prisma.store.findUnique({
-    where: { id: host.id },
-    select: {
-      onlinePaymentEnabled: true,
-      codEnabled: true,
-      transferEnabled: true,
-      transferAccountsJson: true,
-      shippingCents: true,
-      freeShippingOverCents: true,
-      whatsapp: true,
-      locations: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { name: true, address: true, whatsapp: true } },
-      categories: { orderBy: { name: "asc" }, select: { id: true, name: true } },
-      products: {
-        where: { active: true },
-        orderBy: { name: "asc" },
-        select: { name: true, slug: true, description: true, priceCents: true, salePriceCents: true, categoryId: true },
+  const [host, store] = await Promise.all([
+    withAutoKeywords(found),
+    prisma.store.findUnique({
+      where: { id: found.id },
+      select: {
+        onlinePaymentEnabled: true,
+        codEnabled: true,
+        transferEnabled: true,
+        transferAccountsJson: true,
+        shippingCents: true,
+        freeShippingOverCents: true,
+        whatsapp: true,
+        locations: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], select: { name: true, address: true, whatsapp: true } },
+        categories: { orderBy: { name: "asc" }, select: { id: true, name: true } },
+        products: {
+          where: { active: true },
+          orderBy: { name: "asc" },
+          select: { name: true, slug: true, description: true, priceCents: true, salePriceCents: true, categoryId: true },
+        },
       },
-    },
-  });
+    }),
+  ]);
   if (!store) return new Response("", { status: 404 });
 
   const u = (p = "") => storeUrl(host, p);
@@ -100,8 +103,7 @@ export async function GET() {
     for (const g of groups) {
       L.push(`### ${g.name}`, "");
       for (const p of g.items) {
-        const sale = p.salePriceCents && p.salePriceCents > 0 && p.salePriceCents < p.priceCents;
-        const price = sale ? `${money(p.salePriceCents!)} (antes ${money(p.priceCents)})` : money(p.priceCents);
+        const price = isOnSale(p) ? `${money(p.salePriceCents!)} (antes ${money(p.priceCents)})` : money(p.priceCents);
         L.push(`- [${p.name}](${u(`/${p.slug}`)}) — ${price}${p.description ? `: ${p.description}` : ""}`);
       }
       L.push("");

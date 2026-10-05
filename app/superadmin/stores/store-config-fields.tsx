@@ -3,6 +3,7 @@
 import type { StoreType } from "@prisma/client";
 import { STORE_TYPE_OPTIONS } from "@/lib/store-type";
 import { GRACE_DAYS } from "@/lib/billing";
+import { dayKey } from "@/lib/dates";
 
 export type StoreCfg = {
   id?: string;
@@ -40,7 +41,7 @@ export function newStoreDefaults(): StoreCfg {
     seoCity: null,
     seoKeywords: null,
     plan: "SALE",
-    paidUntil: new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(inAYear),
+    paidUntil: dayKey(inAYear),
     maxLocations: 1,
     sedesUsed: 0,
     onlinePaymentEnabled: false,

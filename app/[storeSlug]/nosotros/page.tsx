@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -17,7 +18,7 @@ import { aboutIsLive, parseAbout, SOCIAL_KEYS, type AboutMedia, type SocialKey }
 import { parseStorePhotos, type StorePhoto } from "@/lib/store-photos";
 import { StorePhotoImg } from "@/components/store-photo";
 import { fillGrid } from "@/lib/grid-fill";
-import { bogotaDow, DAY_ORDER, getStoreOpenState, parseStoreHours } from "@/lib/store-hours";
+import { bogotaDow, DAY_ORDER, getStoreOpenState, hour12, parseStoreHours } from "@/lib/store-hours";
 import { whatsappLink } from "@/lib/whatsapp";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { BannerSlider } from "@/components/banner-slider";
@@ -27,7 +28,8 @@ import { JsonLd } from "@/components/json-ld";
 import { storeUrl, faqJsonLd, breadcrumbJsonLd, directionsUrl, sedeSlug as sedePath } from "@/lib/seo";
 import { SocialIcon } from "@/components/about/social-icon";
 
-async function getStore(slug: string) {
+// cache(): metadata y página la piden en el mismo render.
+const getStore = cache(async (slug: string) => {
   return prisma.store.findFirst({
     where: { slug, active: true },
     select: {
@@ -47,7 +49,7 @@ async function getStore(slug: string) {
       whatsapp: true,
     },
   });
-}
+});
 
 export async function generateMetadata({
   params,
@@ -81,15 +83,6 @@ const SOCIAL_LABEL: Record<SocialKey, string> = {
   youtube: "YouTube",
   website: "Sitio web",
 };
-
-// "18:30" → "6:30 p. m."
-function hour12(hhmm: string): string {
-  const [h, m] = hhmm.split(":").map(Number);
-  if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
-  const suffix = h < 12 ? "a. m." : "p. m.";
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return `${h12}:${String(m).padStart(2, "0")} ${suffix}`;
-}
 
 // ¿Es un celular colombiano (para ofrecer WhatsApp además de llamar)?
 function isMobileCo(number: string): boolean {

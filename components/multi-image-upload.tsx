@@ -4,8 +4,9 @@ import { useRef, useState } from "react";
 import { X } from "lucide-react";
 import { compressImage } from "@/lib/image-compress";
 import { ImageFramer } from "@/components/image-framer";
+import type { StorePhoto } from "@/lib/store-photos";
 
-export type GalleryItem = { url: string; position: string; zoom: number };
+export type GalleryItem = StorePhoto;
 
 export function MultiImageUpload({
   name = "gallery",

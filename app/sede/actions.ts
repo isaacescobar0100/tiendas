@@ -14,6 +14,7 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { storeForHost } from "@/lib/host-store";
 import { setOrderPaymentStatus, advanceFulfillment } from "@/lib/orders";
 import { NOTICE_STATE } from "@/lib/order-messages";
+import { FULFILLMENT_STATUSES } from "@/lib/order-status";
 import {
   isLocked,
   registerFailure,
@@ -60,13 +61,7 @@ export async function sedeLoginAction(
   }
   // Desde la dirección de una tienda solo entran SUS sedes (mismo mensaje).
   const hostStore = await storeForHost();
-  if (hostStore) {
-    const own = await prisma.store.findFirst({
-      where: { id: sede.storeId, slug: hostStore.slug },
-      select: { id: true },
-    });
-    if (!own) return fail;
-  }
+  if (hostStore && hostStore.id !== sede.storeId) return fail;
   await clearFailures("sede", sede.id);
 
   await setSedeSession(sede.id, sede.sessionVersion);
@@ -78,7 +73,6 @@ export async function sedeLogoutAction() {
   redirect("/sede/login");
 }
 
-const FULFILLMENTS: Fulfillment[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"];
 const PAYMENTS = ["PENDING", "PAID", "CANCELLED"] as const;
 
 /** Resultado de cambiar un estado desde el selector: el motivo si no se pudo. */
@@ -91,7 +85,7 @@ export async function updateSedeFulfillmentAction(formData: FormData): Promise<S
 
   const orderId = String(formData.get("orderId") ?? "");
   const value = String(formData.get("fulfillment") ?? "") as Fulfillment;
-  if (!FULFILLMENTS.includes(value)) return { error: "Estado no válido." };
+  if (!FULFILLMENT_STATUSES.includes(value)) return { error: "Estado no válido." };
 
   const r = await prisma.order.updateMany({
     where: { id: orderId, storeId: sede.storeId, locationName: sede.name },
