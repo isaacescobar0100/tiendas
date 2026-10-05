@@ -55,7 +55,9 @@ export async function GET() {
   L.push(`- Sitio web y pedidos en línea: ${u()}`);
   if (host.type === "FOOD") L.push(`- Menú: ${u("/menu")}`);
   const about = parseAbout(host.aboutJson);
-  if (aboutIsLive(about)) L.push(`- Quiénes somos: ${u("/nosotros")}`);
+  // Conócenos oculto (el admin lo dejó sin publicar): nada de su contenido sale.
+  const aboutLive = aboutIsLive(about);
+  if (aboutLive) L.push(`- Quiénes somos: ${u("/nosotros")}`);
   L.push("");
 
   if (store.locations.length) {
@@ -110,7 +112,7 @@ export async function GET() {
     }
   }
 
-  if (about.faqs.length) {
+  if (aboutLive && about.faqs.length) {
     L.push("## Preguntas frecuentes", "");
     for (const f of about.faqs) L.push(`**${f.q}**`, f.a, "");
   }

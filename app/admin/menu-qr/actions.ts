@@ -74,10 +74,10 @@ export async function addTableAction(_prev: TableState, formData: FormData): Pro
   if (!name) return { error: "Escribe el nombre de la mesa." };
   const locationId = await resolveLocation(store.id, formData.get("locationId"));
   if (locationId === false) return { error: "Sede no válida." };
-  const dup = await prisma.diningTable.findFirst({
-    where: { storeId: store.id, locationId, name: { equals: name, mode: "insensitive" } },
-    select: { id: true },
-  });
+  // Sin "insensitive" (ILIKE trataría % y _ como comodines): se compara aquí.
+  const dup = (
+    await prisma.diningTable.findMany({ where: { storeId: store.id, locationId }, select: { name: true } })
+  ).some((t) => t.name.toLowerCase() === name.toLowerCase());
   if (dup) return { error: `Ya existe «${name}» en esa sede.` };
   if ((await prisma.diningTable.count({ where: { storeId: store.id } })) >= MAX_TABLES) {
     return { error: `Máximo ${MAX_TABLES} mesas por tienda.` };

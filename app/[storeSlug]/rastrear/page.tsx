@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Search } from "lucide-react";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import {
@@ -41,7 +42,10 @@ export default async function TrackOrderPage({
   // el número completo: con uno vacío o corto bastaría el email para ver los
   // pedidos de otra persona.
   const num = (typeof n === "string" ? n : "").trim().toLowerCase();
-  const mail = (typeof email === "string" ? email : "").trim();
+  // Correo válido y en minúsculas (se guarda así): comparación exacta. Con
+  // "insensitive" Prisma usa ILIKE y "%" o "_" valdrían como comodines.
+  const rawMail = (typeof email === "string" ? email : "").trim().toLowerCase();
+  const mail = z.email().safeParse(rawMail).success ? rawMail : "";
   const searched = Boolean(n || email);
   const validNum = /^[a-z0-9]{8}$/.test(num);
   let limited = false;
@@ -54,7 +58,7 @@ export default async function TrackOrderPage({
       ? await prisma.order.findFirst({
           where: {
             store: { slug: storeSlug },
-            customerEmail: { equals: mail, mode: "insensitive" },
+            customerEmail: mail,
             id: { endsWith: num },
           },
           include: { items: true },

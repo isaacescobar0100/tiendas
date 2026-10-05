@@ -45,6 +45,21 @@ export function safePosition(p: unknown): string {
     : "50% 50%";
 }
 
+/**
+ * Buzón real detrás de un correo, para limitar envíos por destinatario:
+ * "Ana.Perez+1@Gmail.com" y "anaperez@gmail.com" llegan al mismo buzón.
+ */
+export function mailboxKey(email: string): string {
+  const [rawLocal = "", rawDomain = ""] = email.trim().toLowerCase().split("@");
+  let local = rawLocal.split("+")[0];
+  let domain = rawDomain;
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    local = local.replace(/\./g, "");
+    domain = "gmail.com";
+  }
+  return `${local}@${domain}`;
+}
+
 export function isReservedSlug(slug: string): boolean {
   return RESERVED_SLUGS.has(slug);
 }

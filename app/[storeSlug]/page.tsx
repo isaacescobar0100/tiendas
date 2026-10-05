@@ -249,7 +249,7 @@ export default async function StorefrontPage({
   return (
     <div>
       {/* Datos para Google y los buscadores con IA: marca, sitio y cada sede. */}
-      {isHome && <JsonLd data={storeJsonLd(store, locations, socialLinks(about), await storeRating(store.id))} />}
+      {isHome && <JsonLd data={storeJsonLd(store, locations, aboutLive ? socialLinks(about) : [], await storeRating(store.id))} />}
       <BannerSlider slides={bannerSlides} />
       {/* Si la portada ya muestra el nombre, el título queda solo para
           lectores de pantalla y buscadores (no se repite en pantalla). */}

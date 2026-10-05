@@ -7,6 +7,7 @@ import { requireAdminStore } from "@/lib/guards";
 import { sendStatusEmail } from "@/lib/email";
 import { setOrderPaymentStatus, advanceFulfillment } from "@/lib/orders";
 import { noticeText, NOTICE_STATE } from "@/lib/order-messages";
+import { rateLimit } from "@/lib/rate-limit";
 
 const paymentSchema = z.enum(["PENDING", "PAID", "CANCELLED"]);
 const fulfillmentSchema = z.enum(["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED"]);
@@ -37,6 +38,12 @@ export async function notifyByEmailAction(
   });
   if (!order) return { error: "Pedido no encontrado." };
   if (order.status === "CANCELLED") return { error: "El pedido está cancelado." };
+  // El correo del pedido no está verificado: máx. 3 avisos por pedido al día y
+  // 60 por tienda y hora (el envío es compartido entre todas las tiendas).
+  const limited =
+    !(await rateLimit(`status-mail:${order.id}`, 3, 24 * 60 * 60 * 1000)).ok ||
+    !(await rateLimit(`status-mail-store:${store.id}`, 60, 60 * 60 * 1000)).ok;
+  if (limited) return { error: "Ya se enviaron varios correos de este pedido. Avísale por WhatsApp." };
 
   const ok = await sendStatusEmail({
     to: order.customerEmail,

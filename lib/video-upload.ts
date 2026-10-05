@@ -19,7 +19,11 @@ export function videoFileError(file: File): string | null {
 
 /** Sube el video (ya validado con videoFileError) y devuelve su URL pública. */
 export async function uploadVideo(file: File, onProgress: (pct: number) => void): Promise<string> {
-  const blob = await uploadPresigned(`videos/${crypto.randomUUID()}.${TYPES[file.type]}`, file, {
+  // El servidor da el nombre (en la carpeta de la tienda).
+  const res = await fetch(`/api/upload/video?ext=${TYPES[file.type]}`, { cache: "no-store" });
+  const { pathname, error } = (await res.json().catch(() => ({}))) as { pathname?: string; error?: string };
+  if (!res.ok || !pathname) throw new Error(error ?? "No se pudo preparar la subida.");
+  const blob = await uploadPresigned(pathname, file, {
     access: "public",
     handleUploadUrl: "/api/upload/video",
     contentType: file.type,

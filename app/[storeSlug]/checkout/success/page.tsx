@@ -13,7 +13,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { formatPrice, variantLabel } from "@/lib/utils";
 import { normalizeWhatsapp } from "@/lib/whatsapp";
-import { getTransaction, resolveWompiKeys } from "@/lib/wompi";
+import { findTransactionByReference, resolveWompiKeys } from "@/lib/wompi";
 import { markOrderPaid, reconcileOnlineOrders } from "@/lib/orders";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import {
@@ -27,7 +27,7 @@ import CopyButton from "./copy-button";
 import { PostOrderAccount } from "../post-order-account";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { LiveRefresh } from "@/components/live-refresh";
-import { orderLiveSrc } from "@/lib/order-live";
+import { hasOrderAccess, orderLiveSrc } from "@/lib/order-live";
 import { OrderProgress } from "@/components/order-progress";
 
 export const dynamic = "force-dynamic";
@@ -87,8 +87,11 @@ export default async function OrderSuccessPage({
     // Cada consulta usa la llave privada de la tienda contra Wompi: límite por
     // IP para que no se pueda usar esta página para saturar ese servicio.
     const rl = await rateLimit(`wompi-lookup:${await clientIp()}`, 30, 10 * 60 * 1000);
+    // No se usa el id de la URL (lo puede poner cualquiera, incluso de otra
+    // cuenta de Wompi): se busca por la referencia del pedido con la llave
+    // privada de la tienda, que solo ve los pagos de SU comercio.
     const tx = rl.ok
-      ? await getTransaction(txId, resolveWompiKeys(order.store))
+      ? await findTransactionByReference(order.id, resolveWompiKeys(order.store))
       : null;
     if (tx && tx.reference === order.id && tx.status === "APPROVED") {
       // markOrderPaid comprueba monto, moneda y método; solo decimos "pagado"
@@ -156,6 +159,10 @@ export default async function OrderSuccessPage({
     },
   }[payment];
 
+  // Los datos del comprador solo se muestran en el navegador que hizo el
+  // pedido (el enlace con el id podría llegar a otras manos).
+  const mine = await hasOrderAccess(order.id);
+
   // Vacía el carrito salvo que el pago haya fallado (para poder reintentar).
   const shouldClearCart = payment !== "failed";
 
@@ -175,14 +182,14 @@ export default async function OrderSuccessPage({
   ]);
   const accountExists = !!existing;
   const accountCta: "create" | "login" | null =
-    payment === "failed" || loggedIn ? null : accountExists ? "login" : "create";
+    !mine || payment === "failed" || loggedIn ? null : accountExists ? "login" : "create";
 
   // Envío del pedido por WhatsApp (el negocio atiende por ahí: el pedido es
   // oficial cuando les llega). Va a la sede elegida o, si no tiene número, al
   // WhatsApp de la tienda. En transferencia es también donde va el comprobante.
   let sedeWaHref: string | null = null;
   const awaiting = payment === "awaiting";
-  if (payment !== "failed") {
+  if (mine && payment !== "failed") {
     const sede = order.locationName
       ? await prisma.storeLocation.findFirst({
           where: { storeId: order.storeId, name: order.locationName },
@@ -226,7 +233,8 @@ export default async function OrderSuccessPage({
       </div>
       <h1 className="text-2xl font-bold text-ink">{ui.title}</h1>
       <p className="mt-2 text-ink-3">
-        {order.customerName.split(" ")[0]}, {ui.subtitle}
+        {mine ? `${order.customerName.split(" ")[0]}, ` : ""}
+        {ui.subtitle}
       </p>
       <p className="mt-1 text-sm text-ink-3">
         Nº de pedido: <span className="font-mono">{order.id.slice(-8)}</span>
@@ -345,7 +353,11 @@ export default async function OrderSuccessPage({
 
       {payment !== "failed" && (
         <Link
-          href={sh(`/rastrear?n=${order.id.slice(-8)}&email=${encodeURIComponent(order.customerEmail)}`)}
+          href={sh(
+            mine
+              ? `/rastrear?n=${order.id.slice(-8)}&email=${encodeURIComponent(order.customerEmail)}`
+              : `/rastrear?n=${order.id.slice(-8)}`,
+          )}
           className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-line-2 px-6 py-3 text-sm font-medium text-ink-2 transition hover:bg-surface-2"
         >
           <Search className="h-4 w-4" />
@@ -403,9 +415,15 @@ export default async function OrderSuccessPage({
             {formatPrice(order.totalCents, order.currency)}
           </span>
         </div>
-        {payment !== "failed" && (
+        {payment !== "failed" && mine && (
           <p className="mt-4 text-xs text-ink-3">
             Enviaremos una confirmación a {order.customerEmail}.
+          </p>
+        )}
+        {!mine && (
+          <p className="mt-4 text-xs text-ink-3">
+            Los datos de contacto y envío solo se ven en el dispositivo donde se hizo el pedido. Para seguirlo usa
+            «Rastrear mi pedido» con el número y el correo.
           </p>
         )}
       </div>

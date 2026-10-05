@@ -179,8 +179,8 @@ async function brevoSend(opts: {
  */
 export async function sendOrderEmails(
   data: OrderEmailData,
-  // false = solo avisa a la tienda (p. ej. si ese email ya recibió muchos).
-  opts: { toCustomer?: boolean } = {},
+  // false = no se envía esa copia (p. ej. si ya se enviaron demasiadas).
+  opts: { toCustomer?: boolean; toAdmin?: boolean } = {},
 ): Promise<void> {
   if (!BREVO_API_KEY || !SENDER_EMAIL) {
     console.log(
@@ -207,7 +207,7 @@ export async function sendOrderEmails(
     });
 
     // 2) Aviso al admin de la tienda (con datos para poder enviar el pedido)
-    if (data.adminEmail) {
+    if (data.adminEmail && opts.toAdmin !== false) {
       await brevoSend({
         to: data.adminEmail,
         senderName: data.storeName,

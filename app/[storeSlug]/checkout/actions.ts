@@ -10,6 +10,7 @@ import {
   resolveWompiKeys,
 } from "@/lib/wompi";
 import { computeShipping } from "@/lib/shipping";
+import { mailboxKey } from "@/lib/utils";
 import { effectivePriceCents } from "@/lib/pricing";
 import { activeDiscounts, applyDiscount } from "@/lib/discounts";
 import { getStoreOpenState, isMerchProduct } from "@/lib/store-hours";
@@ -18,6 +19,7 @@ import { parseModifiers, resolveSelection } from "@/lib/modifiers";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { storeOrigin } from "@/lib/store-path";
 import { parseTransferAccounts } from "@/lib/payment-methods";
+import { grantOrderAccess } from "@/lib/order-live";
 import type { PaymentMethod } from "@prisma/client";
 
 // `checkoutUrl` presente = hay que redirigir al cliente a pagar en Wompi.
@@ -27,7 +29,8 @@ export type CheckoutState =
 
 const customerSchema = z.object({
   customerName: z.string().trim().min(2, "Indica tu nombre.").max(80, "El nombre es muy largo."),
-  customerEmail: z.string().trim().email("Email inválido.").max(200),
+  // En minúsculas: Mi cuenta y Rastrear comparan el correo exacto.
+  customerEmail: z.string().trim().toLowerCase().email("Email inválido.").max(200),
   // Obligatorio y validado: móvil colombiano (10 dígitos), para poder avisar por WhatsApp.
   customerPhone: z
     .string()
@@ -201,6 +204,17 @@ export async function placeOrderAction(
   let totalCents = 0;
   // Descuentos vigentes: el mismo cálculo que vio el cliente en la tienda.
   const rules = await activeDiscounts(store.id);
+  // Unidades pedidas por producto/opción, sumando las líneas repetidas: el tope
+  // y el stock se comprueban sobre el total (si no, repetir la misma línea
+  // 30 veces apartaría 600 unidades de un producto). La comida no lleva stock.
+  const wanted = new Map<string, number>();
+  for (const item of items) {
+    const key = item.variantId || item.productId;
+    wanted.set(key, (wanted.get(key) ?? 0) + item.quantity);
+  }
+  if (tracks && [...wanted.values()].some((n) => n > MAX_QTY_PER_LINE)) {
+    return { error: `Máximo ${MAX_QTY_PER_LINE} unidades por producto.` };
+  }
   for (const item of items) {
     const product = byId.get(item.productId);
     if (!product) return { error: `Un producto ya no está disponible.` };
@@ -233,7 +247,7 @@ export async function placeOrderAction(
       if (!variant) {
         return { error: `Opción no disponible en "${product.name}".` };
       }
-      if (variant.stock < item.quantity) {
+      if (variant.stock < (wanted.get(variant.id) ?? item.quantity)) {
         const label = [variant.color, variant.size].filter(Boolean).join(" ");
         return { error: `Sin stock de "${product.name}" ${label}.` };
       }
@@ -252,7 +266,7 @@ export async function placeOrderAction(
       });
     } else {
       // Producto sin variantes: stock a nivel de producto (salvo comida).
-      if (tracks && product.stock < item.quantity) {
+      if (tracks && product.stock < (wanted.get(product.id) ?? item.quantity)) {
         return { error: `Sin stock suficiente de "${product.name}".` };
       }
       totalCents += unitCents * item.quantity;
@@ -341,6 +355,8 @@ export async function placeOrderAction(
         },
       });
     });
+    // Este navegador podrá ver los datos del pedido en la página de éxito.
+    await grantOrderAccess(order.id);
 
     // Pago en línea: no enviamos email todavía (el pedido aún no está pagado).
     // Redirigimos al cliente a pagar; el email sale al confirmarse.
@@ -364,11 +380,15 @@ export async function placeOrderAction(
     // recibir o por transferencia (la tienda lo marca pagado al verificarlo).
     // Emails de confirmación (no bloquea si el envío no está configurado o falla)
     // El correo de confirmación va a un email que nadie verificó: máx. 5 por
-    // dirección y hora, para que el checkout no sirva para mandar correos
-    // masivos a terceros con la marca de la tienda.
-    const mailOk = (
-      await rateLimit(`order-mail:${d.customerEmail.toLowerCase()}`, 5, 60 * 60 * 1000)
-    ).ok;
+    // buzón (sin variantes "+algo" ni puntos de Gmail) y hora, y máx. 60 por
+    // tienda y hora, para que el checkout no sirva para mandar correos masivos
+    // con la marca de la tienda ni agote el envío de las demás tiendas.
+    const HOUR = 60 * 60 * 1000;
+    const mailOk =
+      (await rateLimit(`order-mail:${mailboxKey(d.customerEmail)}`, 5, HOUR)).ok &&
+      (await rateLimit(`order-mail-store:${store.id}`, 60, HOUR)).ok;
+    // La copia a la tienda (con respuesta al correo del cliente) también tiene tope.
+    const ownerOk = (await rateLimit(`order-mail-owner:${store.id}`, 60, HOUR)).ok;
     await sendOrderEmails({
       orderId: order.id,
       storeName: store.name,
@@ -397,7 +417,7 @@ export async function placeOrderAction(
         note: l.note,
       })),
       notes,
-    }, { toCustomer: mailOk });
+    }, { toCustomer: mailOk, toAdmin: ownerOk });
 
     return { orderId: order.id };
   } catch {

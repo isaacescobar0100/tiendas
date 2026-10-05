@@ -51,7 +51,8 @@ export default async function AccountPage({
     ? await prisma.order.findMany({
         where: {
           storeId: store.id,
-          customerEmail: { equals: customer.email, mode: "insensitive" },
+          // Exacto (ambos en minúsculas): "insensitive" usaría ILIKE con comodines.
+          customerEmail: customer.email.toLowerCase(),
         },
         orderBy: { createdAt: "desc" },
         include: { items: true },

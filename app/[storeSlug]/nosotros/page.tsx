@@ -60,6 +60,8 @@ export async function generateMetadata({
   const store = await getStore(storeSlug);
   if (!store) return { title: "Tienda no encontrada" };
   const about = parseAbout(store.aboutJson);
+  // Página oculta: sin descripción tomada de su contenido (la página da 404).
+  if (!aboutIsLive(about)) return { title: "Conócenos", robots: { index: false } };
   const description = about.intro || about.story.slice(0, 160) || store.description || undefined;
   const canonical = storeUrl(store, "/nosotros");
   return {
