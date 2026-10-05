@@ -443,6 +443,9 @@ model OrderItem {
   imageUrl   String?
   priceCents Int // precio unitario YA con las adiciones incluidas
   quantity   Int
+  // Unidades descontadas del inventario y aún no devueltas (puede ser menos
+  // que quantity si se agotó). null = pedido anterior a este registro.
+  stockTaken Int?
 
   @@index([orderId])
 }

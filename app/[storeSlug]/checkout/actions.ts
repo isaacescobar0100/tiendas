@@ -334,6 +334,8 @@ export async function placeOrderAction(
               imageUrl: l.imageUrl,
               priceCents: l.priceCents,
               quantity: l.quantity,
+              // Contraentrega/transferencia ya descontó todo; en línea, al pagar.
+              stockTaken: !useOnline && tracks ? l.quantity : 0,
             })),
           },
         },

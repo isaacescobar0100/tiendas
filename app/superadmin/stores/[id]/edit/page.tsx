@@ -11,11 +11,14 @@ export const dynamic = "force-dynamic";
 
 export default async function EditStorePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ vercel?: string | string[] }>;
 }) {
   await requireSuperadmin();
   const { id } = await params;
+  const { vercel } = await searchParams;
   const store = await prisma.store.findUnique({
     where: { id },
     include: {
@@ -42,7 +45,12 @@ export default async function EditStorePage({
       </p>
 
       <div className="mb-6">
-        <DomainPanel storeId={store.id} slug={store.slug} customDomain={store.customDomain} />
+        <DomainPanel
+          storeId={store.id}
+          slug={store.slug}
+          customDomain={store.customDomain}
+          notice={typeof vercel === "string" ? vercel.slice(0, 300) : null}
+        />
       </div>
 
       <EditStoreForm

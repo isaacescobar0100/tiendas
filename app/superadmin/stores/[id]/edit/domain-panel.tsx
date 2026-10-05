@@ -5,7 +5,17 @@ import { storeSubdomain } from "@/lib/store-host";
 
 // Estado de los dominios de la tienda en Vercel: si están en el proyecto y si
 // el DNS ya apunta bien (con los registros a configurar si falta).
-export async function DomainPanel({ storeId, slug, customDomain }: { storeId: string; slug: string; customDomain: string | null }) {
+export async function DomainPanel({
+  storeId,
+  slug,
+  customDomain,
+  notice,
+}: {
+  storeId: string;
+  slug: string;
+  customDomain: string | null;
+  notice?: string | null; // resultado del último intento de conectar
+}) {
   const sub = storeSubdomain(slug);
 
   if (!vercelEnabled()) {
@@ -33,6 +43,9 @@ export async function DomainPanel({ storeId, slug, customDomain }: { storeId: st
       <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-900">
         <Globe2 className="h-4 w-4" /> Conexión con Vercel
       </h2>
+      {notice && (
+        <p className="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-700 ring-1 ring-gray-200">{notice}</p>
+      )}
       {domains.length === 0 && <p className="text-sm text-gray-500">Esta tienda no tiene dominios para conectar.</p>}
       {domains.map((d, i) => (
         <DomainRow key={d} domain={d} status={statuses[i]} own={d === customDomain} />

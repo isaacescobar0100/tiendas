@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { renewedUntil } from "@/lib/billing";
+import { dayKey } from "@/lib/dates";
 import { slugify, isReservedSlug } from "@/lib/utils";
 import { requireSuperadmin } from "@/lib/guards";
 import { setImpersonation, clearImpersonation } from "@/lib/impersonation";
@@ -86,6 +87,9 @@ async function domainServesStore(domain: string, storeName: string): Promise<boo
   }
 }
 
+const domainNotReady = (domain: string) =>
+  `El dominio ${domain} todavía no abre esta tienda. Revisa que esté en Vercel → Domains y que el DNS apunte bien; luego vuelve a activarlo.`;
+
 const configSchema = z.object({
   storeName: z.string().min(2, "El nombre de la tienda es muy corto."),
   slug: z.string().optional(),
@@ -157,19 +161,22 @@ async function readStoreConfig(formData: FormData, current: CurrentStore | null)
     } as const;
   }
   const customDomain = domain || null;
-  if (customDomain &&(await prisma.store.findFirst({ where: { customDomain, ...notSelf } }))) {
+  if (customDomain && (await prisma.store.findFirst({ where: { customDomain, ...notSelf } }))) {
     return { error: "Ese dominio ya está asignado a otra tienda." } as const;
   }
   // Dominio activo: solo si ya abre esta tienda (se comprueba al activarlo).
+  // Un dominio nuevo aún no está guardado, así que todavía no puede abrir la
+  // tienda: se guarda primero y se comprueba después (activateAfterSave).
   let domainActive = false;
+  let activateAfterSave = false;
   if (current && customDomain && formData.get("domainActive") === "on") {
-    const already = current.domainActive && current.customDomain === customDomain;
-    if (!already && !(await domainServesStore(customDomain, current.name))) {
-      return {
-        error: `El dominio ${customDomain} todavía no abre esta tienda. Revisa que esté en Vercel → Domains y que el DNS apunte bien; luego vuelve a activarlo.`,
-      } as const;
+    if (current.customDomain !== customDomain) {
+      activateAfterSave = true;
+    } else if (current.domainActive || (await domainServesStore(customDomain, current.name))) {
+      domainActive = true;
+    } else {
+      return { error: domainNotReady(customDomain) } as const;
     }
-    domainActive = true;
   }
 
   const paidUntil = d.paidUntil ? new Date(`${d.paidUntil}T23:59:59-05:00`) : null;
@@ -205,6 +212,7 @@ async function readStoreConfig(formData: FormData, current: CurrentStore | null)
       wompiEventsSecret: s(d.wompiEventsSecret),
     },
     currency: (s(d.currency) ?? "COP").toUpperCase().slice(0, 3),
+    activateAfterSave,
   } as const;
 }
 
@@ -242,9 +250,14 @@ export async function createStoreAction(
     },
   });
   // Subdominio (y dominio propio) en Vercel, sin tener que hacerlo a mano.
-  await connectDomains(cfg.data.slug, cfg.data.customDomain);
+  // Si Vercel falla, se abre «Configurar tienda» con el motivo.
+  const vercelErrors = await connectDomains(cfg.data.slug, cfg.data.customDomain);
 
   revalidatePath("/superadmin");
+  if (vercelErrors.length) {
+    const created = await prisma.store.findUnique({ where: { slug: cfg.data.slug }, select: { id: true } });
+    if (created) redirect(vercelNotice(created.id, `Tienda creada, pero Vercel: ${vercelErrors.join(" ")}`));
+  }
   redirect("/superadmin");
 }
 
@@ -272,12 +285,18 @@ export async function updateStoreConfigAction(
       create: { slug: store.slug, storeId: store.id },
     });
   }
-  // Si cambia la fecha de pago, reinicia el aviso para el nuevo ciclo.
-  const paidChanged = (cfg.data.paidUntil?.getTime() ?? null) !== (store.paidUntil?.getTime() ?? null);
+  // Si cambia el DÍA de pago (en Colombia), reinicia el aviso para el nuevo
+  // ciclo. El formulario manda la fecha sin hora: con el mismo día se conserva
+  // la fecha guardada tal cual, para no repetir avisos ya enviados.
+  const day = (d: Date | null) => (d ? dayKey(d) : null);
+  const paidChanged = day(cfg.data.paidUntil) !== day(store.paidUntil);
 
   await prisma.store.update({
     where: { id: store.id },
-    data: { ...cfg.data, ...(paidChanged ? { rentNotice: null } : {}) },
+    data: {
+      ...cfg.data,
+      ...(paidChanged ? { rentNotice: null } : { paidUntil: store.paidUntil }),
+    },
   });
 
   // Dominios en Vercel: el subdominio viejo se conserva (los enlaces viejos
@@ -288,10 +307,21 @@ export async function updateStoreConfigAction(
     if (store.customDomain && store.customDomain !== cfg.data.customDomain) await removeProjectDomain(store.customDomain);
   }
 
+  // Dominio nuevo marcado como activo: ya guardado, se comprueba que abra la tienda.
+  let domainError: string | null = null;
+  if (cfg.activateAfterSave && cfg.data.customDomain) {
+    if (await domainServesStore(cfg.data.customDomain, cfg.data.name)) {
+      await prisma.store.update({ where: { id: store.id }, data: { domainActive: true } });
+    } else {
+      domainError = `Guardado. ${domainNotReady(cfg.data.customDomain)}`;
+    }
+  }
+
   revalidatePath("/superadmin");
   revalidatePath(`/${store.slug}`, "layout");
   revalidatePath(`/${slug}`, "layout");
-  if (vercelErrors.length) return { error: `Guardado, pero Vercel: ${vercelErrors.join(" ")}` };
+  const problems = [domainError, vercelErrors.length ? `Vercel: ${vercelErrors.join(" ")}` : null].filter(Boolean);
+  if (problems.length) return { error: problems.join(" ") };
   return { ok: true };
 }
 
@@ -300,8 +330,15 @@ export async function connectStoreDomainsAction(formData: FormData) {
   await requireSuperadmin();
   const store = await prisma.store.findUnique({ where: { id: String(formData.get("storeId") ?? "") } });
   if (!store) return;
-  await connectDomains(store.slug, store.customDomain);
+  const errors = await connectDomains(store.slug, store.customDomain);
   revalidatePath(`/superadmin/stores/${store.id}/edit`);
+  // El motivo se muestra en el panel (antes se perdía y no pasaba nada visible).
+  redirect(vercelNotice(store.id, errors.length ? errors.join(" ") : "Conectado."));
+}
+
+/** «Configurar tienda» con un aviso de Vercel visible en el panel de dominios. */
+function vercelNotice(storeId: string, message: string): string {
+  return `/superadmin/stores/${storeId}/edit?vercel=${encodeURIComponent(message.slice(0, 300))}`;
 }
 
 /** Renueva el plan: +1 año (pago único + anual) o +1 mes (mensual), desde la

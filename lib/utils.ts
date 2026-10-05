@@ -12,9 +12,9 @@ export function slugify(input: string): string {
 }
 
 // Rutas propias de la app: una tienda no puede usar estos slugs (chocarían con
-// /admin, /api, /login…). También se rechazan los que empiezan por ellos,
-// porque el middleware de dominios propios los compara por prefijo.
-const RESERVED_SLUG_PREFIXES = [
+// /admin, /api, /login…). Solo el nombre exacto: el proxy compara la ruta
+// completa ("/sede" o "/sede/…"), así que "sedeno" o "apicultura" sí sirven.
+const RESERVED_SLUGS = new Set([
   "admin",
   "superadmin",
   "api",
@@ -26,7 +26,7 @@ const RESERVED_SLUG_PREFIXES = [
   "robots",
   "favicon",
   "_next",
-];
+]);
 
 /** URL de imagen aceptable: http(s) o un archivo subido a /uploads. */
 export function isSafeImageUrl(url: string): boolean {
@@ -46,7 +46,26 @@ export function safePosition(p: unknown): string {
 }
 
 export function isReservedSlug(slug: string): boolean {
-  return RESERVED_SLUG_PREFIXES.some((p) => slug === p || slug.startsWith(p));
+  return RESERVED_SLUGS.has(slug);
+}
+
+// Páginas propias de cada tienda (/menu, /sedes…): un producto con ese slug
+// quedaría tapado por la página. Tampoco los de la plataforma (/login…), que
+// en el subdominio de la tienda llevan al panel.
+const STORE_PAGE_SLUGS = new Set([
+  "cart",
+  "checkout",
+  "cuenta",
+  "favorites",
+  "legal",
+  "menu",
+  "nosotros",
+  "rastrear",
+  "sedes",
+]);
+
+export function isReservedProductSlug(slug: string): boolean {
+  return STORE_PAGE_SLUGS.has(slug) || RESERVED_SLUGS.has(slug);
 }
 
 // Monedas sin decimales (el peso colombiano, entre otras): se muestran enteras.

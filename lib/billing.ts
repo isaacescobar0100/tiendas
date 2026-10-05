@@ -1,4 +1,5 @@
 import type { StorePlan } from "@prisma/client";
+import { dayKey } from "@/lib/dates";
 
 // ─── Vencimiento del plan de una tienda ──────────────────────────────────────
 // SALE = pago único + cuota ANUAL (infraestructura y soporte).
@@ -51,18 +52,23 @@ export function billingOf(
 export const isSuspended = (store: { plan: StorePlan; paidUntil: Date | null }) =>
   billingOf(store).status === "suspended";
 
-/** Nueva fecha al renovar: desde la actual si aún no vence, si no desde hoy. */
+/**
+ * Nueva fecha al renovar: desde la actual si aún no vence, si no desde hoy.
+ * Se cuenta en días de Colombia (el servidor está en UTC) y vence al final
+ * del día (23:59:59), igual que la fecha que se escribe en el formulario.
+ */
 export function renewedUntil(
   store: { plan: StorePlan; paidUntil: Date | null },
   now = new Date(),
 ): Date {
-  const base =
-    store.paidUntil && store.paidUntil.getTime() > now.getTime()
-      ? new Date(store.paidUntil)
-      : new Date(now);
-  const day = base.getDate();
-  base.setMonth(base.getMonth() + RENEW_MONTHS[store.plan]);
+  const from =
+    store.paidUntil && store.paidUntil.getTime() > now.getTime() ? store.paidUntil : now;
+  const [y, m, d] = dayKey(from).split("-").map(Number);
+  const total = m - 1 + RENEW_MONTHS[store.plan];
+  const year = y + Math.floor(total / 12);
+  const month = (total % 12) + 1;
   // 31 ene + 1 mes no debe saltar a marzo: se queda en el último día del mes.
-  if (base.getDate() !== day) base.setDate(0);
-  return base;
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return new Date(`${year}-${pad(month)}-${pad(Math.min(d, last))}T23:59:59-05:00`);
 }

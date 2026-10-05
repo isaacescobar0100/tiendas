@@ -10,6 +10,7 @@ import {
   parsePriceToCents,
   isSafeImageUrl,
   safePosition,
+  isReservedProductSlug,
 } from "@/lib/utils";
 import { parseModifiers, serializeModifiers } from "@/lib/modifiers";
 
@@ -44,7 +45,7 @@ async function uniqueProductSlug(
     const found = await prisma.product.findUnique({
       where: { storeId_slug: { storeId, slug } },
     });
-    if (!found || found.id === ignoreId) break;
+    if ((!found || found.id === ignoreId) && !isReservedProductSlug(slug)) break;
     slug = `${base}-${n++}`;
   }
   return slug;

@@ -1,7 +1,7 @@
 // Confirmación de pago de un pedido. Compartido por la página de éxito
 // (redirección de Wompi) y el webhook, de forma que solo se marque y notifique
 // una vez aunque ambos lleguen (idempotente).
-import type { Fulfillment } from "@prisma/client";
+import type { Fulfillment, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendOrderEmails } from "@/lib/email";
@@ -54,37 +54,9 @@ export async function markOrderPaid(
 
   // Ahora que el pago está confirmado, descontamos el stock (una sola vez,
   // porque la transición PENDING→PAID de arriba solo la gana una llamada).
-  // Si algo se agotó entre tanto, dejamos el stock en 0 (nunca negativo); el
-  // dueño verá el pedido y lo gestiona. La comida no controla stock.
-  if (tracksStock(order.store.type))
-  await prisma.$transaction(async (tx) => {
-    for (const item of order.items) {
-      const qty = item.quantity;
-      if (item.variantId) {
-        const r = await tx.productVariant.updateMany({
-          where: { id: item.variantId, stock: { gte: qty } },
-          data: { stock: { decrement: qty } },
-        });
-        if (r.count === 0) {
-          await tx.productVariant.updateMany({
-            where: { id: item.variantId },
-            data: { stock: 0 },
-          });
-        }
-      } else if (item.productId) {
-        const r = await tx.product.updateMany({
-          where: { id: item.productId, stock: { gte: qty } },
-          data: { stock: { decrement: qty } },
-        });
-        if (r.count === 0) {
-          await tx.product.updateMany({
-            where: { id: item.productId },
-            data: { stock: 0 },
-          });
-        }
-      }
-    }
-  });
+  // Si algo se agotó entre tanto, el stock queda en 0 (nunca negativo) y se
+  // anota lo que de verdad se descontó. La comida no controla stock.
+  if (tracksStock(order.store.type)) await takeStock(order.items);
 
   await sendOrderEmails({
     orderId: order.id,
@@ -115,48 +87,60 @@ export async function markOrderPaid(
   return true;
 }
 
-type StockLine = { variantId: string | null; productId: string | null; quantity: number };
+type StockLine = {
+  id: string;
+  variantId: string | null;
+  productId: string | null;
+  quantity: number;
+  stockTaken: number | null;
+};
 
-/** Devuelve al inventario las unidades de un pedido (al cancelarlo). */
-async function restock(lines: StockLine[]) {
+/**
+ * Descuenta hasta `qty` unidades sin bajar de 0 y devuelve cuántas se
+ * descontaron de verdad (una sola sentencia, con la fila bloqueada).
+ */
+async function decrementUpTo(tx: Prisma.TransactionClient, l: StockLine, qty: number): Promise<number> {
+  const rows = l.variantId
+    ? await tx.$queryRaw<{ taken: number }[]>`
+        UPDATE "ProductVariant" v SET stock = GREATEST(v.stock - ${qty}, 0)
+        FROM (SELECT id, stock AS old FROM "ProductVariant" WHERE id = ${l.variantId} FOR UPDATE) o
+        WHERE v.id = o.id
+        RETURNING GREATEST(LEAST(o.old, ${qty}), 0)::int AS taken`
+    : l.productId
+      ? await tx.$queryRaw<{ taken: number }[]>`
+          UPDATE "Product" p SET stock = GREATEST(p.stock - ${qty}, 0)
+          FROM (SELECT id, stock AS old FROM "Product" WHERE id = ${l.productId} FOR UPDATE) o
+          WHERE p.id = o.id
+          RETURNING GREATEST(LEAST(o.old, ${qty}), 0)::int AS taken`
+      : [];
+  return Number(rows[0]?.taken ?? 0);
+}
+
+/** Descuenta del inventario las unidades de un pedido y anota cuántas tomó. */
+async function takeStock(lines: StockLine[]) {
   await prisma.$transaction(async (tx) => {
     for (const l of lines) {
-      if (l.variantId) {
-        await tx.productVariant.updateMany({
-          where: { id: l.variantId },
-          data: { stock: { increment: l.quantity } },
-        });
-      } else if (l.productId) {
-        await tx.product.updateMany({
-          where: { id: l.productId },
-          data: { stock: { increment: l.quantity } },
-        });
-      }
+      const taken = await decrementUpTo(tx, l, l.quantity);
+      await tx.orderItem.update({ where: { id: l.id }, data: { stockTaken: taken } });
     }
   });
 }
 
-/** Descuenta del inventario (al marcar pagado a mano un pedido en línea). */
-async function takeStock(lines: StockLine[]) {
+/**
+ * Devuelve al inventario lo que el pedido había descontado (y lo deja en 0).
+ * Pedidos anteriores al registro (stockTaken null): se devuelve la cantidad
+ * completa solo si `legacyTaken` (las reglas de antes).
+ */
+async function restock(lines: StockLine[], legacyTaken: boolean) {
   await prisma.$transaction(async (tx) => {
     for (const l of lines) {
-      if (l.variantId) {
-        const r = await tx.productVariant.updateMany({
-          where: { id: l.variantId, stock: { gte: l.quantity } },
-          data: { stock: { decrement: l.quantity } },
-        });
-        if (r.count === 0) {
-          await tx.productVariant.updateMany({ where: { id: l.variantId }, data: { stock: 0 } });
-        }
-      } else if (l.productId) {
-        const r = await tx.product.updateMany({
-          where: { id: l.productId, stock: { gte: l.quantity } },
-          data: { stock: { decrement: l.quantity } },
-        });
-        if (r.count === 0) {
-          await tx.product.updateMany({ where: { id: l.productId }, data: { stock: 0 } });
-        }
+      const n = l.stockTaken ?? (legacyTaken ? l.quantity : 0);
+      if (n > 0 && l.variantId) {
+        await tx.productVariant.updateMany({ where: { id: l.variantId }, data: { stock: { increment: n } } });
+      } else if (n > 0 && l.productId) {
+        await tx.product.updateMany({ where: { id: l.productId }, data: { stock: { increment: n } } });
       }
+      await tx.orderItem.update({ where: { id: l.id }, data: { stockTaken: 0 } });
     }
   });
 }
@@ -188,7 +172,7 @@ export async function setOrderPaymentStatus(
       paymentMethod: true,
       wompiTransactionId: true,
       store: { select: { type: true } },
-      items: { select: { variantId: true, productId: true, quantity: true } },
+      items: { select: { id: true, variantId: true, productId: true, quantity: true, stockTaken: true } },
     },
   });
   if (!order) return { ok: false, error: "Pedido no encontrado." };
@@ -202,8 +186,9 @@ export async function setOrderPaymentStatus(
   }
 
   // Transición atómica: solo si el estado sigue siendo el que leímos.
+  // (Al volver a pendiente, además, que Wompi no lo haya pagado entre tanto.)
   const res = await prisma.order.updateMany({
-    where: { id: order.id, status: order.status },
+    where: { id: order.id, status: order.status, ...(next === "PENDING" ? { wompiTransactionId: null } : {}) },
     data: { status: next },
   });
   if (res.count === 0) {
@@ -213,16 +198,18 @@ export async function setOrderPaymentStatus(
   if (!tracksStock(order.store.type)) return { ok: true };
   const reservedAtCreation =
     order.paymentMethod === "COD" || order.paymentMethod === "TRANSFER";
-  const isOnline = order.paymentMethod === "ONLINE";
+  // Pedidos antiguos sin método guardado (null) se pagaban en línea: así los
+  // trata también markOrderPaid.
+  const isOnline = order.paymentMethod === "ONLINE" || order.paymentMethod === null;
 
   if (next === "CANCELLED") {
-    const hadStock = reservedAtCreation || (isOnline && current === "PAID");
-    if (hadStock) await restock(order.items);
+    // Se devuelve lo que se descontó (registrado en cada línea).
+    await restock(order.items, reservedAtCreation || (isOnline && current === "PAID"));
   } else if (next === "PAID" && isOnline) {
     await takeStock(order.items);
   } else if (next === "PENDING" && isOnline && current === "PAID") {
     // Se había marcado pagado a mano: ese descuento de stock se deshace.
-    await restock(order.items);
+    await restock(order.items, true);
   }
   return { ok: true };
 }
