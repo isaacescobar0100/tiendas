@@ -3,7 +3,7 @@
 // (localhost o `next start` local) no se reporta nada.
 const DSN =
   process.env.NEXT_PUBLIC_SENTRY_DSN ||
-  "https://0b727a62c4e58eab0bad3ed8bd6f320b@o4510391063871488.ingest.us.sentry.io/4512212096778240";
+  "https://a4b41f4173f623416f874160f99563c9@o4510391063871488.ingest.us.sentry.io/4512212116242432";
 
 const onVercel =
   typeof window === "undefined"
