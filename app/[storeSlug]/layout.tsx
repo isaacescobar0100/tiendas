@@ -18,7 +18,8 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 import { FavoritesProvider } from "@/components/favorites/favorites-context";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { StoreUnavailable } from "@/components/store-unavailable";
-import { AccountMenu } from "./cuenta/account-menu";
+import { AccountMenu, FavoritesLink } from "./cuenta/account-menu";
+import { CUSTOMER_ACCOUNTS } from "@/lib/store-features";
 import { StoreBaseProvider } from "@/components/store-base";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { aboutIsLive, parseAbout } from "@/lib/about";
@@ -135,7 +136,7 @@ export default async function StoreLayout({
     );
   }
 
-  const customer = await getCurrentCustomer(store.id);
+  const customer = CUSTOMER_ACCOUNTS ? await getCurrentCustomer(store.id) : null;
   const openState = getStoreOpenState(store.hoursJson);
 
   return (
@@ -175,10 +176,14 @@ export default async function StoreLayout({
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              <AccountMenu
-                storeSlug={store.slug}
-                customerName={customer?.name ?? null}
-              />
+              {CUSTOMER_ACCOUNTS ? (
+                <AccountMenu
+                  storeSlug={store.slug}
+                  customerName={customer?.name ?? null}
+                />
+              ) : (
+                <FavoritesLink />
+              )}
               <CartButton />
             </div>
           </div>

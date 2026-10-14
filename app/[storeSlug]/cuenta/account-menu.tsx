@@ -129,6 +129,27 @@ export function AccountMenu({
   );
 }
 
+/** Sin cuentas de clientes: en la cabecera solo queda el acceso a Favoritos. */
+export function FavoritesLink() {
+  const sh = useStoreHref();
+  const { count, ready } = useFavorites();
+  return (
+    <Link
+      href={sh(`/favorites`)}
+      aria-label="Favoritos"
+      className="relative flex items-center gap-2 rounded-lg border border-line-2 px-2.5 py-2 text-sm font-medium text-ink-2 transition hover:bg-surface-2"
+    >
+      <Heart className="h-4 w-4" />
+      <span className="hidden sm:inline">Favoritos</span>
+      {ready && count > 0 && (
+        <span className="absolute -right-1.5 -top-1.5 min-w-[1.1rem] rounded-full bg-bad px-1 text-center text-[11px] font-semibold leading-[1.1rem] text-white">
+          {count}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 function MenuLink({
   href,
   onClick,

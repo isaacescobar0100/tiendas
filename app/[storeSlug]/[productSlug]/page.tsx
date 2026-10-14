@@ -19,6 +19,7 @@ import { ProductGallery } from "@/components/product-gallery";
 import { ProductCard } from "@/components/product-card";
 import { StarRating } from "@/components/star-rating";
 import { ReviewForm } from "@/components/review-form";
+import { PRODUCT_REVIEWS } from "@/lib/store-features";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { TZ } from "@/lib/dates";
 
@@ -127,12 +128,15 @@ export default async function ProductPage({
       },
       take: 12,
     }),
-    prisma.review.findMany({
-      where: { productId: data.product.id },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }),
-    getCurrentCustomer(store.id),
+    // Reseñas y cliente en sesión: solo si las reseñas están activas.
+    PRODUCT_REVIEWS
+      ? prisma.review.findMany({
+          where: { productId: data.product.id },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+        })
+      : [],
+    PRODUCT_REVIEWS ? getCurrentCustomer(store.id) : null,
     prisma.storeLocation.count({ where: { storeId: store.id } }),
   ]);
   // Descuento vigente (Admin > Descuentos): mismo cálculo que en el checkout.
@@ -253,7 +257,7 @@ export default async function ProductPage({
           <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl">
             {product.name}
           </h1>
-          {reviewCount > 0 && (
+          {PRODUCT_REVIEWS && reviewCount > 0 && (
             <a
               href="#resenas"
               className="mt-2 inline-flex items-center gap-1.5 hover:opacity-80"
@@ -350,6 +354,7 @@ export default async function ProductPage({
         </div>
       </div>
 
+      {PRODUCT_REVIEWS && (
       <section id="resenas" className="mt-16">
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <h2 className="text-lg font-bold text-ink">Reseñas</h2>
@@ -405,6 +410,7 @@ export default async function ProductPage({
           </div>
         </div>
       </section>
+      )}
 
       {related.length > 0 && (
         <section className="mt-16">

@@ -28,6 +28,7 @@ import { PostOrderAccount } from "../post-order-account";
 import { storeBasePath, joinStorePath } from "@/lib/store-path";
 import { LiveRefresh } from "@/components/live-refresh";
 import { hasOrderAccess, orderLiveSrc } from "@/lib/order-live";
+import { CUSTOMER_ACCOUNTS } from "@/lib/store-features";
 import { OrderProgress } from "@/components/order-progress";
 
 export const dynamic = "force-dynamic";
@@ -167,29 +168,32 @@ export default async function OrderSuccessPage({
   const shouldClearCart = payment !== "failed";
 
   // Sin sesión → invitar a crear cuenta, o a iniciar sesión si ese correo ya
-  // tiene una. Si ya hay sesión, no mostramos nada.
-  const [loggedIn, existing] = await Promise.all([
-    getCurrentCustomer(order.storeId),
-    prisma.customer.findUnique({
-      where: {
-        storeId_email: {
-          storeId: order.storeId,
-          email: order.customerEmail.toLowerCase(),
+  // tiene una. Si ya hay sesión (o las cuentas están apagadas), nada.
+  let accountCta: "create" | "login" | null = null;
+  if (CUSTOMER_ACCOUNTS && mine && payment !== "failed") {
+    const [loggedIn, existing] = await Promise.all([
+      getCurrentCustomer(order.storeId),
+      prisma.customer.findUnique({
+        where: {
+          storeId_email: {
+            storeId: order.storeId,
+            email: order.customerEmail.toLowerCase(),
+          },
         },
-      },
-      select: { id: true },
-    }),
-  ]);
-  const accountExists = !!existing;
-  const accountCta: "create" | "login" | null =
-    !mine || payment === "failed" || loggedIn ? null : accountExists ? "login" : "create";
+        select: { id: true },
+      }),
+    ]);
+    accountCta = loggedIn ? null : existing ? "login" : "create";
+  }
 
   // Envío del pedido por WhatsApp (el negocio atiende por ahí: el pedido es
   // oficial cuando les llega). Va a la sede elegida o, si no tiene número, al
   // WhatsApp de la tienda. En transferencia es también donde va el comprobante.
+  // En otro dispositivo el botón sigue, pero el mensaje lleva solo el número
+  // del pedido (sin nombre, teléfono ni dirección).
   let sedeWaHref: string | null = null;
   const awaiting = payment === "awaiting";
-  if (mine && payment !== "failed") {
+  if (payment !== "failed") {
     const sede = order.locationName
       ? await prisma.storeLocation.findFirst({
           where: { storeId: order.storeId, name: order.locationName },
@@ -207,8 +211,12 @@ export default async function OrderSuccessPage({
           return `• ${i.name}${v ? ` (${v})` : ""} x${i.quantity}${mods}${note}`;
         })
         .join("\n");
-      const msg =
-        `Hola ${greeting}, este es mi pedido #${order.id.slice(-8)}:\n${lines}\n\n` +
+      const shortMsg = awaiting
+        ? `Hola ${greeting}, te envío el comprobante de pago del pedido #${order.id.slice(-8)}.`
+        : `Hola ${greeting}, este es mi pedido #${order.id.slice(-8)}.`;
+      const msg = !mine
+        ? shortMsg
+        : `Hola ${greeting}, este es mi pedido #${order.id.slice(-8)}:\n${lines}\n\n` +
         `Total: ${formatPrice(order.totalCents, order.currency)}\n` +
         (order.paymentMethod
           ? `Pago: ${paymentMethodLabel(order.paymentMethod)}\n`
@@ -340,7 +348,7 @@ export default async function OrderSuccessPage({
           >
             <MessageCircle className="h-4 w-4" />
             {awaiting
-              ? "Enviar pedido y comprobante"
+              ? "Enviar comprobante por WhatsApp"
               : "Enviar mi pedido por WhatsApp"}
           </a>
           {awaiting && (

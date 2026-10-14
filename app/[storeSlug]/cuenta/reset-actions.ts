@@ -13,6 +13,7 @@ import { setCustomerSession } from "@/lib/customer-auth";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { sendAccessLink } from "./access-link";
 import { storeHref } from "@/lib/store-path";
+import { CUSTOMER_ACCOUNTS } from "@/lib/store-features";
 
 export type ResetState = { error?: string; ok?: boolean } | undefined;
 
@@ -28,6 +29,7 @@ export async function requestCustomerResetAction(
   _prev: ResetState,
   formData: FormData,
 ): Promise<ResetState> {
+  if (!CUSTOMER_ACCOUNTS) return { error: "Las cuentas de clientes no están disponibles." };
   const rl = await rateLimit(`reset-req:${await clientIp()}`, 5, 15 * 60 * 1000);
   if (!rl.ok) {
     return { error: `Demasiadas solicitudes. Espera ${rl.retryAfter}s.` };
@@ -69,6 +71,7 @@ export async function resetCustomerPasswordAction(
   _prev: ResetState,
   formData: FormData,
 ): Promise<ResetState> {
+  if (!CUSTOMER_ACCOUNTS) return { error: "Las cuentas de clientes no están disponibles." };
   const store = await storeBySlug(String(formData.get("storeSlug") ?? ""));
   if (!store) return { error: "Tienda no encontrada." };
 

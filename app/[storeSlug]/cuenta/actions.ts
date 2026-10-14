@@ -18,6 +18,7 @@ import {
 } from "@/lib/lockout";
 import { sendAccessLink } from "./access-link";
 import { storeHref } from "@/lib/store-path";
+import { CUSTOMER_ACCOUNTS } from "@/lib/store-features";
 
 export type AccountState = { error?: string; ok?: boolean } | undefined;
 
@@ -43,6 +44,7 @@ export async function registerAction(
   _prev: AccountState,
   formData: FormData,
 ): Promise<AccountState> {
+  if (!CUSTOMER_ACCOUNTS) return { error: "Las cuentas de clientes no están disponibles." };
   const rl = await rateLimit(`register:${await clientIp()}`, 5, 10 * 60 * 1000);
   if (!rl.ok) {
     return { error: `Demasiados intentos. Espera ${rl.retryAfter}s.` };
@@ -78,6 +80,7 @@ export async function loginAction(
   _prev: AccountState,
   formData: FormData,
 ): Promise<AccountState> {
+  if (!CUSTOMER_ACCOUNTS) return { error: "Las cuentas de clientes no están disponibles." };
   const rl = await rateLimit(`login:${await clientIp()}`, 10, 5 * 60 * 1000);
   if (!rl.ok) {
     return { error: `Demasiados intentos. Espera ${rl.retryAfter}s.` };
@@ -131,6 +134,7 @@ export async function sendVerifyLinkAction(
   _prev: AccountState,
   formData: FormData,
 ): Promise<AccountState> {
+  if (!CUSTOMER_ACCOUNTS) return { error: "Las cuentas de clientes no están disponibles." };
   const store = await storeBySlug(String(formData.get("storeSlug") ?? ""));
   if (!store) return { error: "Tienda no encontrada." };
   const customer = await getCurrentCustomer(store.id);

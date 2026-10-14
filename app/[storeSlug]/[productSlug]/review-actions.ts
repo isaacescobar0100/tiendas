@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentCustomer } from "@/lib/customer-auth";
 import { recalcProductRating } from "@/lib/reviews";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { PRODUCT_REVIEWS } from "@/lib/store-features";
 
 export type ReviewState = { error?: string; ok?: boolean } | undefined;
 
@@ -18,6 +19,7 @@ export async function submitReviewAction(
   _prev: ReviewState,
   formData: FormData,
 ): Promise<ReviewState> {
+  if (!PRODUCT_REVIEWS) return { error: "Las reseñas no están disponibles." };
   const rl = await rateLimit(`review:${await clientIp()}`, 10, 60 * 60 * 1000);
   if (!rl.ok) return { error: "Demasiadas reseñas. Inténtalo más tarde." };
 

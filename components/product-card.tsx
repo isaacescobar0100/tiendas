@@ -6,6 +6,7 @@ import { Check, ImageOff } from "lucide-react";
 import { useCart } from "@/components/cart/cart-context";
 import { FavoriteButton } from "@/components/favorites/favorite-button";
 import { StarRating } from "@/components/star-rating";
+import { PRODUCT_REVIEWS } from "@/lib/store-features";
 import { formatPrice } from "@/lib/utils";
 import { isOnSale, effectivePriceCents, discountPercent } from "@/lib/pricing";
 import { flyToCart } from "@/lib/fly-to-cart";
@@ -191,7 +192,7 @@ export function ProductCard({
               </p>
             )}
           </div>
-          {rating && rating.count > 0 && (
+          {PRODUCT_REVIEWS && rating && rating.count > 0 && (
             <div className="mt-1">
               <StarRating value={rating.avg} count={rating.count} />
             </div>

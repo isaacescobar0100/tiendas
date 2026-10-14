@@ -1,5 +1,6 @@
 // Menú del panel de admin agrupado en secciones desplegables. Lo usan la barra
 // superior (escritorio), el menú del celular y el submenú de Ajustes.
+import { PRODUCT_REVIEWS } from "@/lib/store-features";
 
 export type MenuLink = { href: string; label: string; exact?: boolean };
 export type MenuGroup = { label: string; href?: string; items?: MenuLink[] };
@@ -30,7 +31,7 @@ export const ADMIN_MENU: MenuGroup[] = [
       { href: "/admin/categories", label: "Categorías" },
       { href: "/admin/promotions", label: "Promociones (banner)" },
       { href: "/admin/descuentos", label: "Descuentos %" },
-      { href: "/admin/reviews", label: "Reseñas" },
+      ...(PRODUCT_REVIEWS ? [{ href: "/admin/reviews", label: "Reseñas" }] : []),
     ],
   },
   {

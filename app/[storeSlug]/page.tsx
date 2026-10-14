@@ -20,6 +20,7 @@ import { ProductCard } from "@/components/product-card";
 import { BannerSlider, type BannerSlide } from "@/components/banner-slider";
 import { aboutIsLive, parseAbout, SOCIAL_KEYS, type StoreAbout } from "@/lib/about";
 import { seoHomeTitle, seoHomeDescription, seoKeywords, storeUrl, storeJsonLd, sedeSlug } from "@/lib/seo";
+import { PRODUCT_REVIEWS } from "@/lib/store-features";
 import { JsonLd } from "@/components/json-ld";
 import { withAutoKeywords } from "@/lib/seo-data";
 import { fillGrid } from "@/lib/grid-fill";
@@ -249,7 +250,7 @@ export default async function StorefrontPage({
   return (
     <div>
       {/* Datos para Google y los buscadores con IA: marca, sitio y cada sede. */}
-      {isHome && <JsonLd data={storeJsonLd(store, locations, aboutLive ? socialLinks(about) : [], await storeRating(store.id))} />}
+      {isHome && <JsonLd data={storeJsonLd(store, locations, aboutLive ? socialLinks(about) : [], PRODUCT_REVIEWS ? await storeRating(store.id) : undefined)} />}
       <BannerSlider slides={bannerSlides} />
       {/* Si la portada ya muestra el nombre, el título queda solo para
           lectores de pantalla y buscadores (no se repite en pantalla). */}
